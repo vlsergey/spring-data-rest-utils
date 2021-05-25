@@ -1,0 +1,72 @@
+plugins {
+    id 'java-gradle-plugin'
+    id "com.gradle.plugin-publish" version "0.14.0"
+}
+
+group 'io.github.vlsergey.springdatarestutils'
+
+gradlePlugin {
+    plugins {
+	springdatarestutils {
+	    id = 'io.github.vlsergey.spring-data-rest-utils'
+	    implementationClass = 'io.github.vlsergey.springdatarestutils.PluginImpl'
+	}
+    }
+}
+
+ext {
+    lombokVersion = '1.18.12'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.12.3'
+    implementation group: 'io.swagger.core.v3', name: 'swagger-models', version: '2.1.9'
+    implementation group: 'org.reflections', name: 'reflections', version: '0.9.12'
+    implementation group: 'org.springframework.data', name: 'spring-data-rest-core', version: '3.5.1'
+
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testImplementation group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+    testImplementation group: 'javax.persistence', name: 'javax.persistence-api', version: '2.2'
+    testImplementation(platform('org.junit:junit-bom:5.7.2'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testImplementation group: 'org.springframework.data', name: 'spring-data-jpa', version: '2.5.1'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+	events "passed", "skipped", "failed"
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/vlsergey/spring-data-rest-utils'
+    vcsUrl = 'https://github.com/vlsergey/spring-data-rest-utils.git'
+    description = 'Gradle plug-in to generate different specifications (such as OpenAPI) from Spring Data REST entities and repositories'
+    tags = ['spring', 'hateoas', 'rest', 'typescript', 'codegeneration', 'OpenAPI']
+
+    mavenCoordinates {
+	groupId = project.group.toString()
+	artifactId = project.name
+	version = project.version.toString()
+    }
+
+    plugins {
+	springdatarestutils {
+	    displayName = 'Generate OpenAPI specification from Spring Data REST entities and repositories'
+	}
+    }
+}
