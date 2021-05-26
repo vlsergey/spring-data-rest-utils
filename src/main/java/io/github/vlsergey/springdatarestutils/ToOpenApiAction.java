@@ -61,7 +61,7 @@ class ToOpenApiAction implements Action<Task> {
 
 	    final RepositoryEnumerator repositoryEnumerator = new RepositoryEnumerator(
 		    this.pluginProperties.getBasePackage().get(),
-		    this.pluginProperties.getRepositoryDetectionStrategy().get());
+		    this.pluginProperties.repositoryDetectionStrategyEnum.get());
 
 	    final Set<RepositoryMetadata> interfaces = repositoryEnumerator.enumerate(urlClassLoader);
 
@@ -84,15 +84,16 @@ class ToOpenApiAction implements Action<Task> {
 	    while (!toProcess.isEmpty()) {
 		final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
 
-		Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(), (cls, mode) -> {
-		    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
-		    if (!queued.contains(key)) {
-			toProcess.add(key);
-			queued.add(key);
-		    }
+		Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(),
+			pluginProperties.getAddXLinkedEntity().get(), (cls, mode) -> {
+			    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
+			    if (!queued.contains(key)) {
+				toProcess.add(key);
+				queued.add(key);
+			    }
 
-		    return mode.getName(ToOpenApiAction.this.pluginProperties, cls);
-		});
+			    return mode.getName(ToOpenApiAction.this.pluginProperties, cls);
+			});
 
 		apiModel.schema(head.getSecond().getName(pluginProperties, head.getFirst()), schema);
 	    }

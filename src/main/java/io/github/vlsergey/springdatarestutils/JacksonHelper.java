@@ -1,15 +1,22 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanSerializer;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
+import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter.SerializeExceptFilter;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
+import static java.util.Collections.singleton;
 
 import io.swagger.v3.oas.models.media.Schema;
 import lombok.SneakyThrows;
@@ -51,7 +58,25 @@ public class JacksonHelper {
 	});
 
 	final SimpleFilterProvider filterProvider = new SimpleFilterProvider();
-	filterProvider.addFilter(SCHEMA_FILTER_ID, SimpleBeanPropertyFilter.serializeAllExcept("exampleSetFlag"));
+	filterProvider.addFilter(SCHEMA_FILTER_ID, new SerializeExceptFilter(singleton("exampleSetFlag")) {
+	    private static final long serialVersionUID = 1L;
+
+	    @Override
+	    @SneakyThrows
+	    public void serializeAsField(Object pojo, JsonGenerator jgen, SerializerProvider provider,
+		    PropertyWriter writer) throws Exception {
+		if (writer.getName().equals("extensions")) {
+		    Schema<?> schema = (Schema<?>) pojo;
+		    if (schema.getExtensions() != null) {
+			for (Map.Entry<String, Object> entry : schema.getExtensions().entrySet()) {
+			    jgen.writeObjectField(entry.getKey(), entry.getValue());
+			}
+		    }
+		} else {
+		    super.serializeAsField(pojo, jgen, provider, writer);
+		}
+	    }
+	});
 
 	jsonMapper.setFilterProvider(filterProvider);
 	jsonMapper.setSerializationInclusion(Include.NON_ABSENT);

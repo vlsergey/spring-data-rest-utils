@@ -64,7 +64,7 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    public Schema<?> map(Class<?> cls, ClassMappingMode mode,
+    public Schema<?> map(Class<?> cls, ClassMappingMode mode, boolean addXLinkedEntity,
 	    BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName) {
 	if (cls.isEnum() && mode != ClassMappingMode.ENUM || !cls.isEnum() && mode == ClassMappingMode.ENUM) {
 	    throw new AssertionError("Incorrect mode " + mode + " for class " + cls.getName());
@@ -94,8 +94,20 @@ public class EntityToSchemaMapper {
 
 	    ObjectSchema linksSchema = new ObjectSchema();
 	    linksSchema.setProperties(new TreeMap<>());
-	    links.forEach((key, linkClass) -> linksSchema.getProperties().put(key,
-		    buildRefSchema(getReferencedTypeName, Link.class, ClassMappingMode.DATA_ITEM)));
+	    links.forEach((key, linkClass) -> {
+		final Schema<?> refSchema = buildRefSchema(getReferencedTypeName, Link.class,
+			ClassMappingMode.DATA_ITEM);
+		if (!addXLinkedEntity) {
+		    linksSchema.getProperties().put(key, refSchema);
+		    return;
+		}
+
+		ComposedSchema composedSchema = new ComposedSchema();
+		composedSchema.addAllOfItem(refSchema);
+		composedSchema.addExtension("x-linked-entity",
+			getReferencedTypeName.apply(linkClass, ClassMappingMode.TOP_LEVEL_ENTITY));
+		linksSchema.getProperties().put(key, composedSchema);
+	    });
 
 	    final ObjectSchema objectSchema = new ObjectSchema();
 	    objectSchema.setName(getReferencedTypeName.apply(cls, mode));

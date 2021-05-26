@@ -11,12 +11,12 @@ import io.swagger.v3.oas.models.media.Schema;
 class EntityToSchemaMapperTest {
 
     @Test
-    void testMap() throws Exception {
+    void testMapAsDataItem() throws Exception {
 	EntityToSchemaMapper mapper = new EntityToSchemaMapper(
 		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
 			.enumerate(getClass().getClassLoader()));
 
-	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM,
+	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM, false,
 		(a, b) -> a.getSimpleName() + "Type");
 
 	String json = JacksonHelper.writeValueAsString(false, schema);
@@ -38,6 +38,38 @@ class EntityToSchemaMapperTest {
 		"- \"created\"\n" + //
 		"- \"updated\"\n" + //
 		"type: \"object\"\n" + //
+		"", json);
+    }
+
+    @Test
+    void testMapAsTopLevelEntity() throws Exception {
+	EntityToSchemaMapper mapper = new EntityToSchemaMapper(
+		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
+			.enumerate(getClass().getClassLoader()));
+
+	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.TOP_LEVEL_ENTITY, true,
+		(a, b) -> a.getSimpleName() + "Type");
+
+	String json = JacksonHelper.writeValueAsString(false, schema);
+
+	assertEquals("---\n" + //
+		"allOf:\n" + //
+		"- $ref: \"#/components/schemas/TestEntityType\"\n" + //
+		"- properties:\n" + //
+		"    _links:\n" + //
+		"      properties:\n" + //
+		"        self:\n" + //
+		"          allOf:\n" + //
+		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
+		"          x-linked-entity: \"TestEntityType\"\n" + //
+		"        testEntity:\n" + //
+		"          allOf:\n" + //
+		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
+		"          x-linked-entity: \"TestEntityType\"\n" + //
+		"      type: \"object\"\n" + //
+		"  required:\n" + //
+		"  - \"_links\"\n" + //
+		"  type: \"object\"\n" + //
 		"", json);
     }
 
