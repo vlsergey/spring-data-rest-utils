@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
-import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy;

@@ -16,7 +16,7 @@ class EntityToSchemaMapperTest {
 		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
 			.enumerate(getClass().getClassLoader()));
 
-	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM, false,
+	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM, false, false,
 		(a, b) -> a.getSimpleName() + "Type");
 
 	String json = JacksonHelper.writeValueAsString(false, schema);
@@ -47,7 +47,7 @@ class EntityToSchemaMapperTest {
 		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
 			.enumerate(getClass().getClassLoader()));
 
-	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.TOP_LEVEL_ENTITY, true,
+	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.TOP_LEVEL_ENTITY, true, false,
 		(a, b) -> a.getSimpleName() + "Type");
 
 	String json = JacksonHelper.writeValueAsString(false, schema);

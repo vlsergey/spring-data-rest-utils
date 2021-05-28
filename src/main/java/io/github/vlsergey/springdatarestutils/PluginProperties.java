@@ -24,6 +24,7 @@ abstract class PluginProperties {
 
     public PluginProperties() {
 	getAddXLinkedEntity().convention(Boolean.FALSE);
+	getAddXSortable().convention(Boolean.FALSE);
 	getBasePackage().convention((String) null);
 	getEnumSuffix().convention("");
 	getInfo().convention(new Info());
@@ -35,6 +36,8 @@ abstract class PluginProperties {
     }
 
     abstract Property<Boolean> getAddXLinkedEntity();
+
+    abstract Property<Boolean> getAddXSortable();
 
     abstract Property<String> getBasePackage();
 

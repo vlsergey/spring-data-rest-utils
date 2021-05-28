@@ -85,7 +85,8 @@ class ToOpenApiAction implements Action<Task> {
 		final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
 
 		Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(),
-			pluginProperties.getAddXLinkedEntity().get(), (cls, mode) -> {
+			pluginProperties.getAddXLinkedEntity().get(), pluginProperties.getAddXSortable().get(),
+			(cls, mode) -> {
 			    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
 			    if (!queued.contains(key)) {
 				toProcess.add(key);

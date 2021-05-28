@@ -64,7 +64,7 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    public Schema<?> map(Class<?> cls, ClassMappingMode mode, boolean addXLinkedEntity,
+    public Schema<?> map(Class<?> cls, ClassMappingMode mode, boolean addXLinkedEntity, boolean addXSortable,
 	    BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName) {
 	if (cls.isEnum() && mode != ClassMappingMode.ENUM || !cls.isEnum() && mode == ClassMappingMode.ENUM) {
 	    throw new AssertionError("Incorrect mode " + mode + " for class " + cls.getName());
@@ -104,7 +104,7 @@ public class EntityToSchemaMapper {
 
 		ComposedSchema composedSchema = new ComposedSchema();
 		composedSchema.addAllOfItem(refSchema);
-		composedSchema.addExtension("x-linked-entity",
+		composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
 			getReferencedTypeName.apply(linkClass, ClassMappingMode.TOP_LEVEL_ENTITY));
 		linksSchema.getProperties().put(key, composedSchema);
 	    });
@@ -148,7 +148,7 @@ public class EntityToSchemaMapper {
 	    }
 
 	    final Optional<Supplier<Schema>> standardSchemaSupplier = StandardSchemasProvider
-		    .getStandardSchemaSupplier(propertyType);
+		    .getStandardSchemaSupplier(propertyType, addXSortable);
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 		if (schema.getNullable() != null && !schema.getNullable()
