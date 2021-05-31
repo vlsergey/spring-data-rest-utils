@@ -10,19 +10,33 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import org.atteo.evo.inflector.English;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.util.Pair;
+import org.springframework.util.StringUtils;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,57 +73,121 @@ class ToOpenApiAction implements Action<Task> {
 	try (URLClassLoader urlClassLoader = new URLClassLoader(urls.toArray(URL[]::new),
 		Thread.currentThread().getContextClassLoader())) {
 
-	    final RepositoryEnumerator repositoryEnumerator = new RepositoryEnumerator(
-		    this.pluginProperties.getBasePackage().get(),
-		    this.pluginProperties.repositoryDetectionStrategyEnum.get());
-
-	    final Set<RepositoryMetadata> interfaces = repositoryEnumerator.enumerate(urlClassLoader);
-
-	    final EntityToSchemaMapper mapper = new EntityToSchemaMapper(interfaces);
-
-	    Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
-	    Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
-
-	    OpenAPI apiModel = new OpenAPI();
-	    setApiInfo(apiModel);
-
-	    apiModel.setPaths(new Paths()); // empty so far
-
-	    interfaces.forEach(meta -> {
-		Pair<Class<?>, ClassMappingMode> key = Pair.of(meta.getDomainType(), ClassMappingMode.TOP_LEVEL_ENTITY);
-		toProcess.add(key);
-		queued.add(key);
-	    });
-
-	    while (!toProcess.isEmpty()) {
-		final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
-
-		Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(),
-			pluginProperties.getAddXLinkedEntity().get(), pluginProperties.getAddXSortable().get(),
-			(cls, mode) -> {
-			    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
-			    if (!queued.contains(key)) {
-				toProcess.add(key);
-				queued.add(key);
-			    }
-
-			    return mode.getName(ToOpenApiAction.this.pluginProperties, cls);
-			});
-
-		apiModel.schema(head.getSecond().getName(pluginProperties, head.getFirst()), schema);
-	    }
-
-	    final String serialized = JacksonHelper.writeValueAsString(
-		    this.pluginProperties.getOutput().getAsFile().get().getName().endsWith(".json"), apiModel);
-	    final byte[] jsonBytes = serialized.getBytes(StandardCharsets.UTF_8);
-
-	    final RegularFile output = pluginProperties.getOutput().get();
-	    Files.write(output.getAsFile().toPath(), jsonBytes, StandardOpenOption.WRITE, StandardOpenOption.CREATE,
-		    StandardOpenOption.TRUNCATE_EXISTING);
-
-	    log.info("Result ({} bytes) is written into {}", jsonBytes.length, output.getAsFile().getPath());
+	    executeWithClassLoader(urlClassLoader);
 	} catch (IOException e) {
 	    e.printStackTrace();
+	}
+    }
+
+    @SneakyThrows
+    void executeWithClassLoader(ClassLoader urlClassLoader) {
+	final RepositoryEnumerator repositoryEnumerator = new RepositoryEnumerator(
+		this.pluginProperties.getBasePackage().get(),
+		this.pluginProperties.getRepositoryDetectionStrategyEnum().get());
+
+	final Set<RepositoryMetadata> interfaces = repositoryEnumerator.enumerate(urlClassLoader);
+
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(interfaces);
+
+	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
+	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
+
+	OpenAPI apiModel = new OpenAPI();
+	setApiInfo(apiModel);
+	apiModel.setServers(pluginProperties.getServers().get());
+
+	interfaces.forEach(meta -> {
+	    Pair<Class<?>, ClassMappingMode> key = Pair.of(meta.getDomainType(), ClassMappingMode.TOP_LEVEL_ENTITY);
+	    toProcess.add(key);
+	    queued.add(key);
+	});
+
+	while (!toProcess.isEmpty()) {
+	    final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
+
+	    Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(),
+		    pluginProperties.getAddXLinkedEntity().get(), pluginProperties.getAddXSortable().get(),
+		    (cls, mode) -> {
+			Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
+			if (!queued.contains(key)) {
+			    toProcess.add(key);
+			    queued.add(key);
+			}
+
+			return mode.getName(ToOpenApiAction.this.pluginProperties, cls);
+		    });
+
+	    apiModel.schema(head.getSecond().getName(pluginProperties, head.getFirst()), schema);
+	}
+
+	Paths paths = new Paths();
+	apiModel.setPaths(paths);
+	// pathes
+	interfaces.forEach(meta -> {
+	    Schema<?> idSchema = mapper.map(meta.getIdType(), ClassMappingMode.DATA_ITEM, false, false,
+		    (cls, mode) -> mode.getName(ToOpenApiAction.this.pluginProperties, cls));
+
+	    populatePathItems(cls -> ClassMappingMode.SECOND_LEVEL.getName(ToOpenApiAction.this.pluginProperties, cls),
+		    meta, idSchema, paths);
+	});
+
+	final RegularFileProperty outputProperty = this.pluginProperties.getOutput();
+	final File outputFile = outputProperty.getAsFile().get();
+	final String serialized = JacksonHelper.writeValueAsString(outputFile.getName().endsWith(".json"), apiModel);
+	final byte[] jsonBytes = serialized.getBytes(StandardCharsets.UTF_8);
+
+	final RegularFile output = pluginProperties.getOutput().get();
+	Files.write(output.getAsFile().toPath(), jsonBytes, StandardOpenOption.WRITE, StandardOpenOption.CREATE,
+		StandardOpenOption.TRUNCATE_EXISTING);
+
+	log.info("Result ({} bytes) is written into {}", jsonBytes.length, output.getAsFile().getPath());
+    }
+
+    private void populatePathItems(Function<Class<?>, String> nameResolver, RepositoryMetadata meta, Schema<?> idSchema,
+	    Paths paths) {
+	final Class<?> domainType = meta.getDomainType();
+
+	final PathItem noIdPathItem = new PathItem();
+	final PathItem withIdPathItem = new PathItem();
+
+	final CrudMethods crudMethods = meta.getCrudMethods();
+
+	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
+	    final Schema<Object> schema = new Schema<>().$ref("#/components/schemas/" + nameResolver.apply(domainType));
+	    final MediaType mediaType = new MediaType().schema(schema);
+	    final Content content = new Content().addMediaType("application/json", mediaType);
+	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE).content(content);
+	    noIdPathItem.setPost(new Operation() //
+		    .addTagsItem(domainType.getSimpleName()).requestBody(requestBody) //
+		    .responses(new ApiResponses()
+			    .addApiResponse("200",
+				    new ApiResponse().content(content).description("Entity has been created"))
+			    .addApiResponse("204", new ApiResponse().description("Entity has been created"))));
+
+	    withIdPathItem.setPut(new Operation() //
+		    .addTagsItem(domainType.getSimpleName())
+		    .addParametersItem(
+			    new Parameter().allowEmptyValue(Boolean.FALSE).in("path").schema(idSchema).name("id")) //
+		    .requestBody(requestBody) //
+		    .responses(new ApiResponses().addApiResponse("204",
+			    new ApiResponse().description("Entity has been updated"))));
+	});
+
+	crudMethods.getDeleteMethod().ifPresent(deleteMethod -> {
+	    withIdPathItem.setDelete(new Operation() //
+		    .addTagsItem(domainType.getSimpleName()) //
+		    .addParametersItem(new Parameter().in("path").schema(idSchema).name("id")) //
+		    .responses(new ApiResponses().addApiResponse("204",
+			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
+	});
+
+	final String basePath = "/" + English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
+	if (!noIdPathItem.readOperations().isEmpty()) {
+	    paths.addPathItem(basePath, noIdPathItem);
+	}
+
+	if (!withIdPathItem.readOperations().isEmpty()) {
+	    paths.addPathItem(basePath + "/{id}", withIdPathItem);
 	}
     }
 

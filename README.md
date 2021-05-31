@@ -3,13 +3,13 @@
 Generates [OpenAPI specification](https://swagger.io/specification/) from JPA repositories exposed via [Spring Data REST](https://spring.io/projects/spring-data-rest) library.
 
 - [x] Generates schema components for both exposed and non-exposed classes
-- [ ] (TODO) Generates path and operations for supported commands
+- [ ] (WIP) Generates path and operations for supported commands
 
 ## Enabling Gradle plugin
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.4.0"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.5.0"
 }
 ```
 
@@ -22,7 +22,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.4.0"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.5.0"
   }
 }
 

@@ -1,6 +1,8 @@
 package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
@@ -9,10 +11,14 @@ import org.gradle.api.tasks.Internal;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 abstract class PluginProperties {
 
     @Internal
+    @Getter(value = AccessLevel.PACKAGE)
     final Provider<RepositoryDetectionStrategies> repositoryDetectionStrategyEnum = getRepositoryDetectionStrategy()
 	    .map(in -> {
 		try {
@@ -31,6 +37,11 @@ abstract class PluginProperties {
 	getLinkTypeName().convention("LinkType");
 	getRepositoryDetectionStrategy().convention(RepositoryDetectionStrategies.DEFAULT.name());
 	getOutput().convention(() -> new File("api.yaml"));
+
+	final ArrayList<Server> defaultServers = new ArrayList<>();
+	defaultServers.add(new Server().url("/api"));
+	getServers().convention(defaultServers);
+
 	getTypeSuffix().convention("");
 	getWithLinksTypeSuffix().convention("WithLinks");
     }
@@ -50,6 +61,8 @@ abstract class PluginProperties {
     abstract RegularFileProperty getOutput();
 
     abstract Property<String> getRepositoryDetectionStrategy();
+
+    abstract Property<List<Server>> getServers();
 
     abstract Property<String> getTypeSuffix();
 

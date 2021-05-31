@@ -74,6 +74,12 @@ public class EntityToSchemaMapper {
 	    return mapEnum((Class) cls);
 	}
 
+	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider
+		.getStandardSchemaSupplier(cls, addXSortable);
+	if (entityStandardSchemaSupplier.isPresent()) {
+	    return entityStandardSchemaSupplier.get().get();
+	}
+
 	if (mode == ClassMappingMode.TOP_LEVEL_ENTITY) {
 	    final Map<String, Class<?>> links = new TreeMap<>();
 	    links.put("self", cls);
