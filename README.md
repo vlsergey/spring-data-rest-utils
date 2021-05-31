@@ -9,7 +9,7 @@ Generates [OpenAPI specification](https://swagger.io/specification/) from JPA re
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.5.0"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.5.1"
 }
 ```
 
@@ -22,7 +22,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.5.0"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.5.1"
   }
 }
 
@@ -46,6 +46,7 @@ springdatarestutils {
     info.get().with {
         title = 'MyApplication Data API';
     }
+    servers.set([new io.swagger.v3.oas.models.servers.Server().url('/api/data')]);
     output = file('../frontend/src/MyAppApi.yaml');
     repositoryDetectionStrategy = 'ALL'
 }
@@ -59,6 +60,7 @@ springdatarestutils {
 | info                        | [`Info`](https://github.com/swagger-api/swagger-core/blob/master/modules/swagger-models/src/main/java/io/swagger/v3/oas/models/info/Info.java) | `""`        | Bean to be included as `info` part to OpenAPI spec. Plugin will try to fill some fields by default since some of them are required.
 | linkTypeName                | `String`  | `"LinkType"`   | How to name TypeScript interface representing `org.springframework.hateoas.Link` data class.
 | output                      | `File`    | `"api.yaml"`   | Where to output result. Supports both `.json` and `.yaml` extensions.
+| servers                     | `List<`[`Server`](https://github.com/swagger-api/swagger-core/blob/master/modules/swagger-models/src/main/java/io/swagger/v3/oas/models/servers/Server.java)`>` | single server instance with `/api` url | Beans to be included as `servers` part to OpenAPI spec.
 | repositoryDetectionStrategy | `RepositoryDetectionStrategies` | `DEFAULT` | The strategy to determine whether a given repository is to be exported by Spring Data REST. Values (and actual implementation) are reused from [Spring Data REST `RepositoryDetectionStrategies`](https://docs.spring.io/spring-data/rest/docs/current/api/org/springframework/data/rest/core/mapping/RepositoryDetectionStrategy.RepositoryDetectionStrategies.html)
 | typeSuffix          | `String`  | `""`           | Suffix to add to all TypeScript interfaces _without `_links`_ field. I.e. to all non-exposed (included) entities, enums, etc.
 | withLinksTypeSuffix | `String`  | `"WithLinks"`  | Suffix to add to top-level exposed entities, i.e. TypeScript interfaces with `_links` field. Must be different from `typeSuffix`.

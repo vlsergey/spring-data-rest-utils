@@ -12,7 +12,7 @@ public class PluginImpl implements Plugin<Project> {
 		PluginProperties.class);
 
 	project.task("generateOpenAPIForSpringDataREST", (Task task) -> {
-	    task.dependsOn(":compileJava");
+//	    task.dependsOn(":compileJava");
 	    task.doLast(new ToOpenApiAction(project, ownConfig));
 	});
     }

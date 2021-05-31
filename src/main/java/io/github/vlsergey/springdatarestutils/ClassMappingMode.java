@@ -14,8 +14,8 @@ public enum ClassMappingMode {
 
     ENUM(false) {
 	@Override
-	public String getName(PluginProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getEnumSuffix().get();
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return cls.getSimpleName() + props.getEnumSuffix();
 	}
     },
 
@@ -35,8 +35,8 @@ public enum ClassMappingMode {
      */
     TOP_LEVEL_ENTITY(false) {
 	@Override
-	public String getName(PluginProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getWithLinksTypeSuffix().get();
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
 	}
     },
 
@@ -45,10 +45,10 @@ public enum ClassMappingMode {
     @Getter
     private final boolean mappedEntitiesExpoded;
 
-    public String getName(PluginProperties props, Class<?> cls) {
+    public String getName(TaskProperties props, Class<?> cls) {
 	if (cls.isAssignableFrom(Link.class)) {
-	    return props.getLinkTypeName().get();
+	    return props.getLinkTypeName();
 	}
-	return cls.getSimpleName() + props.getTypeSuffix().get();
+	return cls.getSimpleName() + props.getTypeSuffix();
     }
 }

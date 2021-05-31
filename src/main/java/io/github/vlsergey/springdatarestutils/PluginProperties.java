@@ -2,31 +2,15 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Internal;
-import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
-import lombok.AccessLevel;
-import lombok.Getter;
 
 abstract class PluginProperties {
-
-    @Internal
-    @Getter(value = AccessLevel.PACKAGE)
-    final Provider<RepositoryDetectionStrategies> repositoryDetectionStrategyEnum = getRepositoryDetectionStrategy()
-	    .map(in -> {
-		try {
-		    return RepositoryDetectionStrategies.valueOf(in.trim().toUpperCase());
-		} catch (IllegalArgumentException exc) {
-		    return RepositoryDetectionStrategies.DEFAULT;
-		}
-	    });
 
     public PluginProperties() {
 	getAddXLinkedEntity().convention(Boolean.FALSE);
@@ -35,7 +19,7 @@ abstract class PluginProperties {
 	getEnumSuffix().convention("");
 	getInfo().convention(new Info());
 	getLinkTypeName().convention("LinkType");
-	getRepositoryDetectionStrategy().convention(RepositoryDetectionStrategies.DEFAULT.name());
+	getRepositoryDetectionStrategy().convention("DEFAULT");
 	getOutput().convention(() -> new File("api.yaml"));
 
 	final ArrayList<Server> defaultServers = new ArrayList<>();
@@ -62,10 +46,22 @@ abstract class PluginProperties {
 
     abstract Property<String> getRepositoryDetectionStrategy();
 
-    abstract Property<List<Server>> getServers();
+    abstract ListProperty<Server> getServers();
 
     abstract Property<String> getTypeSuffix();
 
     abstract Property<String> getWithLinksTypeSuffix();
+
+    TaskProperties toTaskProperties() {
+	return new TaskProperties() //
+		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
+		.setAddXSortable(getAddXSortable().get()).setBasePackage(getBasePackage().get()) //
+		.setEnumSuffix(getEnumSuffix().get()).setInfo(getInfo().get()) //
+		.setLinkTypeName(getLinkTypeName().get()) //
+		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
+		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
+		.setServers(getServers().get()).setTypeSuffix(getTypeSuffix().get()) //
+		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get());
+    }
 
 }
