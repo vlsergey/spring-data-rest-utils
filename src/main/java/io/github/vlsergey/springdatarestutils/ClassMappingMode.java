@@ -20,25 +20,25 @@ public enum ClassMappingMode {
     },
 
     /**
-     * Class is projection, top level
-     */
-    PROJECTION(true),
-
-    /**
      * Class is part of exported entities set, but currently is included into
      * first-level projection
      */
-    SECOND_LEVEL(false),
+    EXPOSED_NO_LINKS(false),
 
     /**
      * Class is part of exported entities set
      */
-    TOP_LEVEL_ENTITY(false) {
+    EXPOSED_WITH_LINKS(false) {
 	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
 	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
 	}
     },
+
+    /**
+     * Class is projection, top level
+     */
+    PROJECTION(true),
 
     ;
 

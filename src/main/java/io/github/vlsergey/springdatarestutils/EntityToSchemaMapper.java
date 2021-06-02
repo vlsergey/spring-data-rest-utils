@@ -80,7 +80,7 @@ public class EntityToSchemaMapper {
 	    return entityStandardSchemaSupplier.get().get();
 	}
 
-	if (mode == ClassMappingMode.TOP_LEVEL_ENTITY) {
+	if (mode == ClassMappingMode.EXPOSED_WITH_LINKS) {
 	    final Map<String, Class<?>> links = new TreeMap<>();
 	    links.put("self", cls);
 	    links.put(StringUtils.uncapitalize(cls.getSimpleName()), cls);
@@ -111,7 +111,7 @@ public class EntityToSchemaMapper {
 		ComposedSchema composedSchema = new ComposedSchema();
 		composedSchema.addAllOfItem(refSchema);
 		composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
-			getReferencedTypeName.apply(linkClass, ClassMappingMode.TOP_LEVEL_ENTITY));
+			getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED_WITH_LINKS));
 		linksSchema.getProperties().put(key, composedSchema);
 	    });
 
@@ -121,7 +121,7 @@ public class EntityToSchemaMapper {
 	    initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
 
 	    final ComposedSchema resultSchema = new ComposedSchema();
-	    resultSchema.addAllOfItem(buildRefSchema(getReferencedTypeName, cls, ClassMappingMode.SECOND_LEVEL));
+	    resultSchema.addAllOfItem(buildRefSchema(getReferencedTypeName, cls, ClassMappingMode.EXPOSED_NO_LINKS));
 	    resultSchema.addAllOfItem(objectSchema);
 	    return resultSchema;
 	}
@@ -174,7 +174,7 @@ public class EntityToSchemaMapper {
 	    }
 
 	    initPropertiesIfNotYet(objectSchema).put(pd.getName(), buildRefSchema(getReferencedTypeName, propertyType,
-		    isMappedEntityType ? ClassMappingMode.SECOND_LEVEL : ClassMappingMode.DATA_ITEM));
+		    isMappedEntityType ? ClassMappingMode.EXPOSED_NO_LINKS : ClassMappingMode.DATA_ITEM));
 	}
 
 	return objectSchema;

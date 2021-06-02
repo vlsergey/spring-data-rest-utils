@@ -2,7 +2,6 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -10,13 +9,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import org.atteo.evo.inflector.English;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +37,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ToOpenApiActionImpl {
+
+    private static final String APPLICATION_JSON_VALUE = org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+    private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
+    private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
+    private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
 
     private final TaskProperties taskProperties;
     private final String projectDisplayName;
@@ -67,7 +73,7 @@ public class ToOpenApiActionImpl {
 
 	interfaces.forEach(meta -> {
 	    Pair<Class<?>, ClassMappingMode> key = Pair.<Class<?>, ClassMappingMode>of(meta.getDomainType(),
-		    ClassMappingMode.TOP_LEVEL_ENTITY);
+		    ClassMappingMode.EXPOSED_WITH_LINKS);
 	    toProcess.add(key);
 	    queued.add(key);
 	});
@@ -96,9 +102,8 @@ public class ToOpenApiActionImpl {
 	    Schema<?> idSchema = mapper.map(meta.getIdType(), ClassMappingMode.DATA_ITEM, false, false,
 		    (cls, mode) -> mode.getName(ToOpenApiActionImpl.this.taskProperties, cls));
 
-	    populatePathItems(
-		    cls -> ClassMappingMode.SECOND_LEVEL.getName(ToOpenApiActionImpl.this.taskProperties, cls), meta,
-		    idSchema, paths);
+	    populatePathItems((cls, mode) -> mode.getName(ToOpenApiActionImpl.this.taskProperties, cls), meta, idSchema,
+		    paths);
 	});
 
 	final File outputFile = new File(new URI(this.taskProperties.getOutputUri()));
@@ -111,8 +116,8 @@ public class ToOpenApiActionImpl {
 	log.info("Result ({} bytes) is written into {}", jsonBytes.length, outputFile.getPath());
     }
 
-    private void populatePathItems(Function<Class<?>, String> nameResolver, RepositoryMetadata meta, Schema<?> idSchema,
-	    Paths paths) {
+    private void populatePathItems(BiFunction<Class<?>, ClassMappingMode, String> nameResolver, RepositoryMetadata meta,
+	    Schema<?> idSchema, Paths paths) {
 	final Class<?> domainType = meta.getDomainType();
 
 	final PathItem noIdPathItem = new PathItem();
@@ -120,32 +125,60 @@ public class ToOpenApiActionImpl {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
+	final Schema<Object> entitySchemaRef = new Schema<>()
+		.$ref("#/components/schemas/" + nameResolver.apply(domainType, ClassMappingMode.EXPOSED_NO_LINKS));
+	final MediaType entityMediaType = new MediaType().schema(entitySchemaRef);
+	final Content entityContent = new Content().addMediaType(APPLICATION_JSON_VALUE, entityMediaType);
+
+	final Schema<Object> entityWithLinksSchemaRef = new Schema<>()
+		.$ref("#/components/schemas/" + nameResolver.apply(domainType, ClassMappingMode.EXPOSED_WITH_LINKS));
+	final MediaType entityWithLinksMediaType = new MediaType().schema(entityWithLinksSchemaRef);
+	final Content entityWithLinksContent = new Content().addMediaType(APPLICATION_JSON_VALUE,
+		entityWithLinksMediaType);
+
+	final String tag = domainType.getSimpleName();
+	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
+
+	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
+	    withIdPathItem.setGet(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(idParameter) //
+		    .description("Retrieves an entity by its id") //
+		    .responses(
+			    new ApiResponses()
+				    .addApiResponse(RESPONSE_CODE_OK,
+					    new ApiResponse().content(entityWithLinksContent)
+						    .description("Entity is present"))
+				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
+					    new ApiResponse().description("Entity is missing"))));
+	});
+
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
-	    final Schema<Object> schema = new Schema<>().$ref("#/components/schemas/" + nameResolver.apply(domainType));
-	    final MediaType mediaType = new MediaType().schema(schema);
-	    final Content content = new Content().addMediaType("application/json", mediaType);
-	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE).content(content);
+	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE).content(entityContent);
 	    noIdPathItem.setPost(new Operation() //
-		    .addTagsItem(domainType.getSimpleName()).requestBody(requestBody) //
+		    .addTagsItem(tag) //
+		    .requestBody(requestBody) //
 		    .responses(new ApiResponses()
-			    .addApiResponse("200",
-				    new ApiResponse().content(content).description("Entity has been created"))
-			    .addApiResponse("204", new ApiResponse().description("Entity has been created"))));
+			    .addApiResponse(RESPONSE_CODE_OK,
+				    new ApiResponse().content(entityWithLinksContent)
+					    .description("Entity has been created"))
+			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
+				    new ApiResponse().description("Entity has been created"))));
 
 	    withIdPathItem.setPut(new Operation() //
-		    .addTagsItem(domainType.getSimpleName())
-		    .addParametersItem(
-			    new Parameter().allowEmptyValue(Boolean.FALSE).in("path").schema(idSchema).name("id")) //
+		    .addTagsItem(tag) //
+		    .addParametersItem(idParameter) //
 		    .requestBody(requestBody) //
-		    .responses(new ApiResponses().addApiResponse("204",
+		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated"))));
 	});
 
 	crudMethods.getDeleteMethod().ifPresent(deleteMethod -> {
 	    withIdPathItem.setDelete(new Operation() //
-		    .addTagsItem(domainType.getSimpleName()) //
-		    .addParametersItem(new Parameter().in("path").schema(idSchema).name("id")) //
-		    .responses(new ApiResponses().addApiResponse("204",
+		    .addTagsItem(tag) //
+		    .addParametersItem(idParameter) //
+		    .description("Deletes the entity with the given id") //
+		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
 	});
 
