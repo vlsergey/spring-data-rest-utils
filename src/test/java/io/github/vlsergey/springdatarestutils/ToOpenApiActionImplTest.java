@@ -44,7 +44,6 @@ class ToOpenApiActionImplTest {
 	taskProperties.setAddXLinkedEntity(false);
 	taskProperties.setAddXSortable(false);
 	taskProperties.setInfo(new Info());
-	taskProperties.setLinkDepth(3);
 	taskProperties.setLinkTypeName("LinkType");
 	taskProperties.setRepositoryDetectionStrategy(RepositoryDetectionStrategies.DEFAULT.name());
 	taskProperties.setTypeSuffix("");

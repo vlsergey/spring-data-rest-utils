@@ -19,8 +19,6 @@ public class TaskProperties {
 
     private Info info;
 
-    private int linkDepth;
-
     private String linkTypeName;
 
     private String outputUri;

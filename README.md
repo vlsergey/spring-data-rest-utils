@@ -52,7 +52,6 @@ springdatarestutils {
     info.get().with {
         title = 'MyApplication Data API';
     }
-    linkDepth = 3;
     servers.set([new io.swagger.v3.oas.models.servers.Server().url('/api/data')]);
     output = file('../frontend/src/MyAppApi.yaml');
     repositoryDetectionStrategy = 'ALL'
@@ -65,7 +64,6 @@ springdatarestutils {
 | addXSortable                | `boolean` | `false`        | Include additional `x-sortable` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas that are sortable from plugin author point of view. Currently it includes all entries implementing `java.lang.Comparable` and `java.net.URL`. Feel free to submit patch to [StandardSchemasProvider.java](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/main/java/io/github/vlsergey/springdatarestutils/StandardSchemasProvider.java) class better behavior.
 | basePackage                 | `String`  | `""`           | Base package to search JPA repository interfaces in.
 | info                        | [`Info`](https://github.com/swagger-api/swagger-core/blob/master/modules/swagger-models/src/main/java/io/swagger/v3/oas/models/info/Info.java) | `""`        | Bean to be included as `info` part to OpenAPI spec. Plugin will try to fill some fields by default since some of them are required.
-| linkDepth                   | `Integer` | `3`            | How deep shall we go to describe links like `/parent/{id}/linkedFirst/linkedSecond/linkedThird`.
 | linkTypeName                | `String`  | `"LinkType"`   | How to name TypeScript interface representing `org.springframework.hateoas.Link` data class.
 | output                      | `File`    | `"api.yaml"`   | Where to output result. Supports both `.json` and `.yaml` extensions.
 | servers                     | `List<`[`Server`](https://github.com/swagger-api/swagger-core/blob/master/modules/swagger-models/src/main/java/io/swagger/v3/oas/models/servers/Server.java)`>` | single server instance with `/api` url | Beans to be included as `servers` part to OpenAPI spec.

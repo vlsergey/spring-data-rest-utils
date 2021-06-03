@@ -90,7 +90,7 @@ public class PathsGenerator {
 					    new ApiResponse().description("Entity is missing"))));
 
 	    // expose additional methods to get linked entity by main entity ID
-	    populatePathItemsDeep(tag, idParameter, domainType, basePath + "/{id}", 1, paths);
+	    populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths);
 	});
 
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
@@ -132,13 +132,10 @@ public class PathsGenerator {
     }
 
     @SneakyThrows
-    void populatePathItemsDeep(final @NonNull String tag,
+    void populatePathItemsDeeper(final @NonNull String tag,
 	    // TODO: move to components
 	    final @NonNull Parameter mainIdParameter, final @NonNull Class<?> bean, final @NonNull String basePath,
-	    int currentDepth, final @NonNull Paths paths) {
-	if (currentDepth > this.taskProperties.getLinkDepth()) {
-	    return;
-	}
+	    final @NonNull Paths paths) {
 
 	final BeanInfo beanInfo = Introspector.getBeanInfo(bean);
 
@@ -167,8 +164,9 @@ public class PathsGenerator {
 		    .addParametersItem(mainIdParameter) //
 		    .responses(missingResponse))));
 
-	    // we need to go deeper...
-	    populatePathItemsDeep(tag, mainIdParameter, propertyType, componentPath, currentDepth + 1, paths);
+	    /*
+	     * There is no need to go deeper -- Spring Data REST can't handle deeper links
+	     */
 	}
 
     }

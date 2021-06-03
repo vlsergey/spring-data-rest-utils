@@ -18,7 +18,6 @@ abstract class PluginProperties {
 	getBasePackage().convention((String) null);
 	getEnumSuffix().convention("");
 	getInfo().convention(new Info());
-	getLinkDepth().convention(3);
 	getLinkTypeName().convention("LinkType");
 	getRepositoryDetectionStrategy().convention("DEFAULT");
 	getOutput().convention(() -> new File("api.yaml"));
@@ -60,7 +59,6 @@ abstract class PluginProperties {
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
 		.setAddXSortable(getAddXSortable().get()).setBasePackage(getBasePackage().get()) //
 		.setEnumSuffix(getEnumSuffix().get()).setInfo(getInfo().get()) //
-		.setLinkDepth(getLinkDepth().get()) //
 		.setLinkTypeName(getLinkTypeName().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
