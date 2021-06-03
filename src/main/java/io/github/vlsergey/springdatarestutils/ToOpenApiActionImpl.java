@@ -1,15 +1,16 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import org.atteo.evo.inflector.English;
 import org.springframework.data.repository.core.CrudMethods;
@@ -40,13 +41,13 @@ public class ToOpenApiActionImpl {
 
     private static final String APPLICATION_JSON_VALUE = org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-    private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
     private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
+    private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
 
-    private final TaskProperties taskProperties;
     private final String projectDisplayName;
     private final String projectVersion;
+    private final TaskProperties taskProperties;
 
     @SneakyThrows
     public ToOpenApiActionImpl(String projectDisplayName, String projectVersion, String taskProperties) {
@@ -61,8 +62,10 @@ public class ToOpenApiActionImpl {
 
 	final Set<RepositoryMetadata> interfaces = repositoryEnumerator
 		.enumerate(Thread.currentThread().getContextClassLoader());
+	final Predicate<Class<?>> isExposed = cls -> interfaces.stream()
+		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(interfaces);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed);
 
 	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
 	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
@@ -102,8 +105,8 @@ public class ToOpenApiActionImpl {
 	    Schema<?> idSchema = mapper.map(meta.getIdType(), ClassMappingMode.DATA_ITEM, false, false,
 		    (cls, mode) -> mode.getName(ToOpenApiActionImpl.this.taskProperties, cls));
 
-	    populatePathItems((cls, mode) -> mode.getName(ToOpenApiActionImpl.this.taskProperties, cls), meta, idSchema,
-		    paths);
+	    populatePathItems(isExposed, (cls, mode) -> mode.getName(ToOpenApiActionImpl.this.taskProperties, cls),
+		    meta, idSchema, paths);
 	});
 
 	final File outputFile = new File(new URI(this.taskProperties.getOutputUri()));
@@ -116,9 +119,12 @@ public class ToOpenApiActionImpl {
 	log.info("Result ({} bytes) is written into {}", jsonBytes.length, outputFile.getPath());
     }
 
-    private void populatePathItems(BiFunction<Class<?>, ClassMappingMode, String> nameResolver, RepositoryMetadata meta,
-	    Schema<?> idSchema, Paths paths) {
+    @SneakyThrows
+    private void populatePathItems(final Predicate<Class<?>> isExposed,
+	    BiFunction<Class<?>, ClassMappingMode, String> nameResolver, RepositoryMetadata meta, Schema<?> idSchema,
+	    Paths paths) {
 	final Class<?> domainType = meta.getDomainType();
+	final BeanInfo beanInfo = Introspector.getBeanInfo(domainType);
 
 	final PathItem noIdPathItem = new PathItem();
 	final PathItem withIdPathItem = new PathItem();
@@ -138,6 +144,7 @@ public class ToOpenApiActionImpl {
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
+	final String basePath = "/" + English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
 	    withIdPathItem.setGet(new Operation() //
@@ -151,6 +158,25 @@ public class ToOpenApiActionImpl {
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
 					    new ApiResponse().description("Entity is missing"))));
+
+	    // expose additional methods to get linked entity by main entity ID
+	    for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+		final Class<?> propertyType = pd.getPropertyType();
+		if (!isExposed.test(propertyType)) {
+		    continue;
+		}
+
+		paths.addPathItem(basePath + "/{id}/" + pd.getName(), new PathItem().get((new Operation() //
+			.addTagsItem(tag) //
+			.addParametersItem(idParameter) //
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse()
+				.content(new Content().addMediaType(APPLICATION_JSON_VALUE,
+					new MediaType()
+						.schema(new Schema<>().$ref("#/components/schemas/" + nameResolver
+							.apply(propertyType, ClassMappingMode.EXPOSED_NO_LINKS)))))
+				.description("Entity is present")).addApiResponse(RESPONSE_CODE_NOT_FOUND,
+					new ApiResponse().description("Entity is missing"))))));
+	    }
 	});
 
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
@@ -182,7 +208,6 @@ public class ToOpenApiActionImpl {
 			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
 	});
 
-	final String basePath = "/" + English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
 	if (!noIdPathItem.readOperations().isEmpty()) {
 	    paths.addPathItem(basePath, noIdPathItem);
 	}

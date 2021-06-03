@@ -7,9 +7,9 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.hateoas.Link;
 import org.springframework.util.StringUtils;
 
@@ -30,7 +30,7 @@ public class EntityToSchemaMapper {
 	shortDescriptionField = getDeclaredField(FeatureDescriptor.class, "shortDescription");
     }
 
-    private final @NonNull Set<RepositoryMetadata> interfaces;
+    private final @NonNull Predicate<@NonNull Class<?>> isExposed;
 
     static Schema<?> buildRefSchema(BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName, Class<?> cls,
 	    ClassMappingMode mode) {
@@ -57,10 +57,6 @@ public class EntityToSchemaMapper {
 	    objectSchema.setProperties(new TreeMap<>());
 	}
 	return objectSchema.getProperties();
-    }
-
-    private boolean isExported(Class<?> cls) {
-	return interfaces.stream().anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
     }
 
     @SneakyThrows
@@ -92,7 +88,7 @@ public class EntityToSchemaMapper {
 		    // not yet implemented
 		    continue;
 		}
-		if (!isExported(propertyType)) {
+		if (!isExposed.test(propertyType)) {
 		    continue;
 		}
 		links.put(pd.getName(), propertyType);
@@ -138,7 +134,7 @@ public class EntityToSchemaMapper {
 	    final Class<?> propertyType = pd.getPropertyType();
 	    final Boolean nullable = AnnotationHelper.getNullable(cls, pd);
 
-	    boolean isMappedEntityType = isExported(propertyType);
+	    boolean isMappedEntityType = isExposed.test(propertyType);
 	    if (isMappedEntityType && !mode.isMappedEntitiesExpoded()) {
 		continue;
 	    }

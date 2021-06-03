@@ -1,7 +1,6 @@
 package io.github.vlsergey.springdatarestutils;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,9 +11,7 @@ class EntityToSchemaMapperTest {
 
     @Test
     void testMapAsDataItem() throws Exception {
-	EntityToSchemaMapper mapper = new EntityToSchemaMapper(
-		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
-			.enumerate(getClass().getClassLoader()));
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals);
 
 	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM, false, false,
 		(a, b) -> a.getSimpleName() + "Type");
@@ -30,6 +27,8 @@ class EntityToSchemaMapperTest {
 		"  id:\n" + //
 		"    format: \"uuid\"\n" + //
 		"    type: \"string\"\n" + //
+		"  parent:\n" + //
+		"    $ref: \"#/components/schemas/TestEntityType\"\n" + //
 		"  updated:\n" + //
 		"    format: \"date-time\"\n" + //
 		"    nullable: false\n" + //
@@ -43,9 +42,7 @@ class EntityToSchemaMapperTest {
 
     @Test
     void testMapAsTopLevelEntity() throws Exception {
-	EntityToSchemaMapper mapper = new EntityToSchemaMapper(
-		new RepositoryEnumerator(getClass().getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
-			.enumerate(getClass().getClassLoader()));
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals);
 
 	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.EXPOSED_WITH_LINKS, true, false,
 		(a, b) -> a.getSimpleName() + "Type");
@@ -58,6 +55,10 @@ class EntityToSchemaMapperTest {
 		"- properties:\n" + //
 		"    _links:\n" + //
 		"      properties:\n" + //
+		"        parent:\n" + //
+		"          allOf:\n" + //
+		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
+		"          x-linked-entity: \"TestEntityType\"\n" + //
 		"        self:\n" + //
 		"          allOf:\n" + //
 		"          - $ref: \"#/components/schemas/LinkType\"\n" + //

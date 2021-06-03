@@ -15,22 +15,6 @@ import lombok.SneakyThrows;
 
 public class AnnotationHelper {
 
-    public static @Nullable Boolean getNullable(final @NonNull Class<?> owner, final @NonNull PropertyDescriptor pd) {
-	final Method readMethod = pd.getReadMethod();
-	Boolean result = null;
-
-	if (readMethod != null) {
-	    result = getNullable(readMethod.getAnnotations());
-	}
-	if (result == null) {
-	    Field field = ReflectionUtils.findField(owner, pd.getName());
-	    if (field != null) {
-		result = getNullable(field.getAnnotations());
-	    }
-	}
-	return result;
-    }
-
     @SneakyThrows
     private static @Nullable Boolean getNullable(@NonNull Annotation[] annotations) {
 	for (Annotation ann : annotations) {
@@ -56,6 +40,22 @@ public class AnnotationHelper {
 	    }
 	}
 	return null;
+    }
+
+    public static @Nullable Boolean getNullable(final @NonNull Class<?> owner, final @NonNull PropertyDescriptor pd) {
+	final Method readMethod = pd.getReadMethod();
+	Boolean result = null;
+
+	if (readMethod != null) {
+	    result = getNullable(readMethod.getAnnotations());
+	}
+	if (result == null) {
+	    Field field = ReflectionUtils.findField(owner, pd.getName());
+	    if (field != null) {
+		result = getNullable(field.getAnnotations());
+	    }
+	}
+	return result;
     }
 
 }
