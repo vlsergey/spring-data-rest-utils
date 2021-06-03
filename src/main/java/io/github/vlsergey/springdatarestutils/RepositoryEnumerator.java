@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.reflections.Reflections;
+import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
@@ -32,6 +33,7 @@ public class RepositoryEnumerator {
     private final @NonNull RepositoryDetectionStrategy repositoryDetectionStrategy;
 
     @SneakyThrows
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public Set<RepositoryMetadata> enumerate(ClassLoader classLoader) {
 	Class<?> jpaRepositoryInterface = Class.forName("org.springframework.data.jpa.repository.JpaRepository", false,
 		classLoader);
@@ -39,8 +41,13 @@ public class RepositoryEnumerator {
 	final Reflections reflections = basePackage == null ? new Reflections(classLoader, new SubTypesScanner(true))
 		: new Reflections(basePackage, classLoader, new SubTypesScanner(true));
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	final Set<Class<?>> jpaRepos = (Set) reflections.getSubTypesOf(jpaRepositoryInterface);
+	final Set<Class<?>> jpaRepos;
+	try {
+	    jpaRepos = (Set) reflections.getSubTypesOf(jpaRepositoryInterface);
+	} catch (ReflectionsException exc) {
+	    throw new RuntimeException(
+		    "Unable to locate any JPA repositories in package or subpackages of '" + basePackage + "'");
+	}
 
 	return jpaRepos.stream() //
 		.filter(Class::isInterface) //

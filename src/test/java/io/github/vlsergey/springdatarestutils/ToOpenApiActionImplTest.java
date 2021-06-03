@@ -1,7 +1,10 @@
 package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.Re
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.swagger.v3.oas.models.info.Info;
@@ -39,8 +43,8 @@ class ToOpenApiActionImplTest {
 	taskProperties = new TaskProperties();
 	taskProperties.setAddXLinkedEntity(false);
 	taskProperties.setAddXSortable(false);
-	taskProperties.setBasePackage(ToOpenApiActionImplTest.class.getPackageName() + ".test");
 	taskProperties.setInfo(new Info());
+	taskProperties.setLinkDepth(3);
 	taskProperties.setLinkTypeName("LinkType");
 	taskProperties.setRepositoryDetectionStrategy(RepositoryDetectionStrategies.DEFAULT.name());
 	taskProperties.setTypeSuffix("");
@@ -52,12 +56,39 @@ class ToOpenApiActionImplTest {
     void test() throws Exception {
 	File temp = File.createTempFile(ToOpenApiActionImplTest.class.getSimpleName(), ".yaml");
 	try {
+	    taskProperties.setBasePackage(ToOpenApiActionImplTest.class.getPackageName() + ".test");
 	    taskProperties.setOutputUri(temp.toURI().toString());
 
 	    new ToOpenApiActionImpl(ToOpenApiActionImplTest.class.getSimpleName(), "0.0.1-SNAPSHOT",
 		    new ObjectMapper().writeValueAsString(taskProperties)).executeWithinUrlClassLoader();
 
 	    assertOpenAPISpecValid(temp.toURI().toURL());
+	} finally {
+	    if (!temp.delete()) {
+		temp.deleteOnExit();
+	    }
+	}
+    }
+
+    @Test
+    void testExample() throws Exception {
+	File temp = File.createTempFile(ToOpenApiActionImplTest.class.getSimpleName(), ".yaml");
+	try {
+	    taskProperties.setBasePackage(ToOpenApiActionImplTest.class.getPackageName() + ".example");
+	    taskProperties.setOutputUri(temp.toURI().toString());
+
+	    new ToOpenApiActionImpl(ToOpenApiActionImplTest.class.getSimpleName(), "0.0.1-SNAPSHOT",
+		    new ObjectMapper().writeValueAsString(taskProperties)).executeWithinUrlClassLoader();
+
+	    assertOpenAPISpecValid(temp.toURI().toURL());
+
+	    String expected;
+	    try (InputStream in = ToOpenApiActionImplTest.class.getResourceAsStream("example/expected.yaml")) {
+		expected = new String(in.readAllBytes(), StandardCharsets.UTF_8).replace("\r", "");
+	    }
+
+	    String actual = Files.readString(temp.toPath(), StandardCharsets.UTF_8).replace("\r", "");
+	    assertEquals(expected, actual);
 	} finally {
 	    if (!temp.delete()) {
 		temp.deleteOnExit();
