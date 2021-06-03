@@ -4,6 +4,12 @@ Generates [OpenAPI specification](https://swagger.io/specification/) from JPA re
 
 - [x] Generates schema components for both exposed and non-exposed classes
 - [ ] (WIP) Generates path and operations for supported commands
+  - Generates path items for simple CRUD methods: `findOneById`, `deleteById`, `save`
+  - Generates path items to fetch linked entities
+
+Examples:
+- [Example of generated specification](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml). [View in Swagger Editor Online](https://editor.swagger.io/?url=https://raw.githubusercontent.com/vlsergey/spring-data-rest-utils/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml).
+- [Example package used for generation](https://github.com/vlsergey/spring-data-rest-utils/tree/master/src/test/java/io/github/vlsergey/springdatarestutils/example)
 
 ## Enabling Gradle plugin
 Using the plugins DSL:
