@@ -8,12 +8,14 @@ import java.util.function.Predicate;
 import org.atteo.evo.inflector.English;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
@@ -38,6 +40,15 @@ public class PathsGenerator {
 
     private final @NonNull TaskProperties taskProperties;
 
+    private static Content toContent(Schema<?> schema) {
+	final MediaType mediaType = new MediaType().schema(schema);
+	return new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType);
+    }
+
+    private @NonNull Schema<Object> buildRefSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
+	return new Schema<>().$ref("#/components/schemas/" + mode.getName(taskProperties, cls));
+    }
+
     public Paths generate(final @NonNull EntityToSchemaMapper mapper,
 	    final @NonNull Iterable<RepositoryMetadata> metas) {
 	Paths paths = new Paths();
@@ -61,16 +72,23 @@ public class PathsGenerator {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
-	final Schema<Object> entitySchemaRef = new Schema<>()
-		.$ref("#/components/schemas/" + ClassMappingMode.EXPOSED_NO_LINKS.getName(taskProperties, domainType));
-	final MediaType entityMediaType = new MediaType().schema(entitySchemaRef);
-	final Content entityContent = new Content().addMediaType(APPLICATION_JSON_VALUE, entityMediaType);
+	final Content entityContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_NO_LINKS));
 
-	final Schema<Object> entityWithLinksSchemaRef = new Schema<>().$ref(
-		"#/components/schemas/" + ClassMappingMode.EXPOSED_WITH_LINKS.getName(taskProperties, domainType));
-	final MediaType entityWithLinksMediaType = new MediaType().schema(entityWithLinksSchemaRef);
-	final Content entityWithLinksContent = new Content().addMediaType(APPLICATION_JSON_VALUE,
-		entityWithLinksMediaType);
+	final Content standardResponseContent;
+	final RepositoryRestResource repoRestResAnn = meta.getRepositoryInterface()
+		.getAnnotation(RepositoryRestResource.class);
+	if (repoRestResAnn != null && repoRestResAnn.excerptProjection() != null) {
+	    final Schema<Object> entityWithLinksSchemaRef = buildRefSchema(domainType,
+		    ClassMappingMode.EXPOSED_WITH_LINKS);
+	    final Schema<Object> projectionSchemaRef = buildRefSchema(repoRestResAnn.excerptProjection(),
+		    ClassMappingMode.PROJECTION);
+	    final Schema<Object> allOfSchema = new ComposedSchema().addAllOfItem(entityWithLinksSchemaRef)
+		    .addAllOfItem(projectionSchemaRef);
+
+	    standardResponseContent = toContent(allOfSchema);
+	} else {
+	    standardResponseContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_WITH_LINKS));
+	}
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
@@ -84,7 +102,7 @@ public class PathsGenerator {
 		    .responses(
 			    new ApiResponses()
 				    .addApiResponse(RESPONSE_CODE_OK,
-					    new ApiResponse().content(entityWithLinksContent)
+					    new ApiResponse().content(standardResponseContent)
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
 					    new ApiResponse().description("Entity is missing"))));
@@ -100,7 +118,7 @@ public class PathsGenerator {
 		    .requestBody(requestBody) //
 		    .responses(new ApiResponses()
 			    .addApiResponse(RESPONSE_CODE_OK,
-				    new ApiResponse().content(entityWithLinksContent)
+				    new ApiResponse().content(standardResponseContent)
 					    .description("Entity has been created"))
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("Entity has been created"))));
@@ -148,9 +166,7 @@ public class PathsGenerator {
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
-		    .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-			    new MediaType().schema(new Schema<>().$ref("#/components/schemas/"
-				    + ClassMappingMode.EXPOSED_WITH_LINKS.getName(taskProperties, propertyType)))))
+		    .content(toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_WITH_LINKS)))
 		    .description("Entity is present");
 
 	    // TODO: move to components

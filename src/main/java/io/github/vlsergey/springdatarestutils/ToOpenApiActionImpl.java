@@ -5,14 +5,20 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 import org.springframework.data.util.Pair;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
 import lombok.SneakyThrows;
@@ -33,12 +39,11 @@ public class ToOpenApiActionImpl {
     }
 
     public void executeWithinUrlClassLoader() throws Exception {
-	final RepositoryEnumerator repositoryEnumerator = new RepositoryEnumerator(this.taskProperties.getBasePackage(),
+	final CodebaseScannerFacade scannerFacade = new CodebaseScannerFacade(this.taskProperties.getBasePackage(),
 		RepositoryDetectionStrategies.valueOf(this.taskProperties.getRepositoryDetectionStrategy()));
 
-	final Set<RepositoryMetadata> interfaces = repositoryEnumerator
-		.enumerate(Thread.currentThread().getContextClassLoader());
-	final Predicate<Class<?>> isExposed = cls -> interfaces.stream()
+	final ScanResult scanResult = scannerFacade.scan(Thread.currentThread().getContextClassLoader());
+	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
 	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed);
@@ -50,12 +55,30 @@ public class ToOpenApiActionImpl {
 	setApiInfo(apiModel);
 	apiModel.setServers(this.taskProperties.getServers());
 
-	interfaces.forEach(meta -> {
-	    Pair<Class<?>, ClassMappingMode> key = Pair.<Class<?>, ClassMappingMode>of(meta.getDomainType(),
+	Consumer<Class<?>> onProjection = projectionClass -> {
+	    final Pair<Class<?>, ClassMappingMode> projectionKey = Pair.of(projectionClass,
+		    ClassMappingMode.PROJECTION);
+	    if (!queued.contains(projectionKey)) {
+		toProcess.add(projectionKey);
+		queued.add(projectionKey);
+	    }
+	};
+
+	scanResult.getRepositories().forEach(meta -> {
+	    final Pair<Class<?>, ClassMappingMode> key = Pair.of(meta.getDomainType(),
 		    ClassMappingMode.EXPOSED_WITH_LINKS);
 	    toProcess.add(key);
 	    queued.add(key);
+
+	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
+	    if (resAnn != null) {
+		final Class<?> projectionClass = resAnn.excerptProjection();
+		if (projectionClass != null) {
+		    onProjection.accept(projectionClass);
+		}
+	    }
 	});
+	scanResult.getProjections().stream().forEach(onProjection);
 
 	while (!toProcess.isEmpty()) {
 	    final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
@@ -74,7 +97,7 @@ public class ToOpenApiActionImpl {
 	    apiModel.schema(head.getSecond().getName(this.taskProperties, head.getFirst()), schema);
 	}
 
-	apiModel.setPaths(new PathsGenerator(isExposed, taskProperties).generate(mapper, interfaces));
+	apiModel.setPaths(new PathsGenerator(isExposed, taskProperties).generate(mapper, scanResult.getRepositories()));
 
 	final File outputFile = new File(new URI(this.taskProperties.getOutputUri()));
 	final String serialized = JacksonHelper.writeValueAsString(outputFile.getName().endsWith(".json"), apiModel);

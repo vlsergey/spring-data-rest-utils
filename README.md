@@ -3,6 +3,7 @@
 Generates [OpenAPI specification](https://swagger.io/specification/) from JPA repositories exposed via [Spring Data REST](https://spring.io/projects/spring-data-rest) library.
 
 - [x] Generates schema components for both exposed and non-exposed classes
+- [x] Exposes open projections and default projections
 - [ ] (WIP) Generates path and operations for supported commands
   - Generates path items for simple CRUD methods: `findOneById`, `deleteById`, `save`
   - Generates path items to fetch linked entities

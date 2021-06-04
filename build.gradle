@@ -34,8 +34,9 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.12.3'
     implementation group: 'io.swagger.core.v3', name: 'swagger-models', version: '2.1.9'
     compileOnly group: 'org.reflections', name: 'reflections', version: '0.9.12'
+    compileOnly group: 'org.springframework.data', name: 'spring-data-jpa', version: '2.5.1'
     compileOnly group: 'org.springframework.data', name: 'spring-data-rest-core', version: '3.5.1'
-
+    
     testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     testImplementation group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 

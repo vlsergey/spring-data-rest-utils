@@ -1,6 +1,5 @@
 package io.github.vlsergey.springdatarestutils;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -8,23 +7,23 @@ import javax.annotation.Nullable;
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
+import org.springframework.data.rest.core.config.Projection;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy;
 
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
-public class RepositoryEnumerator {
-
-    private static final String ANN_NO_REPOSITORY_BEAN = "org.springframework.data.repository.NoRepositoryBean";
+public class CodebaseScannerFacade {
 
     @Getter
     private final @Nullable String basePackage;
@@ -34,26 +33,23 @@ public class RepositoryEnumerator {
 
     @SneakyThrows
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Set<RepositoryMetadata> enumerate(ClassLoader classLoader) {
-	Class<?> jpaRepositoryInterface = Class.forName("org.springframework.data.jpa.repository.JpaRepository", false,
-		classLoader);
-
-	final Reflections reflections = basePackage == null ? new Reflections(classLoader, new SubTypesScanner(true))
-		: new Reflections(basePackage, classLoader, new SubTypesScanner(true));
+    public ScanResult scan(ClassLoader classLoader) {
+	final Reflections reflections = basePackage == null
+		? new Reflections(classLoader, new SubTypesScanner(true), new TypeAnnotationsScanner())
+		: new Reflections(basePackage, classLoader, new SubTypesScanner(true), new TypeAnnotationsScanner());
 
 	final Set<Class<?>> jpaRepos;
 	try {
-	    jpaRepos = (Set) reflections.getSubTypesOf(jpaRepositoryInterface);
+	    jpaRepos = (Set) reflections.getSubTypesOf(JpaRepository.class);
 	} catch (ReflectionsException exc) {
 	    throw new RuntimeException(
 		    "Unable to locate any JPA repositories in package or subpackages of '" + basePackage + "'");
 	}
 
-	return jpaRepos.stream() //
+	final Set<RepositoryMetadata> repositories = jpaRepos.stream() //
 		.filter(Class::isInterface) //
 		.filter(cls -> basePackage == null || cls.getName().startsWith(basePackage)) //
-		.filter(cls -> Arrays.stream(cls.getAnnotations())
-			.noneMatch(ann -> ann.annotationType().getName().contentEquals(ANN_NO_REPOSITORY_BEAN)))
+		.filter(cls -> cls.getAnnotation(NoRepositoryBean.class) == null) //
 		.map(cls -> {
 		    log.debug("Found JPA repo class: {}", cls.getName());
 		    return cls;
@@ -68,6 +64,22 @@ public class RepositoryEnumerator {
 		    log.info("Collected JPA repo class: {}", metadata.getRepositoryInterface().getName());
 		    return true;
 		}).collect(toSet());
+
+	Set<Class<?>> projections = emptySet();
+	try {
+	    projections = reflections.getTypesAnnotatedWith(Projection.class);
+	} catch (ReflectionsException exc) {
+	    log.info("No types annotated with @Projection were found. Hope you just are not usign them.");
+	}
+
+	return new ScanResult(projections, repositories);
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class ScanResult {
+	private final @NonNull Set<Class<?>> projections;
+	private final @NonNull Set<RepositoryMetadata> repositories;
     }
 
 }
