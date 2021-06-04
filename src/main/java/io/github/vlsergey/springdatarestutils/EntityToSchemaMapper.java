@@ -39,9 +39,7 @@ public class EntityToSchemaMapper {
 
     static Schema<?> buildRefSchema(BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName, Class<?> cls,
 	    ClassMappingMode mode) {
-	Schema<?> schema = new Schema<>();
-	schema.set$ref("#/components/schemas/" + getReferencedTypeName.apply(cls, mode));
-	return schema;
+	return new Schema<>().$ref("#/components/schemas/" + getReferencedTypeName.apply(cls, mode));
     }
 
     @SneakyThrows
@@ -62,6 +60,16 @@ public class EntityToSchemaMapper {
 	    objectSchema.setProperties(new TreeMap<>());
 	}
 	return objectSchema.getProperties();
+    }
+
+    @SneakyThrows
+    private Schema<?> buildWithLinksSchema(Class<?> cls) {
+	Schema<?> withoutLinks = new Schema<>()
+		.$ref("#/components/schemas/" + ClassMappingMode.EXPOSED.getName(taskProperties, cls));
+	Schema<?> links = new Schema<>()
+		.$ref("#/components/schemas/" + ClassMappingMode.LINKS.getName(taskProperties, cls));
+
+	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
     }
 
     @SneakyThrows
@@ -120,6 +128,10 @@ public class EntityToSchemaMapper {
 
 	if (mode == ClassMappingMode.LINKS) {
 	    return buildEntityLinksSchema(cls, mode, getReferencedTypeName);
+	}
+
+	if (mode == ClassMappingMode.WITH_LINKS) {
+	    return buildWithLinksSchema(cls);
 	}
 
 	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider

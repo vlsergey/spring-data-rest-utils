@@ -74,6 +74,11 @@ public class ToOpenApiActionImpl {
 	    toProcess.add(entityLinksKey);
 	    queued.add(entityLinksKey);
 
+	    final Pair<Class<?>, ClassMappingMode> entityWithLinksKey = Pair.of(meta.getDomainType(),
+		    ClassMappingMode.WITH_LINKS);
+	    toProcess.add(entityWithLinksKey);
+	    queued.add(entityWithLinksKey);
+
 	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
 	    if (resAnn != null) {
 		final Class<?> projectionClass = resAnn.excerptProjection();

@@ -73,6 +73,10 @@ components:
       required:
       - "_links"
       type: "object"
+    TestEntityWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/TestEntity"
+      - $ref: "#/components/schemas/TestEntityLinks"
     UriTemplate:
       type: "object"
 info:
@@ -95,9 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/TestEntity"
-                - $ref: "#/components/schemas/TestEntityLinks"
+                $ref: "#/components/schemas/TestEntityWithLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -134,9 +136,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/TestEntity"
-                - $ref: "#/components/schemas/TestEntityLinks"
+                $ref: "#/components/schemas/TestEntityWithLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"

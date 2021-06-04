@@ -21,6 +21,10 @@ components:
       required:
       - "_links"
       type: "object"
+    GroupWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/Group"
+      - $ref: "#/components/schemas/GroupLinks"
     Link:
       properties:
         deprecation:
@@ -69,6 +73,10 @@ components:
       required:
       - "_links"
       type: "object"
+    StudentWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/Student"
+      - $ref: "#/components/schemas/StudentLinks"
     UriTemplate:
       type: "object"
 info:
@@ -91,9 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/Group"
-                - $ref: "#/components/schemas/GroupLinks"
+                $ref: "#/components/schemas/GroupWithLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -130,9 +136,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/Group"
-                - $ref: "#/components/schemas/GroupLinks"
+                $ref: "#/components/schemas/GroupWithLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"
@@ -171,9 +175,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/Student"
-                - $ref: "#/components/schemas/StudentLinks"
+                $ref: "#/components/schemas/StudentWithLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -210,9 +212,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                - $ref: "#/components/schemas/Student"
-                - $ref: "#/components/schemas/StudentLinks"
+                $ref: "#/components/schemas/StudentWithLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"

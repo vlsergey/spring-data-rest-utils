@@ -14,7 +14,6 @@ import org.springframework.util.StringUtils;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
@@ -72,9 +71,7 @@ public class PathsGenerator {
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
 	final Content entityContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED));
-	final Content entityContentWithLinks = toContent(
-		new ComposedSchema().addAllOfItem(buildRefSchema(domainType, ClassMappingMode.EXPOSED))
-			.addAllOfItem(buildRefSchema(domainType, ClassMappingMode.LINKS)));
+	final Content entityContentWithLinks = toContent(buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");

@@ -35,4 +35,6 @@ public class TaskProperties {
 
     private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));
 
+    private String withLinksTypeSuffix = "WithLinks";
+
 }

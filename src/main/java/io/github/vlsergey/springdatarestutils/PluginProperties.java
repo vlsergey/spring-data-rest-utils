@@ -33,6 +33,7 @@ abstract class PluginProperties {
 	    }
 	});
 	getServers().convention(defaults.getServers());
+	getWithLinksTypeSuffix().convention(defaults.getWithLinksTypeSuffix());
     }
 
     abstract Property<Boolean> getAddXLinkedEntity();
@@ -59,17 +60,21 @@ abstract class PluginProperties {
 
     abstract ListProperty<Server> getServers();
 
+    abstract Property<String> getWithLinksTypeSuffix();
+
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
 		.setAddXSortable(getAddXSortable().get()).setBasePackage(getBasePackage().get()) //
 		.setDefaultTypeSuffix(getDefaultTypeSuffix().get()) //
 		.setEnumTypeSuffix(getEnumTypeSuffix().get()).setInfo(getInfo().get()) //
+		.setLinksTypeSuffix(getLinksTypeSuffix().get()) //
 		.setLinkTypeName(getLinkTypeName().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
 		.setServers(getServers().get()) //
-		.setLinksTypeSuffix(getLinksTypeSuffix().get());
+		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get()) //
+	;
     }
 
 }

@@ -34,6 +34,13 @@ public enum ClassMappingMode {
 	}
     },
 
+    WITH_LINKS(false) {
+	@Override
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
+	}
+    },
+
     /**
      * Class is projection, top level
      */
