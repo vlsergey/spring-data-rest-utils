@@ -5,7 +5,10 @@ import java.beans.FeatureDescriptor;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -31,6 +34,8 @@ public class EntityToSchemaMapper {
     }
 
     private final @NonNull Predicate<@NonNull Class<?>> isExposed;
+
+    private final @NonNull TaskProperties taskProperties;
 
     static Schema<?> buildRefSchema(BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName, Class<?> cls,
 	    ClassMappingMode mode) {
@@ -60,7 +65,50 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    public Schema<?> map(Class<?> cls, ClassMappingMode mode, boolean addXLinkedEntity, boolean addXSortable,
+    private Schema<?> buildEntityLinksSchema(Class<?> cls, ClassMappingMode mode,
+	    BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName) {
+	final Map<String, Class<?>> links = new TreeMap<>();
+	links.put("self", cls);
+	links.put(StringUtils.uncapitalize(cls.getSimpleName()), cls);
+
+	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
+	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	    final Class<?> propertyType = pd.getPropertyType();
+	    if (Collection.class.isAssignableFrom(propertyType)) {
+		// not yet implemented
+		continue;
+	    }
+	    if (!isExposed.test(propertyType)) {
+		continue;
+	    }
+	    links.put(pd.getName(), propertyType);
+	}
+
+	ObjectSchema linksSchema = new ObjectSchema();
+	linksSchema.setProperties(new TreeMap<>());
+	links.forEach((key, linkClass) -> {
+	    final Schema<?> refSchema = buildRefSchema(getReferencedTypeName, Link.class, ClassMappingMode.DATA_ITEM);
+	    if (!taskProperties.isAddXLinkedEntity()) {
+		linksSchema.getProperties().put(key, refSchema);
+		return;
+	    }
+
+	    ComposedSchema composedSchema = new ComposedSchema();
+	    composedSchema.addAllOfItem(refSchema);
+	    composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
+		    getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED));
+	    linksSchema.getProperties().put(key, composedSchema);
+	});
+
+	final ObjectSchema objectSchema = new ObjectSchema();
+	objectSchema.setName(getReferencedTypeName.apply(cls, mode));
+	objectSchema.addRequiredItem("_links");
+	initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
+	return objectSchema;
+    }
+
+    @SneakyThrows
+    public Schema<?> mapEntity(Class<?> cls, ClassMappingMode mode,
 	    BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName) {
 	if (cls.isEnum() && mode != ClassMappingMode.ENUM || !cls.isEnum() && mode == ClassMappingMode.ENUM) {
 	    throw new AssertionError("Incorrect mode " + mode + " for class " + cls.getName());
@@ -70,56 +118,14 @@ public class EntityToSchemaMapper {
 	    return mapEnum((Class) cls);
 	}
 
-	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider
-		.getStandardSchemaSupplier(cls, addXSortable);
-	if (entityStandardSchemaSupplier.isPresent()) {
-	    return entityStandardSchemaSupplier.get().get();
+	if (mode == ClassMappingMode.LINKS) {
+	    return buildEntityLinksSchema(cls, mode, getReferencedTypeName);
 	}
 
-	if (mode == ClassMappingMode.EXPOSED_WITH_LINKS) {
-	    final Map<String, Class<?>> links = new TreeMap<>();
-	    links.put("self", cls);
-	    links.put(StringUtils.uncapitalize(cls.getSimpleName()), cls);
-
-	    final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
-	    for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-		final Class<?> propertyType = pd.getPropertyType();
-		if (Collection.class.isAssignableFrom(propertyType)) {
-		    // not yet implemented
-		    continue;
-		}
-		if (!isExposed.test(propertyType)) {
-		    continue;
-		}
-		links.put(pd.getName(), propertyType);
-	    }
-
-	    ObjectSchema linksSchema = new ObjectSchema();
-	    linksSchema.setProperties(new TreeMap<>());
-	    links.forEach((key, linkClass) -> {
-		final Schema<?> refSchema = buildRefSchema(getReferencedTypeName, Link.class,
-			ClassMappingMode.DATA_ITEM);
-		if (!addXLinkedEntity) {
-		    linksSchema.getProperties().put(key, refSchema);
-		    return;
-		}
-
-		ComposedSchema composedSchema = new ComposedSchema();
-		composedSchema.addAllOfItem(refSchema);
-		composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
-			getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED_WITH_LINKS));
-		linksSchema.getProperties().put(key, composedSchema);
-	    });
-
-	    final ObjectSchema objectSchema = new ObjectSchema();
-	    objectSchema.setName(getReferencedTypeName.apply(cls, mode));
-	    objectSchema.addRequiredItem("_links");
-	    initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
-
-	    final ComposedSchema resultSchema = new ComposedSchema();
-	    resultSchema.addAllOfItem(buildRefSchema(getReferencedTypeName, cls, ClassMappingMode.EXPOSED_NO_LINKS));
-	    resultSchema.addAllOfItem(objectSchema);
-	    return resultSchema;
+	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider
+		.getStandardSchemaSupplier(cls, taskProperties.isAddXSortable());
+	if (entityStandardSchemaSupplier.isPresent()) {
+	    return entityStandardSchemaSupplier.get().get();
 	}
 
 	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
@@ -150,7 +156,7 @@ public class EntityToSchemaMapper {
 	    }
 
 	    final Optional<Supplier<Schema>> standardSchemaSupplier = StandardSchemasProvider
-		    .getStandardSchemaSupplier(propertyType, addXSortable);
+		    .getStandardSchemaSupplier(propertyType, taskProperties.isAddXSortable());
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 		if (schema.getNullable() != null && !schema.getNullable()
@@ -170,7 +176,7 @@ public class EntityToSchemaMapper {
 	    }
 
 	    initPropertiesIfNotYet(objectSchema).put(pd.getName(), buildRefSchema(getReferencedTypeName, propertyType,
-		    isMappedEntityType ? ClassMappingMode.EXPOSED_NO_LINKS : ClassMappingMode.DATA_ITEM));
+		    isMappedEntityType ? ClassMappingMode.EXPOSED : ClassMappingMode.DATA_ITEM));
 	}
 
 	return objectSchema;

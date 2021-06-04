@@ -9,21 +9,19 @@ components:
         title:
           type: "string"
       type: "object"
-    GroupWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/Group"
-      - properties:
-          _links:
-            properties:
-              group:
-                $ref: "#/components/schemas/LinkType"
-              self:
-                $ref: "#/components/schemas/LinkType"
-            type: "object"
-        required:
-        - "_links"
-        type: "object"
-    LinkType:
+    GroupLinks:
+      properties:
+        _links:
+          properties:
+            group:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
+    Link:
       properties:
         deprecation:
           type: "string"
@@ -57,22 +55,20 @@ components:
           format: "uuid"
           type: "string"
       type: "object"
-    StudentWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/Student"
-      - properties:
-          _links:
-            properties:
-              group:
-                $ref: "#/components/schemas/LinkType"
-              self:
-                $ref: "#/components/schemas/LinkType"
-              student:
-                $ref: "#/components/schemas/LinkType"
-            type: "object"
-        required:
-        - "_links"
-        type: "object"
+    StudentLinks:
+      properties:
+        _links:
+          properties:
+            group:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+            student:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
     UriTemplate:
       type: "object"
 info:
@@ -95,7 +91,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GroupWithLinks"
+                allOf:
+                - $ref: "#/components/schemas/Group"
+                - $ref: "#/components/schemas/GroupLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -132,7 +130,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GroupWithLinks"
+                allOf:
+                - $ref: "#/components/schemas/Group"
+                - $ref: "#/components/schemas/GroupLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"
@@ -171,7 +171,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StudentWithLinks"
+                allOf:
+                - $ref: "#/components/schemas/Student"
+                - $ref: "#/components/schemas/StudentLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -208,7 +210,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StudentWithLinks"
+                allOf:
+                - $ref: "#/components/schemas/Student"
+                - $ref: "#/components/schemas/StudentLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"
@@ -249,7 +253,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GroupWithLinks"
+                $ref: "#/components/schemas/Group"
           description: "Entity is present"
         "404":
           description: "Entity is missing"

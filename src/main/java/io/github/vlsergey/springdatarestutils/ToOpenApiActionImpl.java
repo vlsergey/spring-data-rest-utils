@@ -46,7 +46,7 @@ public class ToOpenApiActionImpl {
 	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed, taskProperties);
 
 	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
 	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
@@ -65,10 +65,14 @@ public class ToOpenApiActionImpl {
 	};
 
 	scanResult.getRepositories().forEach(meta -> {
-	    final Pair<Class<?>, ClassMappingMode> key = Pair.of(meta.getDomainType(),
-		    ClassMappingMode.EXPOSED_WITH_LINKS);
-	    toProcess.add(key);
-	    queued.add(key);
+	    final Pair<Class<?>, ClassMappingMode> entityKey = Pair.of(meta.getDomainType(), ClassMappingMode.EXPOSED);
+	    toProcess.add(entityKey);
+	    queued.add(entityKey);
+
+	    final Pair<Class<?>, ClassMappingMode> entityLinksKey = Pair.of(meta.getDomainType(),
+		    ClassMappingMode.LINKS);
+	    toProcess.add(entityLinksKey);
+	    queued.add(entityLinksKey);
 
 	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
 	    if (resAnn != null) {
@@ -83,16 +87,15 @@ public class ToOpenApiActionImpl {
 	while (!toProcess.isEmpty()) {
 	    final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
 
-	    Schema<?> schema = mapper.map(head.getFirst(), head.getSecond(), this.taskProperties.isAddXLinkedEntity(),
-		    this.taskProperties.isAddXSortable(), (cls, mode) -> {
-			Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
-			if (!queued.contains(key)) {
-			    toProcess.add(key);
-			    queued.add(key);
-			}
+	    Schema<?> schema = mapper.mapEntity(head.getFirst(), head.getSecond(), (cls, mode) -> {
+		Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
+		if (!queued.contains(key)) {
+		    toProcess.add(key);
+		    queued.add(key);
+		}
 
-			return mode.getName(ToOpenApiActionImpl.this.taskProperties, cls);
-		    });
+		return mode.getName(ToOpenApiActionImpl.this.taskProperties, cls);
+	    });
 
 	    apiModel.schema(head.getSecond().getName(this.taskProperties, head.getFirst()), schema);
 	}

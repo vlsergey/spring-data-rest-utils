@@ -15,23 +15,22 @@ public enum ClassMappingMode {
     ENUM(false) {
 	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getEnumSuffix();
+	    return cls.getSimpleName() + props.getEnumTypeSuffix();
 	}
     },
 
     /**
-     * Class is part of exported entities set, but currently is included into
-     * first-level projection
+     * Class is part of exported entities set.
      */
-    EXPOSED_NO_LINKS(false),
+    EXPOSED(false),
 
     /**
-     * Class is part of exported entities set
+     * The part of entity where _links property is described
      */
-    EXPOSED_WITH_LINKS(false) {
+    LINKS(false) {
 	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
+	    return cls.getSimpleName() + props.getLinksTypeSuffix();
 	}
     },
 
@@ -49,6 +48,6 @@ public enum ClassMappingMode {
 	if (cls.isAssignableFrom(Link.class)) {
 	    return props.getLinkTypeName();
 	}
-	return cls.getSimpleName() + props.getTypeSuffix();
+	return cls.getSimpleName() + props.getDefaultTypeSuffix();
     }
 }

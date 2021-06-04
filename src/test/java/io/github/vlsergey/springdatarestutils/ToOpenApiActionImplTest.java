@@ -17,16 +17,11 @@ import org.openapi4j.core.validation.ValidationSeverity;
 import org.openapi4j.parser.OpenApi3Parser;
 import org.openapi4j.parser.model.v3.OpenApi3;
 import org.openapi4j.parser.validation.v3.OpenApi3Validator;
-import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.servers.Server;
 
 class ToOpenApiActionImplTest {
 
@@ -64,14 +59,6 @@ class ToOpenApiActionImplTest {
     @BeforeEach
     void beforeEach() {
 	taskProperties = new TaskProperties();
-	taskProperties.setAddXLinkedEntity(false);
-	taskProperties.setAddXSortable(false);
-	taskProperties.setInfo(new Info());
-	taskProperties.setLinkTypeName("LinkType");
-	taskProperties.setRepositoryDetectionStrategy(RepositoryDetectionStrategies.DEFAULT.name());
-	taskProperties.setTypeSuffix("");
-	taskProperties.setServers(singletonList(new Server().url("/api")));
-	taskProperties.setWithLinksTypeSuffix("WithLinks");
     }
 
     private void generate(final String basePackage, File dst) throws Exception, JsonProcessingException {

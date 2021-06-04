@@ -11,10 +11,11 @@ class EntityToSchemaMapperTest {
 
     @Test
     void testMapAsDataItem() throws Exception {
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals);
+	final TaskProperties taskProperties = new TaskProperties();
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
 
-	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.DATA_ITEM, false, false,
-		(a, b) -> a.getSimpleName() + "Type");
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM,
+		(a, b) -> b.getName(taskProperties, a));
 
 	String json = JacksonHelper.writeValueAsString(false, schema);
 
@@ -28,7 +29,7 @@ class EntityToSchemaMapperTest {
 		"    format: \"uuid\"\n" + //
 		"    type: \"string\"\n" + //
 		"  parent:\n" + //
-		"    $ref: \"#/components/schemas/TestEntityType\"\n" + //
+		"    $ref: \"#/components/schemas/TestEntity\"\n" + //
 		"  updated:\n" + //
 		"    format: \"date-time\"\n" + //
 		"    nullable: false\n" + //
@@ -41,36 +42,68 @@ class EntityToSchemaMapperTest {
     }
 
     @Test
-    void testMapAsTopLevelEntity() throws Exception {
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals);
+    void testMapAsExposed() throws Exception {
+	final TaskProperties taskProperties = new TaskProperties().setAddXSortable(true);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
 
-	final Schema<?> schema = mapper.map(TestEntity.class, ClassMappingMode.EXPOSED_WITH_LINKS, true, false,
-		(a, b) -> a.getSimpleName() + "Type");
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED,
+		(a, b) -> b.getName(taskProperties, a));
 
 	String json = JacksonHelper.writeValueAsString(false, schema);
 
 	assertEquals("---\n" + //
-		"allOf:\n" + //
-		"- $ref: \"#/components/schemas/TestEntityType\"\n" + //
-		"- properties:\n" + //
-		"    _links:\n" + //
-		"      properties:\n" + //
-		"        parent:\n" + //
-		"          allOf:\n" + //
-		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
-		"          x-linked-entity: \"TestEntityType\"\n" + //
-		"        self:\n" + //
-		"          allOf:\n" + //
-		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
-		"          x-linked-entity: \"TestEntityType\"\n" + //
-		"        testEntity:\n" + //
-		"          allOf:\n" + //
-		"          - $ref: \"#/components/schemas/LinkType\"\n" + //
-		"          x-linked-entity: \"TestEntityType\"\n" + //
-		"      type: \"object\"\n" + //
-		"  required:\n" + //
-		"  - \"_links\"\n" + //
-		"  type: \"object\"\n" + //
+		"properties:\n" + //
+		"  created:\n" + //
+		"    x-sortable: true\n" + //
+		"    format: \"date-time\"\n" + //
+		"    nullable: false\n" + //
+		"    type: \"string\"\n" + //
+		"  id:\n" + //
+		"    x-sortable: true\n" + //
+		"    format: \"uuid\"\n" + //
+		"    type: \"string\"\n" + //
+		"  updated:\n" + //
+		"    x-sortable: true\n" + //
+		"    format: \"date-time\"\n" + //
+		"    nullable: false\n" + //
+		"    type: \"string\"\n" + //
+		"required:\n" + //
+		"- \"created\"\n" + //
+		"- \"updated\"\n" + //
+		"type: \"object\"\n" + //
+		"", json);
+    }
+
+    @Test
+    void testMapAsLinks() throws Exception {
+	final TaskProperties taskProperties = new TaskProperties().setAddXLinkedEntity(true);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
+
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS,
+		(a, b) -> b.getName(taskProperties, a));
+
+	String json = JacksonHelper.writeValueAsString(false, schema);
+
+	assertEquals("---\n" + //
+		"properties:\n" + //
+		"  _links:\n" + //
+		"    properties:\n" + //
+		"      parent:\n" + //
+		"        allOf:\n" + //
+		"        - $ref: \"#/components/schemas/Link\"\n" + //
+		"        x-linked-entity: \"TestEntity\"\n" + //
+		"      self:\n" + //
+		"        allOf:\n" + //
+		"        - $ref: \"#/components/schemas/Link\"\n" + //
+		"        x-linked-entity: \"TestEntity\"\n" + //
+		"      testEntity:\n" + //
+		"        allOf:\n" + //
+		"        - $ref: \"#/components/schemas/Link\"\n" + //
+		"        x-linked-entity: \"TestEntity\"\n" + //
+		"    type: \"object\"\n" + //
+		"required:\n" + //
+		"- \"_links\"\n" + //
+		"type: \"object\"\n" + //
 		"", json);
     }
 

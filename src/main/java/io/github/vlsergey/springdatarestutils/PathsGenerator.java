@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 import org.atteo.evo.inflector.English;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
@@ -53,7 +52,7 @@ public class PathsGenerator {
 	    final @NonNull Iterable<RepositoryMetadata> metas) {
 	Paths paths = new Paths();
 	metas.forEach(meta -> {
-	    Schema<?> idSchema = mapper.map(meta.getIdType(), ClassMappingMode.DATA_ITEM, false, false,
+	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM,
 		    (cls, mode) -> mode.getName(taskProperties, cls));
 
 	    populatePathItems(meta, idSchema, paths);
@@ -72,23 +71,10 @@ public class PathsGenerator {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
-	final Content entityContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_NO_LINKS));
-
-	final Content standardResponseContent;
-	final RepositoryRestResource repoRestResAnn = meta.getRepositoryInterface()
-		.getAnnotation(RepositoryRestResource.class);
-	if (repoRestResAnn != null && repoRestResAnn.excerptProjection() != null) {
-	    final Schema<Object> entityWithLinksSchemaRef = buildRefSchema(domainType,
-		    ClassMappingMode.EXPOSED_WITH_LINKS);
-	    final Schema<Object> projectionSchemaRef = buildRefSchema(repoRestResAnn.excerptProjection(),
-		    ClassMappingMode.PROJECTION);
-	    final Schema<Object> allOfSchema = new ComposedSchema().addAllOfItem(entityWithLinksSchemaRef)
-		    .addAllOfItem(projectionSchemaRef);
-
-	    standardResponseContent = toContent(allOfSchema);
-	} else {
-	    standardResponseContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_WITH_LINKS));
-	}
+	final Content entityContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED));
+	final Content entityContentWithLinks = toContent(
+		new ComposedSchema().addAllOfItem(buildRefSchema(domainType, ClassMappingMode.EXPOSED))
+			.addAllOfItem(buildRefSchema(domainType, ClassMappingMode.LINKS)));
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
@@ -102,7 +88,7 @@ public class PathsGenerator {
 		    .responses(
 			    new ApiResponses()
 				    .addApiResponse(RESPONSE_CODE_OK,
-					    new ApiResponse().content(standardResponseContent)
+					    new ApiResponse().content(entityContentWithLinks)
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
 					    new ApiResponse().description("Entity is missing"))));
@@ -118,7 +104,7 @@ public class PathsGenerator {
 		    .requestBody(requestBody) //
 		    .responses(new ApiResponses()
 			    .addApiResponse(RESPONSE_CODE_OK,
-				    new ApiResponse().content(standardResponseContent)
+				    new ApiResponse().content(entityContentWithLinks)
 					    .description("Entity has been created"))
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("Entity has been created"))));
@@ -166,7 +152,7 @@ public class PathsGenerator {
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
-		    .content(toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_WITH_LINKS)))
+		    .content(toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED)))
 		    .description("Entity is present");
 
 	    // TODO: move to components

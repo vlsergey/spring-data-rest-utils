@@ -1,7 +1,7 @@
 ---
 components:
   schemas:
-    LinkType:
+    Link:
       properties:
         deprecation:
           type: "string"
@@ -59,22 +59,20 @@ components:
           format: "uuid"
           type: "string"
       type: "object"
-    TestEntityWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/TestEntity"
-      - properties:
-          _links:
-            properties:
-              parent:
-                $ref: "#/components/schemas/LinkType"
-              self:
-                $ref: "#/components/schemas/LinkType"
-              testEntity:
-                $ref: "#/components/schemas/LinkType"
-            type: "object"
-        required:
-        - "_links"
-        type: "object"
+    TestEntityLinks:
+      properties:
+        _links:
+          properties:
+            parent:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+            testEntity:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
     UriTemplate:
       type: "object"
 info:
@@ -98,8 +96,8 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/TestEntityWithLinks"
-                - $ref: "#/components/schemas/TestEntityDefaultProjection"
+                - $ref: "#/components/schemas/TestEntity"
+                - $ref: "#/components/schemas/TestEntityLinks"
           description: "Entity has been created"
         "204":
           description: "Entity has been created"
@@ -137,8 +135,8 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/TestEntityWithLinks"
-                - $ref: "#/components/schemas/TestEntityDefaultProjection"
+                - $ref: "#/components/schemas/TestEntity"
+                - $ref: "#/components/schemas/TestEntityLinks"
           description: "Entity is present"
         "404":
           description: "Entity is missing"
@@ -179,7 +177,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestEntityWithLinks"
+                $ref: "#/components/schemas/TestEntity"
           description: "Entity is present"
         "404":
           description: "Entity is missing"

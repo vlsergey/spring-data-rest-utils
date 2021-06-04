@@ -1,6 +1,10 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
@@ -9,26 +13,26 @@ import lombok.Data;
 @Data
 public class TaskProperties {
 
-    private boolean addXLinkedEntity;
+    private boolean addXLinkedEntity = false;
 
-    private boolean addXSortable;
+    private boolean addXSortable = false;
 
-    private String basePackage;
+    private String basePackage = null;
 
-    private String enumSuffix;
+    private String defaultTypeSuffix = "";
 
-    private Info info;
+    private String enumTypeSuffix = "";
 
-    private String linkTypeName;
+    private Info info = new Info();
 
-    private String outputUri;
+    private String linksTypeSuffix = "Links";
 
-    private String repositoryDetectionStrategy;
+    private String linkTypeName = "Link";
 
-    private List<Server> servers;
+    private String outputUri = new File("api.yaml").toURI().toString();
 
-    private String typeSuffix;
+    private String repositoryDetectionStrategy = "DEFAULT";
 
-    private String withLinksTypeSuffix;
+    private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));
 
 }

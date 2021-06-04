@@ -1,7 +1,8 @@
 package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -13,21 +14,25 @@ import io.swagger.v3.oas.models.servers.Server;
 abstract class PluginProperties {
 
     public PluginProperties() {
-	getAddXLinkedEntity().convention(Boolean.FALSE);
-	getAddXSortable().convention(Boolean.FALSE);
-	getBasePackage().convention((String) null);
-	getEnumSuffix().convention("");
-	getInfo().convention(new Info());
-	getLinkTypeName().convention("LinkType");
-	getRepositoryDetectionStrategy().convention("DEFAULT");
-	getOutput().convention(() -> new File("api.yaml"));
+	final TaskProperties defaults = new TaskProperties();
 
-	final ArrayList<Server> defaultServers = new ArrayList<>();
-	defaultServers.add(new Server().url("/api"));
-	getServers().convention(defaultServers);
-
-	getTypeSuffix().convention("");
-	getWithLinksTypeSuffix().convention("WithLinks");
+	getAddXLinkedEntity().convention(defaults.isAddXLinkedEntity());
+	getAddXSortable().convention(defaults.isAddXSortable());
+	getBasePackage().convention(defaults.getBasePackage());
+	getDefaultTypeSuffix().convention(defaults.getDefaultTypeSuffix());
+	getEnumTypeSuffix().convention(defaults.getEnumTypeSuffix());
+	getInfo().convention(defaults.getInfo());
+	getLinkTypeName().convention(defaults.getLinkTypeName());
+	getLinksTypeSuffix().convention(defaults.getLinksTypeSuffix());
+	getRepositoryDetectionStrategy().convention(defaults.getRepositoryDetectionStrategy());
+	getOutput().convention(() -> {
+	    try {
+		return new File(new URI(defaults.getOutputUri()));
+	    } catch (URISyntaxException e) {
+		throw new RuntimeException(e);
+	    }
+	});
+	getServers().convention(defaults.getServers());
     }
 
     abstract Property<Boolean> getAddXLinkedEntity();
@@ -36,11 +41,15 @@ abstract class PluginProperties {
 
     abstract Property<String> getBasePackage();
 
-    abstract Property<String> getEnumSuffix();
+    abstract Property<String> getDefaultTypeSuffix();
+
+    abstract Property<String> getEnumTypeSuffix();
 
     abstract Property<Info> getInfo();
 
     abstract Property<Integer> getLinkDepth();
+
+    abstract Property<String> getLinksTypeSuffix();
 
     abstract Property<String> getLinkTypeName();
 
@@ -50,20 +59,17 @@ abstract class PluginProperties {
 
     abstract ListProperty<Server> getServers();
 
-    abstract Property<String> getTypeSuffix();
-
-    abstract Property<String> getWithLinksTypeSuffix();
-
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
 		.setAddXSortable(getAddXSortable().get()).setBasePackage(getBasePackage().get()) //
-		.setEnumSuffix(getEnumSuffix().get()).setInfo(getInfo().get()) //
+		.setDefaultTypeSuffix(getDefaultTypeSuffix().get()) //
+		.setEnumTypeSuffix(getEnumTypeSuffix().get()).setInfo(getInfo().get()) //
 		.setLinkTypeName(getLinkTypeName().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
-		.setServers(getServers().get()).setTypeSuffix(getTypeSuffix().get()) //
-		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get());
+		.setServers(getServers().get()) //
+		.setLinksTypeSuffix(getLinksTypeSuffix().get());
     }
 
 }
