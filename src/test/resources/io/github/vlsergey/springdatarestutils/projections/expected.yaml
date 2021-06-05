@@ -1,90 +1,12 @@
 ---
-components:
-  schemas:
-    Link:
-      properties:
-        deprecation:
-          type: "string"
-        href:
-          type: "string"
-        hreflang:
-          type: "string"
-        media:
-          type: "string"
-        name:
-          type: "string"
-        profile:
-          type: "string"
-        rel:
-          type: "string"
-        template:
-          $ref: "#/components/schemas/UriTemplate"
-        templated:
-          nullable: false
-          type: "boolean"
-        title:
-          type: "string"
-        type:
-          type: "string"
-      required:
-      - "templated"
-      type: "object"
-    TestEntity:
-      properties:
-        created:
-          format: "date-time"
-          nullable: false
-          type: "string"
-        id:
-          format: "uuid"
-          type: "string"
-        updated:
-          format: "date-time"
-          nullable: false
-          type: "string"
-      required:
-      - "created"
-      - "updated"
-      type: "object"
-    TestEntityDefaultProjection:
-      properties:
-        grandParent:
-          $ref: "#/components/schemas/TestEntity"
-        id:
-          format: "uuid"
-          type: "string"
-        parent:
-          $ref: "#/components/schemas/TestEntity"
-        parentId:
-          format: "uuid"
-          type: "string"
-      type: "object"
-    TestEntityLinks:
-      properties:
-        _links:
-          properties:
-            parent:
-              $ref: "#/components/schemas/Link"
-            self:
-              $ref: "#/components/schemas/Link"
-            testEntity:
-              $ref: "#/components/schemas/Link"
-          type: "object"
-      required:
-      - "_links"
-      type: "object"
-    TestEntityWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/TestEntity"
-      - $ref: "#/components/schemas/TestEntityLinks"
-    UriTemplate:
-      type: "object"
+openapi: "3.0.1"
 info:
   description: "This is automatically generated OpenAPI Specification for Spring Data\
     \ REST entities and repositories"
   title: "ToOpenApiActionImplTest Spring Data REST OpenAPI Specification"
   version: "0.0.1-SNAPSHOT"
-openapi: "3.0.1"
+servers:
+- url: "/api"
 paths:
   /testEntities:
     post:
@@ -183,5 +105,83 @@ paths:
           description: "Entity is missing"
       tags:
       - "TestEntity"
-servers:
-- url: "/api"
+components:
+  schemas:
+    Link:
+      properties:
+        deprecation:
+          type: "string"
+        href:
+          type: "string"
+        hreflang:
+          type: "string"
+        media:
+          type: "string"
+        name:
+          type: "string"
+        profile:
+          type: "string"
+        rel:
+          type: "string"
+        template:
+          $ref: "#/components/schemas/UriTemplate"
+        templated:
+          nullable: false
+          type: "boolean"
+        title:
+          type: "string"
+        type:
+          type: "string"
+      required:
+      - "templated"
+      type: "object"
+    TestEntity:
+      properties:
+        created:
+          format: "date-time"
+          nullable: false
+          type: "string"
+        id:
+          format: "uuid"
+          type: "string"
+        updated:
+          format: "date-time"
+          nullable: false
+          type: "string"
+      required:
+      - "created"
+      - "updated"
+      type: "object"
+    TestEntityDefaultProjection:
+      properties:
+        grandParent:
+          $ref: "#/components/schemas/TestEntity"
+        id:
+          format: "uuid"
+          type: "string"
+        parent:
+          $ref: "#/components/schemas/TestEntity"
+        parentId:
+          format: "uuid"
+          type: "string"
+      type: "object"
+    TestEntityLinks:
+      properties:
+        _links:
+          properties:
+            parent:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+            testEntity:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
+    TestEntityWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/TestEntity"
+      - $ref: "#/components/schemas/TestEntityLinks"
+    UriTemplate:
+      type: "object"

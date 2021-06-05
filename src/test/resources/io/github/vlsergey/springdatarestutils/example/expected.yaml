@@ -1,90 +1,12 @@
 ---
-components:
-  schemas:
-    Group:
-      properties:
-        groupId:
-          format: "uuid"
-          type: "string"
-        title:
-          type: "string"
-      type: "object"
-    GroupLinks:
-      properties:
-        _links:
-          properties:
-            group:
-              $ref: "#/components/schemas/Link"
-            self:
-              $ref: "#/components/schemas/Link"
-          type: "object"
-      required:
-      - "_links"
-      type: "object"
-    GroupWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/Group"
-      - $ref: "#/components/schemas/GroupLinks"
-    Link:
-      properties:
-        deprecation:
-          type: "string"
-        href:
-          type: "string"
-        hreflang:
-          type: "string"
-        media:
-          type: "string"
-        name:
-          type: "string"
-        profile:
-          type: "string"
-        rel:
-          type: "string"
-        template:
-          $ref: "#/components/schemas/UriTemplate"
-        templated:
-          nullable: false
-          type: "boolean"
-        title:
-          type: "string"
-        type:
-          type: "string"
-      required:
-      - "templated"
-      type: "object"
-    Student:
-      properties:
-        studentId:
-          format: "uuid"
-          type: "string"
-      type: "object"
-    StudentLinks:
-      properties:
-        _links:
-          properties:
-            group:
-              $ref: "#/components/schemas/Link"
-            self:
-              $ref: "#/components/schemas/Link"
-            student:
-              $ref: "#/components/schemas/Link"
-          type: "object"
-      required:
-      - "_links"
-      type: "object"
-    StudentWithLinks:
-      allOf:
-      - $ref: "#/components/schemas/Student"
-      - $ref: "#/components/schemas/StudentLinks"
-    UriTemplate:
-      type: "object"
+openapi: "3.0.1"
 info:
   description: "This is automatically generated OpenAPI Specification for Spring Data\
     \ REST entities and repositories"
   title: "ToOpenApiActionImplTest Spring Data REST OpenAPI Specification"
   version: "0.0.1-SNAPSHOT"
-openapi: "3.0.1"
+servers:
+- url: "/api"
 paths:
   /groups:
     post:
@@ -259,5 +181,83 @@ paths:
           description: "Entity is missing"
       tags:
       - "Student"
-servers:
-- url: "/api"
+components:
+  schemas:
+    Group:
+      properties:
+        groupId:
+          format: "uuid"
+          type: "string"
+        title:
+          type: "string"
+      type: "object"
+    GroupLinks:
+      properties:
+        _links:
+          properties:
+            group:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
+    GroupWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/Group"
+      - $ref: "#/components/schemas/GroupLinks"
+    Link:
+      properties:
+        deprecation:
+          type: "string"
+        href:
+          type: "string"
+        hreflang:
+          type: "string"
+        media:
+          type: "string"
+        name:
+          type: "string"
+        profile:
+          type: "string"
+        rel:
+          type: "string"
+        template:
+          $ref: "#/components/schemas/UriTemplate"
+        templated:
+          nullable: false
+          type: "boolean"
+        title:
+          type: "string"
+        type:
+          type: "string"
+      required:
+      - "templated"
+      type: "object"
+    Student:
+      properties:
+        studentId:
+          format: "uuid"
+          type: "string"
+      type: "object"
+    StudentLinks:
+      properties:
+        _links:
+          properties:
+            group:
+              $ref: "#/components/schemas/Link"
+            self:
+              $ref: "#/components/schemas/Link"
+            student:
+              $ref: "#/components/schemas/Link"
+          type: "object"
+      required:
+      - "_links"
+      type: "object"
+    StudentWithLinks:
+      allOf:
+      - $ref: "#/components/schemas/Student"
+      - $ref: "#/components/schemas/StudentLinks"
+    UriTemplate:
+      type: "object"
