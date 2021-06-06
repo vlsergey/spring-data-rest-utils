@@ -1,5 +1,8 @@
 # Gradle plugin for Spring Data JPA REST and OpenAPI  
 
+[![Build with Gradle](https://github.com/vlsergey/spring-data-rest-utils/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/vlsergey/spring-data-rest-utils/actions/workflows/build.yml)
+[![Gradle Plugin](https://img.shields.io/maven-metadata/v?label=Gradle%20Plugin&metadataUrl=https://plugins.gradle.org/m2/io/github/vlsergey/spring-data-rest-utils/io.github.vlsergey.spring-data-rest-utils.gradle.plugin/maven-metadata.xml)](https://plugins.gradle.org/plugin/io.github.vlsergey.spring-data-rest-utils)
+
 Generates [OpenAPI specification](https://swagger.io/specification/) from JPA repositories exposed via [Spring Data REST](https://spring.io/projects/spring-data-rest) library.
 
 - [x] Generates schema components for both exposed and non-exposed classes
@@ -16,7 +19,7 @@ Examples:
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.16.0"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.17.0"
 }
 ```
 
@@ -29,7 +32,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.16.0"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.17.0"
   }
 }
 
