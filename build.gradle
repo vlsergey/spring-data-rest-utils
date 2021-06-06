@@ -60,17 +60,24 @@ test {
 
 task regenerateReadme {
    doLast {
+      def releaseVersion = project.property('release.releaseVersion');
       copy {
-          from file( '/README.template.md')
+          from file( 'README.template.md')
           rename 'README\\.template\\.md', 'README.md'
           into project.projectDir
-          expand([ "version": project.version ])
+          expand([ "version": releaseVersion ])
       }
 
       exec {
           workingDir project.projectDir
           commandLine 'git'
           args 'add', 'README.md'
+      }
+
+      exec {
+          workingDir project.projectDir
+          commandLine 'git'
+          args 'commit', '-m', 'Update version in README.md to ' + releaseVersion
       }
    }
 }
