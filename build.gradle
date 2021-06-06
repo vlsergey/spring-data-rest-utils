@@ -1,6 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id "com.gradle.plugin-publish" version "0.14.0"
+    id 'net.researchgate.release' version '2.8.1'
 }
 
 group 'io.github.vlsergey.springdatarestutils'
@@ -56,6 +57,16 @@ test {
 	events "passed", "skipped", "failed"
     }
 }
+
+release {
+    failOnCommitNeeded = true
+    failOnSnapshotDependencies = true
+    failOnUnversionedFiles = true
+    failOnUpdateNeeded = true
+    pushReleaseVersionBranch = false
+}
+
+afterReleaseBuild.dependsOn publishPlugins
 
 pluginBundle {
     website = 'https://github.com/vlsergey/spring-data-rest-utils'
