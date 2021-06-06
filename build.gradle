@@ -58,6 +58,20 @@ test {
     }
 }
 
+task regenerateReadme {
+   doLast {
+      def map = [ "version": project.version ];
+      System.out.println file( '/README.template.md')
+      copy {
+          from file( '/README.template.md')
+          rename 'README\\.template\\.md', 'README.md'
+          into project.projectDir
+          expand(map)
+      }
+   }    
+}
+beforeReleaseBuild.dependsOn regenerateReadme
+
 release {
     failOnCommitNeeded = true
     failOnSnapshotDependencies = true
