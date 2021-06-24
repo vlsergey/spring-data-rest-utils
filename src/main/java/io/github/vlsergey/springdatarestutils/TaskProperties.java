@@ -31,6 +31,8 @@ public class TaskProperties {
 
     private String outputUri = new File("api.yaml").toURI().toString();
 
+    private String patchTypeSuffix = "Patch";
+
     private String repositoryDetectionStrategy = "DEFAULT";
 
     private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));

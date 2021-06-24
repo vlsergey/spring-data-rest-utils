@@ -25,6 +25,16 @@ public enum ClassMappingMode {
     EXPOSED(false),
 
     /**
+     * Class is part of exported entities set, but this mode is for patch
+     */
+    EXPOSED_PATCH(false) {
+	@Override
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return cls.getSimpleName() + props.getPatchTypeSuffix();
+	}
+    },
+
+    /**
      * The part of entity where _links property is described
      */
     LINKS(false) {

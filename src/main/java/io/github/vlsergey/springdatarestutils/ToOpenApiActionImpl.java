@@ -74,6 +74,11 @@ public class ToOpenApiActionImpl {
 	    toProcess.add(entityLinksKey);
 	    queued.add(entityLinksKey);
 
+	    final Pair<Class<?>, ClassMappingMode> entityPatchKey = Pair.of(meta.getDomainType(),
+		    ClassMappingMode.EXPOSED_PATCH);
+	    toProcess.add(entityPatchKey);
+	    queued.add(entityPatchKey);
+
 	    final Pair<Class<?>, ClassMappingMode> entityWithLinksKey = Pair.of(meta.getDomainType(),
 		    ClassMappingMode.WITH_LINKS);
 	    toProcess.add(entityWithLinksKey);

@@ -106,6 +106,14 @@ public class PathsGenerator {
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("Entity has been created"))));
 
+	    withIdPathItem.setPatch(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(idParameter) //
+		    .requestBody(new RequestBody().required(Boolean.TRUE)
+			    .content(toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_PATCH)))) //
+		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+			    new ApiResponse().description("Entity has been updated"))));
+
 	    withIdPathItem.setPut(new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idParameter) //

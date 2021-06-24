@@ -24,6 +24,7 @@ abstract class PluginProperties {
 	getInfo().convention(defaults.getInfo());
 	getLinkTypeName().convention(defaults.getLinkTypeName());
 	getLinksTypeSuffix().convention(defaults.getLinksTypeSuffix());
+	getPatchTypeSuffix().convention(defaults.getPatchTypeSuffix());
 	getRepositoryDetectionStrategy().convention(defaults.getRepositoryDetectionStrategy());
 	getOutput().convention(() -> {
 	    try {
@@ -62,6 +63,8 @@ abstract class PluginProperties {
 
     abstract Property<String> getWithLinksTypeSuffix();
 
+    abstract Property<String> getPatchTypeSuffix();
+
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
@@ -70,6 +73,7 @@ abstract class PluginProperties {
 		.setEnumTypeSuffix(getEnumTypeSuffix().get()).setInfo(getInfo().get()) //
 		.setLinksTypeSuffix(getLinksTypeSuffix().get()) //
 		.setLinkTypeName(getLinkTypeName().get()) //
+		.setPatchTypeSuffix(getPatchTypeSuffix().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
 		.setServers(getServers().get()) //

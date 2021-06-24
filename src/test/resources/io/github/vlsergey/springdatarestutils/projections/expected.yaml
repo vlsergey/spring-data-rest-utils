@@ -64,6 +64,26 @@ paths:
           description: "Entity is missing"
       tags:
       - "TestEntity"
+    patch:
+      parameters:
+      - description: "Entity ID"
+        in: "path"
+        name: "id"
+        required: true
+        schema:
+          format: "uuid"
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestEntityPatch"
+        required: true
+      responses:
+        "204":
+          description: "Entity has been updated"
+      tags:
+      - "TestEntity"
     put:
       parameters:
       - description: "Entity ID"
@@ -178,6 +198,20 @@ components:
           type: "object"
       required:
       - "_links"
+      type: "object"
+    TestEntityPatch:
+      properties:
+        created:
+          format: "date-time"
+          nullable: false
+          type: "string"
+        id:
+          format: "uuid"
+          type: "string"
+        updated:
+          format: "date-time"
+          nullable: false
+          type: "string"
       type: "object"
     TestEntityWithLinks:
       allOf:

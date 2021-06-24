@@ -157,7 +157,7 @@ public class EntityToSchemaMapper {
 		continue;
 	    }
 
-	    if (nullable != null && !nullable) {
+	    if (mode != ClassMappingMode.EXPOSED_PATCH && nullable != null && !nullable) {
 		objectSchema.addRequiredItem(pd.getName());
 	    }
 
@@ -171,7 +171,7 @@ public class EntityToSchemaMapper {
 		    .getStandardSchemaSupplier(propertyType, taskProperties.isAddXSortable());
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
-		if (schema.getNullable() != null && !schema.getNullable()
+		if (mode != ClassMappingMode.EXPOSED_PATCH && schema.getNullable() != null && !schema.getNullable()
 			&& (objectSchema.getRequired() == null || !objectSchema.getRequired().contains(pd.getName()))) {
 		    objectSchema.addRequiredItem(pd.getName());
 		}
