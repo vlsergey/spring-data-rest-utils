@@ -110,7 +110,8 @@ public class ToOpenApiActionImpl {
 	    apiModel.schema(head.getSecond().getName(this.taskProperties, head.getFirst()), schema);
 	}
 
-	apiModel.setPaths(new PathsGenerator(isExposed, taskProperties).generate(mapper, scanResult.getRepositories()));
+	apiModel.setPaths(new PathsGenerator(isExposed, taskProperties).generate(mapper, scanResult.getRepositories(),
+		scanResult.getQueryMethodsCandidates()));
 
 	final File outputFile = new File(new URI(this.taskProperties.getOutputUri()));
 	final String serialized = JacksonHelper.writeValueAsString(outputFile.getName().endsWith(".json"), apiModel);

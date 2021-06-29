@@ -1,5 +1,8 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -14,8 +17,10 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.rest.core.config.Projection;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy;
+import org.springframework.util.ClassUtils;
 
 import static java.util.Collections.emptySet;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toSet;
 
 import lombok.*;
@@ -72,7 +77,55 @@ public class CodebaseScannerFacade {
 	    log.info("No types annotated with @Projection were found. Hope you just are not usign them.");
 	}
 
-	return new ScanResult(projections, repositories);
+	final @NonNull Set<Method> queryMethodsCandidates = scanForQueryMethodsCandidates(reflections, repositories);
+
+	return new ScanResult(unmodifiableSet(projections), unmodifiableSet(repositories),
+		unmodifiableSet(queryMethodsCandidates));
+    }
+
+    private @NonNull Set<Method> scanForQueryMethodsCandidates(final Reflections reflections,
+	    final Set<RepositoryMetadata> repositories) {
+	log.info("Scanning implementation of repo methods to filter query methods candidates...");
+	Set<Method> queryMethodsCandidates = new LinkedHashSet<>();
+	for (RepositoryMetadata meta : repositories) {
+	    nextMethod: for (Method repoMethod : meta.getRepositoryInterface().getMethods()) {
+		Method method = ClassUtils.getMostSpecificMethod(repoMethod, meta.getRepositoryInterface());
+		if (method.isBridge() || method.isDefault() || Modifier.isStatic(method.getModifiers())
+			|| method.getDeclaringClass().getName().startsWith("org.springframework.")) {
+		    continue;
+		}
+
+		for (Class<?> subType : reflections.getSubTypesOf(method.getDeclaringClass())) {
+		    final @NonNull Method declared;
+		    try {
+			declared = subType.getDeclaredMethod(method.getName(), method.getParameterTypes());
+		    } catch (NoSuchMethodException exc) {
+			continue;
+		    }
+
+		    if (subType.isInterface()) {
+			if (declared.isDefault()) {
+			    log.debug(
+				    "Method {} is not a query candidate because have non-default declaration in {}, "
+					    + "which is child class of {}",
+				    method, subType.getName(), method.getDeclaringClass().getName());
+			    continue nextMethod;
+			}
+		    } else {
+			if (!Modifier.isAbstract(declared.getModifiers())) {
+			    log.debug(
+				    "Method {} is not a query candidate because have non-abstract declaration in {}, "
+					    + "which is child class of {}",
+				    method, subType.getName(), method.getDeclaringClass().getName());
+			    continue nextMethod;
+			}
+		    }
+		}
+		log.info("Method {} is registered as a query candidate", method);
+		queryMethodsCandidates.add(method);
+	    }
+	}
+	return queryMethodsCandidates;
     }
 
     @AllArgsConstructor
@@ -80,6 +133,7 @@ public class CodebaseScannerFacade {
     public static class ScanResult {
 	private final @NonNull Set<Class<?>> projections;
 	private final @NonNull Set<RepositoryMetadata> repositories;
+	private final @NonNull Set<Method> queryMethodsCandidates;
     }
 
 }

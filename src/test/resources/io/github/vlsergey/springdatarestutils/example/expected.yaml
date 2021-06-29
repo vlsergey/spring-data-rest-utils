@@ -123,6 +123,24 @@ paths:
           description: "Entity has been created"
       tags:
       - "Student"
+  /students/countByGroupGroupId:
+    get:
+      parameters:
+      - in: "query"
+        name: "groupId"
+        schema:
+          format: "uuid"
+          type: "string"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                format: "int64"
+                type: "integer"
+          description: "ok"
+      tags:
+      - "Student"
   /students/{id}:
     delete:
       description: "Deletes the entity with the given id"

@@ -23,7 +23,7 @@ public class StandardSchemasProvider {
 	standardSchemas.put(Integer.class, IntegerSchema::new);
 
 	standardSchemas.put(org.springframework.hateoas.LinkRelation.class, StringSchema::new);
-	standardSchemas.put(Long.class, NumberSchema::new);
+	standardSchemas.put(Long.class, () -> new IntegerSchema().format("int64"));
 
 	standardSchemas.put(Map.class, MapSchema::new);
 
@@ -34,8 +34,8 @@ public class StandardSchemasProvider {
 	standardSchemas.put(UUID.class, UUIDSchema::new);
 
 	standardSchemas.put(boolean.class, () -> new BooleanSchema().nullable(Boolean.FALSE));
-	standardSchemas.put(int.class, () -> new IntegerSchema().nullable(Boolean.FALSE));
-	standardSchemas.put(long.class, () -> new NumberSchema().nullable(Boolean.FALSE));
+	standardSchemas.put(int.class, () -> new IntegerSchema().format("int32").nullable(Boolean.FALSE));
+	standardSchemas.put(long.class, () -> new IntegerSchema().format("int64").nullable(Boolean.FALSE));
     }
 
     public static Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls, boolean withXSortable) {

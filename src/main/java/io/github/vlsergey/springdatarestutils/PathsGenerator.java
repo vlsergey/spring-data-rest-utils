@@ -3,12 +3,21 @@ package io.github.vlsergey.springdatarestutils;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.atteo.evo.inflector.English;
+import org.gradle.internal.impldep.com.esotericsoftware.minlog.Log;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.rest.core.Path;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import io.swagger.v3.oas.models.Operation;
@@ -47,22 +56,31 @@ public class PathsGenerator {
 	return new Schema<>().$ref("#/components/schemas/" + mode.getName(taskProperties, cls));
     }
 
-    public Paths generate(final @NonNull EntityToSchemaMapper mapper,
-	    final @NonNull Iterable<RepositoryMetadata> metas) {
+    public Paths generate(final @NonNull EntityToSchemaMapper mapper, final @NonNull Iterable<RepositoryMetadata> metas,
+	    final Set<Method> allQueryCandidates) {
 	Paths paths = new Paths();
 	metas.forEach(meta -> {
 	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM,
 		    (cls, mode) -> mode.getName(taskProperties, cls));
 
-	    populatePathItems(meta, idSchema, paths);
+	    populatePathItems(meta, allQueryCandidates, idSchema, paths);
 	});
 
 	return paths;
     }
 
+    public Schema<?> methodInOutsToSchema(Class<?> cls) {
+	@SuppressWarnings("rawtypes")
+	final Optional<Supplier<Schema>> schema = StandardSchemasProvider.getStandardSchemaSupplier(cls, false);
+	if (!schema.isPresent()) {
+	    throw new UnsupportedOperationException("Unsupported class: " + cls.getName());
+	}
+	return schema.get().get();
+    }
+
     @SneakyThrows
-    public void populatePathItems(final @NonNull RepositoryMetadata meta, final @NonNull Schema<?> idSchema,
-	    final @NonNull Paths paths) {
+    public void populatePathItems(final @NonNull RepositoryMetadata meta, final Set<Method> allQueryCandidates,
+	    final @NonNull Schema<?> idSchema, final @NonNull Paths paths) {
 	final Class<?> domainType = meta.getDomainType();
 
 	final PathItem noIdPathItem = new PathItem();
@@ -130,6 +148,34 @@ public class PathsGenerator {
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
 	});
+
+	for (Method method : meta.getRepositoryInterface().getMethods()) {
+	    method = ClassUtils.getMostSpecificMethod(method, meta.getRepositoryInterface());
+	    if (!allQueryCandidates.contains(method)) {
+		continue;
+	    }
+
+	    try {
+		RestResource annotation = AnnotationUtils.findAnnotation(method, RestResource.class);
+		Path path = annotation == null || !StringUtils.hasText(annotation.path()) ? new Path(method.getName())
+			: new Path(annotation.path());
+
+		// TODO: check void
+		final Operation operation = new Operation().addTagsItem(tag)
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse()
+				.description("ok").content(toContent(methodInOutsToSchema(method.getReturnType())))));
+
+		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
+		    operation.addParametersItem(new Parameter().in("query").name(methodParam.getName())
+			    .schema(methodInOutsToSchema(methodParam.getType())));
+		}
+
+		paths.addPathItem(basePath + path.toString(), new PathItem().get(operation));
+
+	    } catch (UnsupportedOperationException exc) {
+		Log.warn("Unable to generate mapping to method " + method + ": " + exc.getMessage());
+	    }
+	}
 
 	if (!noIdPathItem.readOperations().isEmpty()) {
 	    paths.addPathItem(basePath, noIdPathItem);

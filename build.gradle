@@ -24,6 +24,20 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
+compileJava {
+    options.compilerArgs << '-parameters'
+    options.debugOptions.debugLevel = "source,lines,vars"
+    options.encoding = 'UTF-8'
+    options.release = 11
+}
+
+compileTestJava {
+    options.compilerArgs << '-parameters'
+    options.debugOptions.debugLevel = "source,lines,vars"
+    options.encoding = 'UTF-8'
+    options.release = 11
+}
+
 repositories {
     mavenCentral()
 }
