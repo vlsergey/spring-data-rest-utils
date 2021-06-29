@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.atteo.evo.inflector.English;
-import org.gradle.internal.impldep.com.esotericsoftware.minlog.Log;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -33,8 +32,10 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
+@Slf4j
 public class PathsGenerator {
 
     private static final String APPLICATION_JSON_VALUE = org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -173,7 +174,7 @@ public class PathsGenerator {
 		paths.addPathItem(basePath + path.toString(), new PathItem().get(operation));
 
 	    } catch (UnsupportedOperationException exc) {
-		Log.warn("Unable to generate mapping to method " + method + ": " + exc.getMessage());
+		log.warn("Unable to generate mapping to method " + method + ": " + exc.getMessage());
 	    }
 	}
 
