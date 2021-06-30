@@ -82,7 +82,16 @@ class ToOpenApiActionImplTest {
 	withTempFile(tempFile -> {
 	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".example", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("example/expected.yaml"), tempFile);
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-example.yaml"), tempFile);
+	});
+    }
+
+    @Test
+    void testInheritance() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".inheritance", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-inheritance.yaml"), tempFile);
 	});
     }
 
@@ -91,7 +100,7 @@ class ToOpenApiActionImplTest {
 	withTempFile(tempFile -> {
 	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".projections", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("projections/expected.yaml"), tempFile);
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-projections.yaml"), tempFile);
 	});
     }
 

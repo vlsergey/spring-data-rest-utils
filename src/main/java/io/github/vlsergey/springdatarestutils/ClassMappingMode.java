@@ -39,6 +39,22 @@ public enum ClassMappingMode {
     },
 
     /**
+     * Container for properties that present in hierarchy base class.
+     */
+    INHERITANCE_BASE(false) {
+	@Override
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return props.getBaseTypePrefix() + cls.getSimpleName() + props.getDefaultTypeSuffix();
+	}
+    },
+
+    /**
+     * Extends {@link ClassMappingMode#INHERITANCE_BASE} and includes own
+     * properties.
+     */
+    INHERITANCE_CHILD(false),
+
+    /**
      * The part of entity where _links property is described
      */
     LINKS(false) {

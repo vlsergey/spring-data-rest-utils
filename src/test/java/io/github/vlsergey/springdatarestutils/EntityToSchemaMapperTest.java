@@ -2,17 +2,23 @@ package io.github.vlsergey.springdatarestutils;
 
 import org.junit.jupiter.api.Test;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.github.vlsergey.springdatarestutils.test.TestEntity;
 import io.swagger.v3.oas.models.media.Schema;
 
 class EntityToSchemaMapperTest {
 
+    private static final ScanResult emptyScanResult = new ScanResult(emptyMap(), emptySet(), emptySet(), emptySet());
+
     @Test
     void testMapAsDataItem() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties();
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
+		taskProperties);
 
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM,
 		(a, b) -> b.getName(taskProperties, a));
@@ -43,7 +49,8 @@ class EntityToSchemaMapperTest {
     @Test
     void testMapAsExposed() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties().setAddXSortable(true);
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
+		taskProperties);
 
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED,
 		(a, b) -> b.getName(taskProperties, a));
@@ -75,7 +82,8 @@ class EntityToSchemaMapperTest {
     @Test
     void testMapAsLinks() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties().setAddXLinkedEntity(true);
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
+		taskProperties);
 
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS,
 		(a, b) -> b.getName(taskProperties, a));

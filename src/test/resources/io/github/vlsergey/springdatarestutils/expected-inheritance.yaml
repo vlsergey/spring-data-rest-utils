@@ -1,0 +1,295 @@
+openapi: 3.0.1
+info:
+  title: ToOpenApiActionImplTest Spring Data REST OpenAPI Specification
+  description: This is automatically generated OpenAPI Specification for Spring Data
+    REST entities and repositories
+  version: 0.0.1-SNAPSHOT
+servers:
+- url: /api
+paths:
+  /baseEntities:
+    get:
+      tags:
+      - BaseEntity
+      description: Find entities
+      parameters:
+      - name: page
+        in: query
+        description: Results page you want to retrieve (0..N)
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          nullable: false
+      - name: size
+        in: query
+        description: Number of records per page
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          nullable: false
+      - name: sort
+        in: query
+        description: Sorting parameters
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - baseEntities
+                    type: object
+                    properties:
+                      baseEntities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BaseEntityWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
+                  page:
+                    required:
+                    - number
+                    - size
+                    - totalElements
+                    - totalPages
+                    type: object
+                    properties:
+                      size:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      totalElements:
+                        minimum: 0
+                        type: integer
+                        format: int64
+                        nullable: false
+                      totalPages:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      number:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+    post:
+      tags:
+      - BaseEntity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseEntity'
+        required: true
+      responses:
+        "200":
+          description: Entity has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEntityWithLinks'
+        "204":
+          description: Entity has been created
+  /baseEntities/{id}:
+    get:
+      tags:
+      - BaseEntity
+      description: Retrieves an entity by its id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Entity is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseEntityWithLinks'
+        "404":
+          description: Entity is missing
+    put:
+      tags:
+      - BaseEntity
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseEntity'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+    delete:
+      tags:
+      - BaseEntity
+      description: Deletes the entity with the given id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Entity has been deleted or already didn't exists
+    patch:
+      tags:
+      - BaseEntity
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseEntityPatch'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+components:
+  schemas:
+    BaseBaseEntity:
+      required:
+      - kind
+      type: object
+      properties:
+        fromBase:
+          type: string
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          nullable: false
+    BaseEntity:
+      discriminator:
+        propertyName: kind
+        mapping:
+          stub: '#/components/schemas/BaseBaseEntity'
+          a: '#/components/schemas/ChildA'
+          b: '#/components/schemas/ChildB'
+      anyOf:
+      - $ref: '#/components/schemas/BaseBaseEntity'
+      - $ref: '#/components/schemas/ChildA'
+      - $ref: '#/components/schemas/ChildB'
+    BaseEntityLinks:
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            baseEntity:
+              $ref: '#/components/schemas/Link'
+            self:
+              $ref: '#/components/schemas/Link'
+    BaseEntityPatch:
+      type: object
+      properties:
+        fromBase:
+          type: string
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          nullable: false
+    BaseEntityWithLinks:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - $ref: '#/components/schemas/BaseEntityLinks'
+    ChildA:
+      allOf:
+      - $ref: '#/components/schemas/BaseBaseEntity'
+      - type: object
+        properties:
+          fromA:
+            type: string
+    ChildB:
+      allOf:
+      - $ref: '#/components/schemas/BaseBaseEntity'
+      - type: object
+        properties:
+          fromB:
+            type: string
+    Link:
+      required:
+      - templated
+      type: object
+      properties:
+        deprecation:
+          type: string
+        href:
+          type: string
+        hreflang:
+          type: string
+        media:
+          type: string
+        name:
+          type: string
+        profile:
+          type: string
+        rel:
+          type: string
+        template:
+          $ref: '#/components/schemas/UriTemplate'
+        templated:
+          type: boolean
+          nullable: false
+        title:
+          type: string
+        type:
+          type: string
+    UriTemplate:
+      type: object
