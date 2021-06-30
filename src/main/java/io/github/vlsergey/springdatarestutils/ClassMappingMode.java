@@ -7,15 +7,19 @@ import lombok.Getter;
 
 @AllArgsConstructor
 public enum ClassMappingMode {
-    /**
-     * Class is not part of exported entities set, considered as POJO
-     */
-    DATA_ITEM(true),
 
-    ENUM(false) {
+    /**
+     * Class is not part of exported entities set, considered as POJO. Enums are
+     * also goes here.
+     */
+    DATA_ITEM(true) {
 	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getEnumTypeSuffix();
+	    if (cls.isEnum()) {
+		return cls.getSimpleName() + props.getEnumTypeSuffix();
+	    } else {
+		return cls.getSimpleName() + props.getDefaultTypeSuffix();
+	    }
 	}
     },
 
