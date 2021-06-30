@@ -2,8 +2,8 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -20,6 +20,7 @@ import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy;
 import org.springframework.util.ClassUtils;
 
 import static java.util.Collections.emptySet;
+import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toSet;
 
@@ -77,10 +78,32 @@ public class CodebaseScannerFacade {
 	    log.info("No types annotated with @Projection were found. Hope you just are not usign them.");
 	}
 
+	final @NonNull Map<Class<?>, SortedSet<Class<?>>> inheritance = scanForInheritance(reflections, repositories);
 	final @NonNull Set<Method> queryMethodsCandidates = scanForQueryMethodsCandidates(reflections, repositories);
 
-	return new ScanResult(unmodifiableSet(projections), unmodifiableSet(repositories),
+	return new ScanResult(unmodifiableMap(inheritance), unmodifiableSet(projections), unmodifiableSet(repositories),
 		unmodifiableSet(queryMethodsCandidates));
+    }
+
+    private @NonNull Map<Class<?>, SortedSet<Class<?>>> scanForInheritance(final Reflections reflections,
+	    final Set<RepositoryMetadata> repositories) {
+	final Predicate<Class<?>> inBasePackageOrSubpackage = cls -> (cls.getPackage().getName() + ".")
+		.startsWith(basePackage + ".");
+
+	Map<Class<?>, SortedSet<Class<?>>> result = new HashMap<>();
+	PersistenceUtils.CLASS_INHERITANCE.ifPresent(inheritance -> repositories.stream() //
+		.map(RepositoryMetadata::getDomainType) //
+		.filter(cls -> cls.isAnnotationPresent(inheritance)) //
+		.forEach(parentClass -> {
+		    SortedSet<Class<?>> childClasses = new TreeSet<>(Comparator.comparing(Class::getName));
+
+		    childClasses.add(parentClass);
+		    reflections.getSubTypesOf(parentClass).stream().filter(inBasePackageOrSubpackage)
+			    .forEach(childClasses::add);
+
+		    result.put(parentClass, childClasses);
+		}));
+	return result;
     }
 
     private @NonNull Set<Method> scanForQueryMethodsCandidates(final Reflections reflections,
@@ -131,6 +154,11 @@ public class CodebaseScannerFacade {
     @AllArgsConstructor
     @Data
     public static class ScanResult {
+	/**
+	 * key class has @Inheritance annotation, child class is not an interface and
+	 * present in base (sub)package
+	 */
+	private final @NonNull Map<Class<?>, SortedSet<Class<?>>> inheritance;
 	private final @NonNull Set<Class<?>> projections;
 	private final @NonNull Set<RepositoryMetadata> repositories;
 	private final @NonNull Set<Method> queryMethodsCandidates;

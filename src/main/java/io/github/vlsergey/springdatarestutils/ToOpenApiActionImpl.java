@@ -46,7 +46,7 @@ public class ToOpenApiActionImpl {
 	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed, taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed, scanResult, taskProperties);
 
 	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
 	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();

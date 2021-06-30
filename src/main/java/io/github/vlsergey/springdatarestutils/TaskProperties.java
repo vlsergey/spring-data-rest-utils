@@ -19,6 +19,8 @@ public class TaskProperties {
 
     private String basePackage = null;
 
+    private String baseTypePrefix = "Base";
+
     private String defaultTypeSuffix = "";
 
     private String enumTypeSuffix = "";

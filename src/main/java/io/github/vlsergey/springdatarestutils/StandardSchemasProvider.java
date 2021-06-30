@@ -49,6 +49,10 @@ public class StandardSchemasProvider {
 		.findFirst();
     }
 
+    public static boolean hasStandardSchemaSupplier(Class<?> cls) {
+	return standardSchemas.keySet().stream().anyMatch(e -> e.isAssignableFrom(cls));
+    }
+
     public static final class UriSchema extends Schema<String> {
 	public UriSchema() {
 	    super("string", "uri");

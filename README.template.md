@@ -6,14 +6,15 @@
 Generates [OpenAPI specification](https://swagger.io/specification/) from JPA repositories exposed via [Spring Data REST](https://spring.io/projects/spring-data-rest) library.
 
 - [x] Generates schema components for both exposed and non-exposed classes
+- [x] Supports simple cases of inheritance with discriminators
 - [x] Exposes open projections and default projections
-- [ ] (WIP) Generates path and operations for supported commands
+- [X] Generates path and operations for supported commands
   - Generates path items for CRUD methods: `findAll`, `findOneById`, `deleteById`, `save` (incl. PUT, POST and PATCH)
   - Generates path items to fetch linked entities
   - (WIP) Generates path items for query methods (so far that accepts and returns "simple" types like `Long` or `String`)
 
 Examples:
-- [Example of generated specification](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml). [View in Swagger Editor Online](https://editor.swagger.io/?url=https://raw.githubusercontent.com/vlsergey/spring-data-rest-utils/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml).
+- [Example of generated specification](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/test/resources/io/github/vlsergey/springdatarestutils/expected-example.yaml). [View in Swagger Editor Online](https://editor.swagger.io/?url=https://raw.githubusercontent.com/vlsergey/spring-data-rest-utils/master/src/test/resources/io/github/vlsergey/springdatarestutils/expected-example.yaml).
 - [Example package used for generation](https://github.com/vlsergey/spring-data-rest-utils/tree/master/src/test/java/io/github/vlsergey/springdatarestutils/example)
 
 ## Enabling Gradle plugin
@@ -68,6 +69,7 @@ springdatarestutils {
 | addXLinkedEntity            | `boolean` | `false`        | Include additional `x-linked-entity` [extension](https://swagger.io/docs/specification/openapi-extensions/) to every `link` entry to indicate type of entity returned by corresponding `href` URL  
 | addXSortable                | `boolean` | `false`        | Include additional `x-sortable` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas that are sortable from plugin author point of view. Currently it includes all entries implementing `java.lang.Comparable` and `java.net.URL`. Feel free to submit patch to [StandardSchemasProvider.java](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/main/java/io/github/vlsergey/springdatarestutils/StandardSchemasProvider.java) class better behavior.
 | basePackage                 | `String`  | `""`           | Base package to search JPA repository interfaces in.
+| baseTypePrefix              | `String`  | `"Base"`       | Prefix to add to component's name that contains properties from root classes when inheritance is used.
 | defaultTypeSuffix           | `String`  | `""`           | Suffix to add to TypeScript interfaces to everything except enum classes
 | enumTypeSuffix              | `String`  | `""`           | Suffix to add to TypeScript interfaces generated from enums
 | info                        | [`Info`](https://github.com/swagger-api/swagger-core/blob/master/modules/swagger-models/src/main/java/io/swagger/v3/oas/models/info/Info.java) | `""`        | Bean to be included as `info` part to OpenAPI spec. Plugin will try to fill some fields by default since some of them are required.

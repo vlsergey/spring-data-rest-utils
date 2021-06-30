@@ -7,6 +7,15 @@ import java.util.Optional;
 
 class ReflectionUtils {
 
+    @SuppressWarnings("unchecked")
+    static <T> Optional<Class<T>> findClass(String className) {
+	try {
+	    return Optional.of((Class<T>) Class.forName(className));
+	} catch (Exception exc) {
+	    return Optional.empty();
+	}
+    }
+
     static Optional<Method> findMethod(Class<?> cls, String methodName, String... paramArgsClassNames) {
 	return Arrays.stream(cls.getMethods()) //
 		.filter(method -> Objects.equals(method.getName(), methodName))

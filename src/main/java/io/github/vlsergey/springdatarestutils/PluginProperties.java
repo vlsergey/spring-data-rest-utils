@@ -19,6 +19,7 @@ abstract class PluginProperties {
 	getAddXLinkedEntity().convention(defaults.isAddXLinkedEntity());
 	getAddXSortable().convention(defaults.isAddXSortable());
 	getBasePackage().convention(defaults.getBasePackage());
+	getBaseTypePrefix().convention(defaults.getBaseTypePrefix());
 	getDefaultTypeSuffix().convention(defaults.getDefaultTypeSuffix());
 	getEnumTypeSuffix().convention(defaults.getEnumTypeSuffix());
 	getInfo().convention(defaults.getInfo());
@@ -43,6 +44,8 @@ abstract class PluginProperties {
 
     abstract Property<String> getBasePackage();
 
+    abstract Property<String> getBaseTypePrefix();
+
     abstract Property<String> getDefaultTypeSuffix();
 
     abstract Property<String> getEnumTypeSuffix();
@@ -57,20 +60,23 @@ abstract class PluginProperties {
 
     abstract RegularFileProperty getOutput();
 
+    abstract Property<String> getPatchTypeSuffix();
+
     abstract Property<String> getRepositoryDetectionStrategy();
 
     abstract ListProperty<Server> getServers();
 
     abstract Property<String> getWithLinksTypeSuffix();
 
-    abstract Property<String> getPatchTypeSuffix();
-
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
-		.setAddXSortable(getAddXSortable().get()).setBasePackage(getBasePackage().get()) //
+		.setAddXSortable(getAddXSortable().get()) //
+		.setBasePackage(getBasePackage().get()) //
+		.setBaseTypePrefix(getBaseTypePrefix().get()) //
 		.setDefaultTypeSuffix(getDefaultTypeSuffix().get()) //
-		.setEnumTypeSuffix(getEnumTypeSuffix().get()).setInfo(getInfo().get()) //
+		.setEnumTypeSuffix(getEnumTypeSuffix().get()) //
+		.setInfo(getInfo().get()) //
 		.setLinksTypeSuffix(getLinksTypeSuffix().get()) //
 		.setLinkTypeName(getLinkTypeName().get()) //
 		.setPatchTypeSuffix(getPatchTypeSuffix().get()) //
