@@ -9,6 +9,7 @@ Generates [OpenAPI specification](https://swagger.io/specification/) from JPA re
 - [x] Exposes open projections and default projections
 - [ ] (WIP) Generates path and operations for supported commands
   - Generates path items for simple CRUD methods: `findOneById`, `deleteById`, `save`
+  - (WIP) Generates path items for query methods (so far that accepts and returns "simple" types like `Long` or `String`)
   - Generates path items to fetch linked entities
 
 Examples:
