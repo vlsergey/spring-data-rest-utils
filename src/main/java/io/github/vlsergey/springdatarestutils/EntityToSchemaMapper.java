@@ -5,10 +5,8 @@ import java.beans.FeatureDescriptor;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -16,10 +14,7 @@ import java.util.function.Supplier;
 import org.springframework.hateoas.Link;
 import org.springframework.util.StringUtils;
 
-import io.swagger.v3.oas.models.media.ComposedSchema;
-import io.swagger.v3.oas.models.media.ObjectSchema;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.*;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -42,6 +37,34 @@ public class EntityToSchemaMapper {
 	return new Schema<>().$ref("#/components/schemas/" + getReferencedTypeName.apply(cls, mode));
     }
 
+    @SuppressWarnings("rawtypes")
+    static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
+	ObjectSchema result = new ObjectSchema();
+	result.setRequired(Arrays.asList("_embedded", "_links", "page"));
+
+	result.addProperties("_embedded", new ObjectSchema().addRequiredItem(collectionKey).addProperties(collectionKey,
+		new ArraySchema().items(itemRefSchema)));
+
+	final Schema<?> linkSchema = new Schema<>().$ref("#/components/schemas/" + linkTypeName);
+
+	result.addProperties("_links",
+		new ObjectSchema().addRequiredItem("self").addRequiredItem("profile").addRequiredItem("search")
+			.addProperties("self", linkSchema).addProperties("profile", linkSchema)
+			.addProperties("search", linkSchema));
+
+	Schema int32NonNegativeSchema = new IntegerSchema().format("int32").minimum(BigDecimal.ZERO)
+		.nullable(Boolean.FALSE);
+	Schema int64NonNegativeSchema = new IntegerSchema().format("int64").minimum(BigDecimal.ZERO)
+		.nullable(Boolean.FALSE);
+
+	result.addProperties("page", new ObjectSchema().addRequiredItem("size").addRequiredItem("totalElements")
+		.addRequiredItem("totalPages").addRequiredItem("number").addProperties("size", int32NonNegativeSchema)
+		.addProperties("totalElements", int64NonNegativeSchema)
+		.addProperties("totalPages", int32NonNegativeSchema).addProperties("number", int32NonNegativeSchema));
+
+	return result;
+    }
+
     @SneakyThrows
     private static Field getDeclaredField(Class<?> cls, String fieldName) {
 	final Field field = cls.getDeclaredField(fieldName);
@@ -52,24 +75,6 @@ public class EntityToSchemaMapper {
     @SneakyThrows
     private static boolean hasShortDescription(FeatureDescriptor pd) {
 	return shortDescriptionField.get(pd) != null;
-    }
-
-    @SuppressWarnings("rawtypes")
-    private Map<String, Schema> initPropertiesIfNotYet(final ObjectSchema objectSchema) {
-	if (objectSchema.getProperties() == null) {
-	    objectSchema.setProperties(new TreeMap<>());
-	}
-	return objectSchema.getProperties();
-    }
-
-    @SneakyThrows
-    private Schema<?> buildWithLinksSchema(Class<?> cls) {
-	Schema<?> withoutLinks = new Schema<>()
-		.$ref("#/components/schemas/" + ClassMappingMode.EXPOSED.getName(taskProperties, cls));
-	Schema<?> links = new Schema<>()
-		.$ref("#/components/schemas/" + ClassMappingMode.LINKS.getName(taskProperties, cls));
-
-	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
     }
 
     @SneakyThrows
@@ -113,6 +118,24 @@ public class EntityToSchemaMapper {
 	objectSchema.addRequiredItem("_links");
 	initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
 	return objectSchema;
+    }
+
+    @SneakyThrows
+    private Schema<?> buildWithLinksSchema(Class<?> cls) {
+	Schema<?> withoutLinks = new Schema<>()
+		.$ref("#/components/schemas/" + ClassMappingMode.EXPOSED.getName(taskProperties, cls));
+	Schema<?> links = new Schema<>()
+		.$ref("#/components/schemas/" + ClassMappingMode.LINKS.getName(taskProperties, cls));
+
+	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private Map<String, Schema> initPropertiesIfNotYet(final ObjectSchema objectSchema) {
+	if (objectSchema.getProperties() == null) {
+	    objectSchema.setProperties(new TreeMap<>());
+	}
+	return objectSchema.getProperties();
     }
 
     @SneakyThrows

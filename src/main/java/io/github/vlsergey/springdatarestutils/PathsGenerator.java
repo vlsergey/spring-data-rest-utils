@@ -4,6 +4,7 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -22,10 +23,12 @@ import org.springframework.util.StringUtils;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.Parameter.StyleEnum;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
@@ -38,7 +41,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PathsGenerator {
 
-    private static final String APPLICATION_JSON_VALUE = org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+    private static final String CLASSNAME_QUERYDSL_PREDICATE = "com.querydsl.core.types.Predicate";
+    private static final String CLASSNAME_SPRING_PAGEABLE = "org.springframework.data.domain.Pageable";
+
+    private static final String IN_QUERY = "query";
 
     private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
@@ -47,11 +53,6 @@ public class PathsGenerator {
     private final @NonNull Predicate<Class<?>> isExposed;
 
     private final @NonNull TaskProperties taskProperties;
-
-    private static Content toContent(Schema<?> schema) {
-	final MediaType mediaType = new MediaType().schema(schema);
-	return new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType);
-    }
 
     private @NonNull Schema<Object> buildRefSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
 	return new Schema<>().$ref("#/components/schemas/" + mode.getName(taskProperties, cls));
@@ -66,7 +67,6 @@ public class PathsGenerator {
 
 	    populatePathItems(meta, allQueryCandidates, idSchema, paths);
 	});
-
 	return paths;
     }
 
@@ -80,6 +80,37 @@ public class PathsGenerator {
     }
 
     @SneakyThrows
+    private void populateOperationWithPageable(Operation operation) {
+	operation.addParametersItem(new Parameter().description("Results page you want to retrieve (0..N)").in(IN_QUERY)
+		.name("page").schema(StandardSchemasProvider.getStandardSchemaSupplier(int.class, false).get().get()
+			.minimum(BigDecimal.ZERO)));
+
+	operation.addParametersItem(new Parameter().description("Number of records per page").in(IN_QUERY).name("size")
+		.schema(StandardSchemasProvider.getStandardSchemaSupplier(int.class, false).get().get()
+			.minimum(BigDecimal.ONE).maximum(BigDecimal.valueOf(100))));
+
+	operation.addParametersItem(new Parameter().description("Sorting parameters").explode(Boolean.TRUE).in(IN_QUERY)
+		.name("sort").schema(new ArraySchema().items(new StringSchema())).style(StyleEnum.FORM));
+    }
+
+    @SneakyThrows
+    private void populateOperationWithPredicate(@NonNull RepositoryMetadata meta, Operation operation) {
+	final Class<?> cls = meta.getDomainType();
+	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
+	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	    if (pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang.")) {
+		continue;
+	    }
+	    final Class<?> propertyType = pd.getPropertyType();
+
+	    StandardSchemasProvider.getStandardSchemaSupplier(propertyType, false).ifPresent(schemaSupplier -> {
+		operation.addParametersItem(
+			new Parameter().in(IN_QUERY).name(pd.getName()).schema(schemaSupplier.get()));
+	    });
+	}
+    }
+
+    @SneakyThrows
     public void populatePathItems(final @NonNull RepositoryMetadata meta, final Set<Method> allQueryCandidates,
 	    final @NonNull Schema<?> idSchema, final @NonNull Paths paths) {
 	final Class<?> domainType = meta.getDomainType();
@@ -89,12 +120,43 @@ public class PathsGenerator {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
-	final Content entityContent = toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED));
-	final Content entityContentWithLinks = toContent(buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
+	final Content entityContent = SchemaUtils.toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED));
+	final Content entityContentWithLinks = SchemaUtils
+		.toContent(buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
-	final String basePath = "/" + English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
+	final String collectionKey = English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
+	final String basePath = "/" + collectionKey;
+
+	crudMethods.getFindAllMethod().ifPresent(findAllMethod -> {
+	    final Operation operation = new Operation() //
+		    .addTagsItem(tag).description("Find entities");
+
+	    final Schema<?> responseSchema = EntityToSchemaMapper.buildRootCollectionSchema(
+		    taskProperties.getLinkTypeName(), collectionKey,
+		    buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
+
+	    operation.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
+		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success")));
+
+	    Optional<Method> method = ReflectionUtils.findMethod(meta.getRepositoryInterface(), findAllMethod.getName(),
+		    CLASSNAME_QUERYDSL_PREDICATE, CLASSNAME_SPRING_PAGEABLE);
+	    if (method.isPresent()) {
+		populateOperationWithPredicate(meta, operation);
+		populateOperationWithPageable(operation);
+		noIdPathItem.setGet(operation);
+		return;
+	    }
+
+	    method = ReflectionUtils.findMethod(meta.getRepositoryInterface(), findAllMethod.getName(),
+		    CLASSNAME_SPRING_PAGEABLE);
+	    if (method.isPresent()) {
+		populateOperationWithPageable(operation);
+		noIdPathItem.setGet(operation);
+		return;
+	    }
+	});
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
 	    withIdPathItem.setGet(new Operation() //
@@ -108,9 +170,6 @@ public class PathsGenerator {
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
 					    new ApiResponse().description("Entity is missing"))));
-
-	    // expose additional methods to get linked entity by main entity ID
-	    populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths);
 	});
 
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
@@ -129,7 +188,7 @@ public class PathsGenerator {
 		    .addTagsItem(tag) //
 		    .addParametersItem(idParameter) //
 		    .requestBody(new RequestBody().required(Boolean.TRUE)
-			    .content(toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_PATCH)))) //
+			    .content(SchemaUtils.toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_PATCH)))) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated"))));
 
@@ -158,6 +217,11 @@ public class PathsGenerator {
 	    paths.addPathItem(basePath + "/{id}", withIdPathItem);
 	}
 
+	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
+	    // expose additional methods to get linked entity by main entity ID
+	    populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths);
+	});
+
 	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
     }
 
@@ -178,7 +242,7 @@ public class PathsGenerator {
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
-		    .content(toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED)))
+		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED)))
 		    .description("Entity is present");
 
 	    // TODO: move to components
@@ -213,12 +277,12 @@ public class PathsGenerator {
 			: new Path(annotation.path());
 
 		// TODO: check void
-		final Operation operation = new Operation().addTagsItem(tag)
-			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse()
-				.description("ok").content(toContent(methodInOutsToSchema(method.getReturnType())))));
+		final Operation operation = new Operation().addTagsItem(tag).responses(
+			new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse().description("ok")
+				.content(SchemaUtils.toContent(methodInOutsToSchema(method.getReturnType())))));
 
 		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
-		    operation.addParametersItem(new Parameter().in("query").name(methodParam.getName())
+		    operation.addParametersItem(new Parameter().in(IN_QUERY).name(methodParam.getName())
 			    .schema(methodInOutsToSchema(methodParam.getType())));
 		}
 
