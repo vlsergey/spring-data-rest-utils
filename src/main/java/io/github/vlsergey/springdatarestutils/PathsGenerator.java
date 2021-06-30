@@ -150,34 +150,6 @@ public class PathsGenerator {
 			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
 	});
 
-	for (Method method : meta.getRepositoryInterface().getMethods()) {
-	    method = ClassUtils.getMostSpecificMethod(method, meta.getRepositoryInterface());
-	    if (!allQueryCandidates.contains(method)) {
-		continue;
-	    }
-
-	    try {
-		RestResource annotation = AnnotationUtils.findAnnotation(method, RestResource.class);
-		Path path = annotation == null || !StringUtils.hasText(annotation.path()) ? new Path(method.getName())
-			: new Path(annotation.path());
-
-		// TODO: check void
-		final Operation operation = new Operation().addTagsItem(tag)
-			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse()
-				.description("ok").content(toContent(methodInOutsToSchema(method.getReturnType())))));
-
-		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
-		    operation.addParametersItem(new Parameter().in("query").name(methodParam.getName())
-			    .schema(methodInOutsToSchema(methodParam.getType())));
-		}
-
-		paths.addPathItem(basePath + path.toString(), new PathItem().get(operation));
-
-	    } catch (UnsupportedOperationException exc) {
-		log.warn("Unable to generate mapping to method " + method + ": " + exc.getMessage());
-	    }
-	}
-
 	if (!noIdPathItem.readOperations().isEmpty()) {
 	    paths.addPathItem(basePath, noIdPathItem);
 	}
@@ -185,6 +157,8 @@ public class PathsGenerator {
 	if (!withIdPathItem.readOperations().isEmpty()) {
 	    paths.addPathItem(basePath + "/{id}", withIdPathItem);
 	}
+
+	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
     }
 
     @SneakyThrows
@@ -223,6 +197,37 @@ public class PathsGenerator {
 	     */
 	}
 
+    }
+
+    private void populatePathItemsWithSearchQueries(final RepositoryMetadata meta, final Set<Method> allQueryCandidates,
+	    final Paths paths, final String tag, final String basePath) {
+	for (Method method : meta.getRepositoryInterface().getMethods()) {
+	    method = ClassUtils.getMostSpecificMethod(method, meta.getRepositoryInterface());
+	    if (!allQueryCandidates.contains(method)) {
+		continue;
+	    }
+
+	    try {
+		RestResource annotation = AnnotationUtils.findAnnotation(method, RestResource.class);
+		Path path = annotation == null || !StringUtils.hasText(annotation.path()) ? new Path(method.getName())
+			: new Path(annotation.path());
+
+		// TODO: check void
+		final Operation operation = new Operation().addTagsItem(tag)
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse()
+				.description("ok").content(toContent(methodInOutsToSchema(method.getReturnType())))));
+
+		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
+		    operation.addParametersItem(new Parameter().in("query").name(methodParam.getName())
+			    .schema(methodInOutsToSchema(methodParam.getType())));
+		}
+
+		paths.addPathItem(basePath + "/search" + path.toString(), new PathItem().get(operation));
+
+	    } catch (UnsupportedOperationException exc) {
+		log.warn("Unable to generate mapping to method " + method + ": " + exc.getMessage());
+	    }
+	}
     }
 
 }
