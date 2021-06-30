@@ -17,27 +17,26 @@ class EntityToSchemaMapperTest {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM,
 		(a, b) -> b.getName(taskProperties, a));
 
-	String json = JacksonHelper.writeValueAsString(false, schema);
+	String json = SchemaUtils.writeValueAsString(false, schema);
 
-	assertEquals("---\n" + //
+	assertEquals("required:\n" + //
+		"- created\n" + //
+		"- updated\n" + //
+		"type: object\n" + //
 		"properties:\n" + //
 		"  created:\n" + //
-		"    format: \"date-time\"\n" + //
+		"    type: string\n" + //
+		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    type: \"string\"\n" + //
 		"  id:\n" + //
-		"    format: \"uuid\"\n" + //
-		"    type: \"string\"\n" + //
+		"    type: string\n" + //
+		"    format: uuid\n" + //
 		"  parent:\n" + //
-		"    $ref: \"#/components/schemas/TestEntity\"\n" + //
+		"    $ref: '#/components/schemas/TestEntity'\n" + //
 		"  updated:\n" + //
-		"    format: \"date-time\"\n" + //
+		"    type: string\n" + //
+		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    type: \"string\"\n" + //
-		"required:\n" + //
-		"- \"created\"\n" + //
-		"- \"updated\"\n" + //
-		"type: \"object\"\n" + //
 		"", json);
     }
 
@@ -49,28 +48,27 @@ class EntityToSchemaMapperTest {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED,
 		(a, b) -> b.getName(taskProperties, a));
 
-	String json = JacksonHelper.writeValueAsString(false, schema);
+	String json = SchemaUtils.writeValueAsString(false, schema);
 
-	assertEquals("---\n" + //
+	assertEquals("required:\n" + //
+		"- created\n" + //
+		"- updated\n" + //
+		"type: object\n" + //
 		"properties:\n" + //
 		"  created:\n" + //
-		"    x-sortable: true\n" + //
-		"    format: \"date-time\"\n" + //
+		"    type: string\n" + //
+		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    type: \"string\"\n" + //
+		"    x-sortable: true\n" + //
 		"  id:\n" + //
+		"    type: string\n" + //
+		"    format: uuid\n" + //
 		"    x-sortable: true\n" + //
-		"    format: \"uuid\"\n" + //
-		"    type: \"string\"\n" + //
 		"  updated:\n" + //
-		"    x-sortable: true\n" + //
-		"    format: \"date-time\"\n" + //
+		"    type: string\n" + //
+		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    type: \"string\"\n" + //
-		"required:\n" + //
-		"- \"created\"\n" + //
-		"- \"updated\"\n" + //
-		"type: \"object\"\n" + //
+		"    x-sortable: true\n" + //
 		"", json);
     }
 
@@ -82,28 +80,27 @@ class EntityToSchemaMapperTest {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS,
 		(a, b) -> b.getName(taskProperties, a));
 
-	String json = JacksonHelper.writeValueAsString(false, schema);
+	String json = SchemaUtils.writeValueAsString(false, schema);
 
-	assertEquals("---\n" + //
+	assertEquals("required:\n" + //
+		"- _links\n" + //
+		"type: object\n" + //
 		"properties:\n" + //
 		"  _links:\n" + //
+		"    type: object\n" + //
 		"    properties:\n" + //
 		"      parent:\n" + //
 		"        allOf:\n" + //
-		"        - $ref: \"#/components/schemas/Link\"\n" + //
-		"        x-linked-entity: \"TestEntity\"\n" + //
+		"        - $ref: '#/components/schemas/Link'\n" + //
+		"        x-linked-entity: TestEntity\n" + //
 		"      self:\n" + //
 		"        allOf:\n" + //
-		"        - $ref: \"#/components/schemas/Link\"\n" + //
-		"        x-linked-entity: \"TestEntity\"\n" + //
+		"        - $ref: '#/components/schemas/Link'\n" + //
+		"        x-linked-entity: TestEntity\n" + //
 		"      testEntity:\n" + //
 		"        allOf:\n" + //
-		"        - $ref: \"#/components/schemas/Link\"\n" + //
-		"        x-linked-entity: \"TestEntity\"\n" + //
-		"    type: \"object\"\n" + //
-		"required:\n" + //
-		"- \"_links\"\n" + //
-		"type: \"object\"\n" + //
+		"        - $ref: '#/components/schemas/Link'\n" + //
+		"        x-linked-entity: TestEntity\n" + //
 		"", json);
     }
 

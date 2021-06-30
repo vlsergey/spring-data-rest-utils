@@ -1,221 +1,313 @@
----
-openapi: "3.0.1"
+openapi: 3.0.1
 info:
-  description: "This is automatically generated OpenAPI Specification for Spring Data\
-    \ REST entities and repositories"
-  title: "ToOpenApiActionImplTest Spring Data REST OpenAPI Specification"
-  version: "0.0.1-SNAPSHOT"
+  title: ToOpenApiActionImplTest Spring Data REST OpenAPI Specification
+  description: This is automatically generated OpenAPI Specification for Spring Data
+    REST entities and repositories
+  version: 0.0.1-SNAPSHOT
 servers:
-- url: "/api"
+- url: /api
 paths:
   /testEntities:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TestEntity"
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TestEntityWithLinks"
-          description: "Entity has been created"
-        "204":
-          description: "Entity has been created"
-      tags:
-      - "TestEntity"
-  /testEntities/{id}:
-    delete:
-      description: "Deletes the entity with the given id"
-      parameters:
-      - description: "Entity ID"
-        in: "path"
-        name: "id"
-        required: true
-        schema:
-          format: "uuid"
-          type: "string"
-      responses:
-        "204":
-          description: "Entity has been deleted or already didn't exists"
-      tags:
-      - "TestEntity"
     get:
-      description: "Retrieves an entity by its id"
+      tags:
+      - TestEntity
+      description: Find entities
       parameters:
-      - description: "Entity ID"
-        in: "path"
-        name: "id"
-        required: true
+      - name: page
+        in: query
+        description: Results page you want to retrieve (0..N)
         schema:
-          format: "uuid"
-          type: "string"
+          minimum: 0
+          type: integer
+          format: int32
+          nullable: false
+      - name: size
+        in: query
+        description: Number of records per page
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          nullable: false
+      - name: sort
+        in: query
+        description: Sorting parameters
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
       responses:
         "200":
+          description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestEntityWithLinks"
-          description: "Entity is present"
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - testEntities
+                    type: object
+                    properties:
+                      testEntities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestEntityWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
+                  page:
+                    required:
+                    - number
+                    - size
+                    - totalElements
+                    - totalPages
+                    type: object
+                    properties:
+                      size:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      totalElements:
+                        minimum: 0
+                        type: integer
+                        format: int64
+                        nullable: false
+                      totalPages:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      number:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+    post:
+      tags:
+      - TestEntity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestEntity'
+        required: true
+      responses:
+        "200":
+          description: Entity has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestEntityWithLinks'
+        "204":
+          description: Entity has been created
+  /testEntities/{id}:
+    get:
+      tags:
+      - TestEntity
+      description: Retrieves an entity by its id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Entity is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestEntityWithLinks'
         "404":
-          description: "Entity is missing"
-      tags:
-      - "TestEntity"
-    patch:
-      parameters:
-      - description: "Entity ID"
-        in: "path"
-        name: "id"
-        required: true
-        schema:
-          format: "uuid"
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TestEntityPatch"
-        required: true
-      responses:
-        "204":
-          description: "Entity has been updated"
-      tags:
-      - "TestEntity"
+          description: Entity is missing
     put:
+      tags:
+      - TestEntity
       parameters:
-      - description: "Entity ID"
-        in: "path"
-        name: "id"
+      - name: id
+        in: path
+        description: Entity ID
         required: true
         schema:
-          format: "uuid"
-          type: "string"
+          type: string
+          format: uuid
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TestEntity"
+              $ref: '#/components/schemas/TestEntity'
         required: true
       responses:
         "204":
-          description: "Entity has been updated"
+          description: Entity has been updated
+    delete:
       tags:
-      - "TestEntity"
+      - TestEntity
+      description: Deletes the entity with the given id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Entity has been deleted or already didn't exists
+    patch:
+      tags:
+      - TestEntity
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestEntityPatch'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
   /testEntities/{id}/parent:
     get:
+      tags:
+      - TestEntity
       parameters:
-      - description: "Entity ID"
-        in: "path"
-        name: "id"
+      - name: id
+        in: path
+        description: Entity ID
         required: true
         schema:
-          format: "uuid"
-          type: "string"
+          type: string
+          format: uuid
       responses:
         "200":
+          description: Entity is present
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestEntity"
-          description: "Entity is present"
+                $ref: '#/components/schemas/TestEntity'
         "404":
-          description: "Entity is missing"
-      tags:
-      - "TestEntity"
+          description: Entity is missing
 components:
   schemas:
     Link:
+      required:
+      - templated
+      type: object
       properties:
         deprecation:
-          type: "string"
+          type: string
         href:
-          type: "string"
+          type: string
         hreflang:
-          type: "string"
+          type: string
         media:
-          type: "string"
+          type: string
         name:
-          type: "string"
+          type: string
         profile:
-          type: "string"
+          type: string
         rel:
-          type: "string"
+          type: string
         template:
-          $ref: "#/components/schemas/UriTemplate"
+          $ref: '#/components/schemas/UriTemplate'
         templated:
+          type: boolean
           nullable: false
-          type: "boolean"
         title:
-          type: "string"
+          type: string
         type:
-          type: "string"
-      required:
-      - "templated"
-      type: "object"
+          type: string
     TestEntity:
+      required:
+      - created
+      - updated
+      type: object
       properties:
         created:
-          format: "date-time"
+          type: string
+          format: date-time
           nullable: false
-          type: "string"
         id:
-          format: "uuid"
-          type: "string"
+          type: string
+          format: uuid
         updated:
-          format: "date-time"
+          type: string
+          format: date-time
           nullable: false
-          type: "string"
-      required:
-      - "created"
-      - "updated"
-      type: "object"
     TestEntityDefaultProjection:
+      type: object
       properties:
         grandParent:
-          $ref: "#/components/schemas/TestEntity"
+          $ref: '#/components/schemas/TestEntity'
         id:
-          format: "uuid"
-          type: "string"
+          type: string
+          format: uuid
         parent:
-          $ref: "#/components/schemas/TestEntity"
+          $ref: '#/components/schemas/TestEntity'
         parentId:
-          format: "uuid"
-          type: "string"
-      type: "object"
+          type: string
+          format: uuid
     TestEntityLinks:
+      required:
+      - _links
+      type: object
       properties:
         _links:
+          type: object
           properties:
             parent:
-              $ref: "#/components/schemas/Link"
+              $ref: '#/components/schemas/Link'
             self:
-              $ref: "#/components/schemas/Link"
+              $ref: '#/components/schemas/Link'
             testEntity:
-              $ref: "#/components/schemas/Link"
-          type: "object"
-      required:
-      - "_links"
-      type: "object"
+              $ref: '#/components/schemas/Link'
     TestEntityPatch:
+      type: object
       properties:
         created:
-          format: "date-time"
+          type: string
+          format: date-time
           nullable: false
-          type: "string"
         id:
-          format: "uuid"
-          type: "string"
+          type: string
+          format: uuid
         updated:
-          format: "date-time"
+          type: string
+          format: date-time
           nullable: false
-          type: "string"
-      type: "object"
     TestEntityWithLinks:
       allOf:
-      - $ref: "#/components/schemas/TestEntity"
-      - $ref: "#/components/schemas/TestEntityLinks"
+      - $ref: '#/components/schemas/TestEntity'
+      - $ref: '#/components/schemas/TestEntityLinks'
     UriTemplate:
-      type: "object"
+      type: object

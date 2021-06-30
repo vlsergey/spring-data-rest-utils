@@ -8,9 +8,9 @@ Generates [OpenAPI specification](https://swagger.io/specification/) from JPA re
 - [x] Generates schema components for both exposed and non-exposed classes
 - [x] Exposes open projections and default projections
 - [ ] (WIP) Generates path and operations for supported commands
-  - Generates path items for simple CRUD methods: `findOneById`, `deleteById`, `save`
-  - (WIP) Generates path items for query methods (so far that accepts and returns "simple" types like `Long` or `String`)
+  - Generates path items for CRUD methods: `findAll`, `findOneById`, `deleteById`, `save` (incl. PUT, POST and PATCH)
   - Generates path items to fetch linked entities
+  - (WIP) Generates path items for query methods (so far that accepts and returns "simple" types like `Long` or `String`)
 
 Examples:
 - [Example of generated specification](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml). [View in Swagger Editor Online](https://editor.swagger.io/?url=https://raw.githubusercontent.com/vlsergey/spring-data-rest-utils/master/src/test/resources/io/github/vlsergey/springdatarestutils/example/expected.yaml).
