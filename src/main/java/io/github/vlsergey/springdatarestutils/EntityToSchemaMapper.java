@@ -141,10 +141,6 @@ public class EntityToSchemaMapper {
     @SneakyThrows
     public Schema<?> mapEntity(Class<?> cls, ClassMappingMode mode,
 	    BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName) {
-	if (cls.isEnum() && mode != ClassMappingMode.ENUM || !cls.isEnum() && mode == ClassMappingMode.ENUM) {
-	    throw new AssertionError("Incorrect mode " + mode + " for class " + cls.getName());
-	}
-
 	if (cls.isEnum()) {
 	    return mapEnum((Class) cls);
 	}
@@ -186,7 +182,7 @@ public class EntityToSchemaMapper {
 
 	    if (propertyType.isEnum()) {
 		initPropertiesIfNotYet(objectSchema).put(pd.getName(),
-			buildRefSchema(getReferencedTypeName, pd.getPropertyType(), ClassMappingMode.ENUM));
+			buildRefSchema(getReferencedTypeName, pd.getPropertyType(), ClassMappingMode.DATA_ITEM));
 		continue;
 	    }
 
