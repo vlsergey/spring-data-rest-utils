@@ -27,6 +27,7 @@ abstract class PluginProperties {
 	getLinksTypeSuffix().convention(defaults.getLinksTypeSuffix());
 	getPatchTypeSuffix().convention(defaults.getPatchTypeSuffix());
 	getRepositoryDetectionStrategy().convention(defaults.getRepositoryDetectionStrategy());
+	getRequestTypeSuffix().convention(defaults.getRequestTypeSuffix());
 	getOutput().convention(() -> {
 	    try {
 		return new File(new URI(defaults.getOutputUri()));
@@ -64,6 +65,8 @@ abstract class PluginProperties {
 
     abstract Property<String> getRepositoryDetectionStrategy();
 
+    abstract Property<String> getRequestTypeSuffix();
+
     abstract ListProperty<Server> getServers();
 
     abstract Property<String> getWithLinksTypeSuffix();
@@ -82,6 +85,7 @@ abstract class PluginProperties {
 		.setPatchTypeSuffix(getPatchTypeSuffix().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
+		.setRequestTypeSuffix(getRequestTypeSuffix().get()) //
 		.setServers(getServers().get()) //
 		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get()) //
 	;

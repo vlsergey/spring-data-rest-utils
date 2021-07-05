@@ -17,11 +17,10 @@ class EntityToSchemaMapperTest {
     @Test
     void testMapAsDataItem() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties();
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
-		taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper((a, b) -> b.getName(taskProperties, a),
+		TestEntity.class::equals, emptyScanResult, taskProperties);
 
-	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM,
-		(a, b) -> b.getName(taskProperties, a));
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM);
 
 	String json = SchemaUtils.writeValueAsString(false, schema);
 
@@ -38,7 +37,7 @@ class EntityToSchemaMapperTest {
 		"    type: string\n" + //
 		"    format: uuid\n" + //
 		"  parent:\n" + //
-		"    $ref: '#/components/schemas/TestEntity'\n" + //
+		"    $ref: '#/components/schemas/TestEntityRequest'\n" + //
 		"  updated:\n" + //
 		"    type: string\n" + //
 		"    format: date-time\n" + //
@@ -49,11 +48,10 @@ class EntityToSchemaMapperTest {
     @Test
     void testMapAsExposed() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties().setAddXSortable(true);
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
-		taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper((a, b) -> b.getName(taskProperties, a),
+		TestEntity.class::equals, emptyScanResult, taskProperties);
 
-	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED,
-		(a, b) -> b.getName(taskProperties, a));
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED_SUBMIT);
 
 	String json = SchemaUtils.writeValueAsString(false, schema);
 
@@ -82,11 +80,10 @@ class EntityToSchemaMapperTest {
     @Test
     void testMapAsLinks() throws Exception {
 	final TaskProperties taskProperties = new TaskProperties().setAddXLinkedEntity(true);
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(TestEntity.class::equals, emptyScanResult,
-		taskProperties);
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper((a, b) -> b.getName(taskProperties, a),
+		TestEntity.class::equals, emptyScanResult, taskProperties);
 
-	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS,
-		(a, b) -> b.getName(taskProperties, a));
+	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS);
 
 	String json = SchemaUtils.writeValueAsString(false, schema);
 

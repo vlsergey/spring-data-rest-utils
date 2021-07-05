@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -46,8 +47,6 @@ public class ToOpenApiActionImpl {
 	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(isExposed, scanResult, taskProperties);
-
 	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
 	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
 
@@ -64,26 +63,23 @@ public class ToOpenApiActionImpl {
 	    }
 	};
 
+	final BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName = (cls, mode) -> {
+	    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
+	    if (!queued.contains(key)) {
+		toProcess.add(key);
+		queued.add(key);
+	    }
+
+	    return mode.getName(ToOpenApiActionImpl.this.taskProperties, cls);
+	};
+
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(getReferencedTypeName, isExposed, scanResult,
+		taskProperties);
+
+	apiModel.setPaths(new PathsGenerator(getReferencedTypeName, isExposed, taskProperties).generate(mapper,
+		scanResult.getRepositories(), scanResult.getQueryMethodsCandidates()));
+
 	scanResult.getRepositories().forEach(meta -> {
-	    final Pair<Class<?>, ClassMappingMode> entityKey = Pair.of(meta.getDomainType(), ClassMappingMode.EXPOSED);
-	    toProcess.add(entityKey);
-	    queued.add(entityKey);
-
-	    final Pair<Class<?>, ClassMappingMode> entityLinksKey = Pair.of(meta.getDomainType(),
-		    ClassMappingMode.LINKS);
-	    toProcess.add(entityLinksKey);
-	    queued.add(entityLinksKey);
-
-	    final Pair<Class<?>, ClassMappingMode> entityPatchKey = Pair.of(meta.getDomainType(),
-		    ClassMappingMode.EXPOSED_PATCH);
-	    toProcess.add(entityPatchKey);
-	    queued.add(entityPatchKey);
-
-	    final Pair<Class<?>, ClassMappingMode> entityWithLinksKey = Pair.of(meta.getDomainType(),
-		    ClassMappingMode.WITH_LINKS);
-	    toProcess.add(entityWithLinksKey);
-	    queued.add(entityWithLinksKey);
-
 	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
 	    if (resAnn != null) {
 		final Class<?> projectionClass = resAnn.excerptProjection();
@@ -96,22 +92,9 @@ public class ToOpenApiActionImpl {
 
 	while (!toProcess.isEmpty()) {
 	    final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
-
-	    Schema<?> schema = mapper.mapEntity(head.getFirst(), head.getSecond(), (cls, mode) -> {
-		Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
-		if (!queued.contains(key)) {
-		    toProcess.add(key);
-		    queued.add(key);
-		}
-
-		return mode.getName(ToOpenApiActionImpl.this.taskProperties, cls);
-	    });
-
+	    Schema<?> schema = mapper.mapEntity(head.getFirst(), head.getSecond());
 	    apiModel.schema(head.getSecond().getName(this.taskProperties, head.getFirst()), schema);
 	}
-
-	apiModel.setPaths(new PathsGenerator(isExposed, taskProperties).generate(mapper, scanResult.getRepositories(),
-		scanResult.getQueryMethodsCandidates()));
 
 	SchemaUtils.sortMapByKeys(apiModel.getComponents().getSchemas());
 	SchemaUtils.sortMapByKeys(apiModel.getPaths());

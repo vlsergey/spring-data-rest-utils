@@ -108,7 +108,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestEntity'
+              $ref: '#/components/schemas/TestEntityRequest'
         required: true
       responses:
         "200":
@@ -156,7 +156,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestEntity'
+              $ref: '#/components/schemas/TestEntityRequest'
         required: true
       responses:
         "204":
@@ -214,7 +214,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestEntity'
+                $ref: '#/components/schemas/TestEntityRequest'
         "404":
           description: Entity is missing
 components:
@@ -250,6 +250,7 @@ components:
     TestEntity:
       required:
       - created
+      - id
       - updated
       type: object
       properties:
@@ -268,12 +269,12 @@ components:
       type: object
       properties:
         grandParent:
-          $ref: '#/components/schemas/TestEntity'
+          $ref: '#/components/schemas/TestEntityRequest'
         id:
           type: string
           format: uuid
         parent:
-          $ref: '#/components/schemas/TestEntity'
+          $ref: '#/components/schemas/TestEntityRequest'
         parentId:
           type: string
           format: uuid
@@ -292,6 +293,23 @@ components:
             testEntity:
               $ref: '#/components/schemas/Link'
     TestEntityPatch:
+      type: object
+      properties:
+        created:
+          type: string
+          format: date-time
+          nullable: false
+        id:
+          type: string
+          format: uuid
+        updated:
+          type: string
+          format: date-time
+          nullable: false
+    TestEntityRequest:
+      required:
+      - created
+      - updated
       type: object
       properties:
         created:

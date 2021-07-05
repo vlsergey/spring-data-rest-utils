@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -50,21 +51,25 @@ public class PathsGenerator {
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
     private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
 
+    private final BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName;
+
     private final @NonNull Predicate<Class<?>> isExposed;
 
     private final @NonNull TaskProperties taskProperties;
 
+    private @NonNull Content buildRefContent(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
+	return SchemaUtils.toContent(buildRefSchema(cls, mode));
+    }
+
     private @NonNull Schema<Object> buildRefSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
-	return new Schema<>().$ref("#/components/schemas/" + mode.getName(taskProperties, cls));
+	return new Schema<>().$ref("#/components/schemas/" + getReferencedTypeName.apply(cls, mode));
     }
 
     public Paths generate(final @NonNull EntityToSchemaMapper mapper, final @NonNull Iterable<RepositoryMetadata> metas,
 	    final Set<Method> allQueryCandidates) {
 	Paths paths = new Paths();
 	metas.forEach(meta -> {
-	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM,
-		    (cls, mode) -> mode.getName(taskProperties, cls));
-
+	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM);
 	    populatePathItems(meta, allQueryCandidates, idSchema, paths);
 	});
 	return paths;
@@ -120,7 +125,6 @@ public class PathsGenerator {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
-	final Content entityContent = SchemaUtils.toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED));
 	final Content entityContentWithLinks = SchemaUtils
 		.toContent(buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
 
@@ -173,7 +177,18 @@ public class PathsGenerator {
 	});
 
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
-	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE).content(entityContent);
+
+	    withIdPathItem.setPatch(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(idParameter) //
+		    .requestBody(new RequestBody().required(Boolean.TRUE)
+			    .content(buildRefContent(domainType, ClassMappingMode.EXPOSED_PATCH))) //
+		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+			    new ApiResponse().description("Entity has been updated"))));
+
+	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE)
+		    .content(buildRefContent(domainType, ClassMappingMode.EXPOSED_SUBMIT));
+
 	    noIdPathItem.setPost(new Operation() //
 		    .addTagsItem(tag) //
 		    .requestBody(requestBody) //
@@ -183,14 +198,6 @@ public class PathsGenerator {
 					    .description("Entity has been created"))
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("Entity has been created"))));
-
-	    withIdPathItem.setPatch(new Operation() //
-		    .addTagsItem(tag) //
-		    .addParametersItem(idParameter) //
-		    .requestBody(new RequestBody().required(Boolean.TRUE)
-			    .content(SchemaUtils.toContent(buildRefSchema(domainType, ClassMappingMode.EXPOSED_PATCH)))) //
-		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-			    new ApiResponse().description("Entity has been updated"))));
 
 	    withIdPathItem.setPut(new Operation() //
 		    .addTagsItem(tag) //
@@ -242,7 +249,7 @@ public class PathsGenerator {
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
-		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED)))
+		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_SUBMIT)))
 		    .description("Entity is present");
 
 	    // TODO: move to components

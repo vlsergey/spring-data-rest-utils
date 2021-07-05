@@ -108,7 +108,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Group'
+              $ref: '#/components/schemas/GroupRequest'
         required: true
       responses:
         "200":
@@ -156,7 +156,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Group'
+              $ref: '#/components/schemas/GroupRequest'
         required: true
       responses:
         "204":
@@ -302,7 +302,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Student'
+              $ref: '#/components/schemas/StudentRequest'
         required: true
       responses:
         "200":
@@ -368,7 +368,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Student'
+              $ref: '#/components/schemas/StudentRequest'
         required: true
       responses:
         "204":
@@ -426,12 +426,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
+                $ref: '#/components/schemas/GroupRequest'
         "404":
           description: Entity is missing
 components:
   schemas:
     Group:
+      required:
+      - groupId
       type: object
       properties:
         groupId:
@@ -452,6 +454,14 @@ components:
             self:
               $ref: '#/components/schemas/Link'
     GroupPatch:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        title:
+          type: string
+    GroupRequest:
       type: object
       properties:
         groupId:
@@ -492,6 +502,8 @@ components:
         type:
           type: string
     Student:
+      required:
+      - studentId
       type: object
       properties:
         studentId:
@@ -512,6 +524,12 @@ components:
             student:
               $ref: '#/components/schemas/Link'
     StudentPatch:
+      type: object
+      properties:
+        studentId:
+          type: string
+          format: uuid
+    StudentRequest:
       type: object
       properties:
         studentId:

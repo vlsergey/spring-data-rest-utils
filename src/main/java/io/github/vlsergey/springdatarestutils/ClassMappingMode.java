@@ -24,17 +24,26 @@ public enum ClassMappingMode {
     },
 
     /**
-     * Class is part of exported entities set.
-     */
-    EXPOSED(false),
-
-    /**
      * Class is part of exported entities set, but this mode is for patch
      */
     EXPOSED_PATCH(false) {
 	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
 	    return cls.getSimpleName() + props.getPatchTypeSuffix();
+	}
+    },
+
+    EXPOSED_RETURN(false) {
+	@Override
+	public boolean generatedValuesMustPresent() {
+	    return true;
+	}
+    },
+
+    EXPOSED_SUBMIT(false) {
+	@Override
+	public String getName(TaskProperties props, Class<?> cls) {
+	    return cls.getSimpleName() + props.getRequestTypeSuffix();
 	}
     },
 
@@ -66,6 +75,11 @@ public enum ClassMappingMode {
 
     WITH_LINKS(false) {
 	@Override
+	public boolean generatedValuesMustPresent() {
+	    return true;
+	}
+
+	@Override
 	public String getName(TaskProperties props, Class<?> cls) {
 	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
 	}
@@ -80,6 +94,10 @@ public enum ClassMappingMode {
 
     @Getter
     private final boolean mappedEntitiesExpoded;
+
+    public boolean generatedValuesMustPresent() {
+	return false;
+    }
 
     public String getName(TaskProperties props, Class<?> cls) {
 	if (cls.isAssignableFrom(Link.class)) {
