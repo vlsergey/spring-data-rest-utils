@@ -37,6 +37,8 @@ public class TaskProperties {
 
     private String repositoryDetectionStrategy = "DEFAULT";
 
+    private String requestTypeSuffix = "Request";
+
     private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));
 
     private String withLinksTypeSuffix = "WithLinks";

@@ -108,7 +108,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BaseEntity'
+              $ref: '#/components/schemas/BaseEntityRequest'
         required: true
       responses:
         "200":
@@ -156,7 +156,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BaseEntity'
+              $ref: '#/components/schemas/BaseEntityRequest'
         required: true
       responses:
         "204":
@@ -235,6 +235,19 @@ components:
             self:
               $ref: '#/components/schemas/Link'
     BaseEntityPatch:
+      type: object
+      properties:
+        fromBase:
+          type: string
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          nullable: false
+    BaseEntityRequest:
+      required:
+      - kind
       type: object
       properties:
         fromBase:
