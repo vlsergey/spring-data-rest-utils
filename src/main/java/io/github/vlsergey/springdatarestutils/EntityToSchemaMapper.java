@@ -86,8 +86,24 @@ public class EntityToSchemaMapper {
 		.filter(pd -> !pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang."));
     }
 
-    private static void withBeanProperties(Class<?> cls, Consumer<PropertyDescriptor> consumer) {
-	withBeanProperties(cls).forEach(consumer);
+    static void withBeanProperties(Class<?> cls, Consumer<PropertyDescriptor> consumer) {
+	if (!cls.isInterface()) {
+	    withBeanProperties(cls).forEach(consumer);
+	    return;
+	}
+	// special handling for interfaces
+	withBeanPropertiesImpl(cls, consumer, new HashSet<String>());
+    }
+
+    static void withBeanPropertiesImpl(final @NonNull Class<?> interfaceClass,
+	    final @NonNull Consumer<PropertyDescriptor> consumer, final @NonNull Set<String> alreadyProcessed) {
+	withBeanProperties(interfaceClass).filter(pd -> !alreadyProcessed.contains(pd.getName())).forEach(pd -> {
+	    alreadyProcessed.add(pd.getName());
+	    consumer.accept(pd);
+	});
+	for (Class<?> superInterface : interfaceClass.getInterfaces()) {
+	    withBeanPropertiesImpl(superInterface, consumer, alreadyProcessed);
+	}
     }
 
     @SneakyThrows

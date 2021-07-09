@@ -1,5 +1,9 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyMap;
@@ -7,6 +11,7 @@ import static java.util.Collections.emptySet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
+import io.github.vlsergey.springdatarestutils.projections.TestEntityDefaultProjection;
 import io.github.vlsergey.springdatarestutils.test.TestEntity;
 import io.swagger.v3.oas.models.media.Schema;
 
@@ -107,6 +112,13 @@ class EntityToSchemaMapperTest {
 		"        - $ref: '#/components/schemas/Link'\n" + //
 		"        x-linked-entity: TestEntity\n" + //
 		"", json);
+    }
+
+    @Test
+    void testWithBeanPropertiesReturnsPropsFromAllSuperinterfaces() {
+	List<String> props = new ArrayList<>();
+	EntityToSchemaMapper.withBeanProperties(TestEntityDefaultProjection.class, pd -> props.add(pd.getName()));
+	assertEquals(Arrays.asList("grandParent", "parent", "parentId", "id"), props);
     }
 
 }

@@ -6,14 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.config.Projection;
 
 @Projection(types = TestEntity.class)
-public interface TestEntityDefaultProjection {
-
-    UUID getId();
-
-    TestEntity getParent();
+public interface TestEntityDefaultProjection extends TestEntityProjectionParent {
 
     @Value("#{target.parent.parent}")
     TestEntity getGrandParent();
+
+    TestEntity getParent();
 
     @Value("#{target.parentId}")
     UUID getParentId();
