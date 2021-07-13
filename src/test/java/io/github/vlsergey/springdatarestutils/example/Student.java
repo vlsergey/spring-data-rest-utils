@@ -21,6 +21,7 @@ public class Student {
 
     @ManyToOne
     @ToString.Exclude
+    @Column(nullable = false)
     private @NonNull Group group;
 
 }

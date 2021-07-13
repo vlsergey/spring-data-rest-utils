@@ -246,6 +246,7 @@ public class PathsGenerator {
 	    if (!isExposed.test(propertyType)) {
 		continue;
 	    }
+	    final PathItem pathItem = new PathItem();
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
@@ -256,12 +257,20 @@ public class PathsGenerator {
 	    final ApiResponses missingResponse = new ApiResponses().addApiResponse(RESPONSE_CODE_OK, okResponse)
 		    .addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
 
-	    final String componentPath = basePath + "/" + pd.getName();
-
-	    paths.addPathItem(componentPath, new PathItem().get((new Operation() //
+	    pathItem.get(new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(mainIdParameter) //
-		    .responses(missingResponse))));
+		    .responses(missingResponse));
+
+	    if (PersistenceUtils.isColumnNullable(pd)) {
+		pathItem.delete(new Operation() //
+			.addTagsItem(tag) //
+			.addParametersItem(mainIdParameter) //
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+				new ApiResponse().description("ok"))));
+	    }
+
+	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
 
 	    /*
 	     * There is no need to go deeper -- Spring Data REST can't handle deeper links
