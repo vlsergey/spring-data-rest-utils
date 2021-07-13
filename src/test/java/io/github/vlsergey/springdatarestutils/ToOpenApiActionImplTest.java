@@ -87,6 +87,15 @@ class ToOpenApiActionImplTest {
     }
 
     @Test
+    void testHibernate() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".hibernate", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-hibernate.yaml"), tempFile);
+	});
+    }
+
+    @Test
     void testInheritance() throws Exception {
 	withTempFile(tempFile -> {
 	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".inheritance", tempFile);
