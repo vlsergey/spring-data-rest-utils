@@ -79,6 +79,11 @@ public class EntityToSchemaMapper {
 	return shortDescriptionField.get(pd) != null;
     }
 
+    private static boolean isGeneratedValue(PropertyDescriptor pd) {
+	return PersistenceUtils.isGeneratedValue(pd) || HibernateUtils.isCreationTimestamp(pd)
+		|| HibernateUtils.isUpdateTimestamp(pd);
+    }
+
     @SneakyThrows
     private static Stream<PropertyDescriptor> withBeanProperties(Class<?> cls) {
 	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
@@ -196,13 +201,12 @@ public class EntityToSchemaMapper {
 		// never add as required
 		break;
 	    case EXPOSED_RETURN: {
-		if ((nullable != null && !nullable) || PersistenceUtils.isGeneratedValue(pd)
-			|| PersistenceUtils.isId(pd))
+		if ((nullable != null && !nullable) || isGeneratedValue(pd) || PersistenceUtils.isId(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    }
 	    case EXPOSED_SUBMIT:
-		if (nullable != null && !nullable && !PersistenceUtils.isGeneratedValue(pd))
+		if (nullable != null && !nullable && !isGeneratedValue(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    default:
@@ -229,7 +233,7 @@ public class EntityToSchemaMapper {
 		    case EXPOSED_PATCH:
 			break;
 		    case EXPOSED_SUBMIT:
-			if (nullableBySchema && !PersistenceUtils.isGeneratedValue(pd))
+			if (nullableBySchema && !isGeneratedValue(pd))
 			    objectSchema.addRequiredItem(pd.getName());
 			break;
 		    default:

@@ -1,11 +1,36 @@
 package io.github.vlsergey.springdatarestutils;
 
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.NonNull;
+
 class ReflectionUtils {
+
+    static <T extends Annotation> Optional<T> findAnnotationOnReadMethodOfField(final @NonNull Class<T> cls,
+	    final @NonNull PropertyDescriptor pd) {
+	if (pd.getReadMethod() != null) {
+	    final T annotation = pd.getReadMethod().getAnnotation(cls);
+	    if (annotation != null) {
+		return Optional.of(annotation);
+	    }
+	}
+	try {
+	    final Field field = pd.getReadMethod().getDeclaringClass().getDeclaredField(pd.getName());
+	    final T annotation = field.getAnnotation(cls);
+	    if (annotation != null) {
+		return Optional.of(annotation);
+	    }
+	} catch (Exception exc) {
+	    // no field
+	}
+	return Optional.empty();
+    }
 
     @SuppressWarnings("unchecked")
     static <T> Optional<Class<T>> findClass(String className) {
