@@ -249,7 +249,7 @@ public class PathsGenerator {
 
 	    // TODO: move to components
 	    final ApiResponse okResponse = new ApiResponse()
-		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_SUBMIT)))
+		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_RETURN)))
 		    .description("Entity is present");
 
 	    // TODO: move to components

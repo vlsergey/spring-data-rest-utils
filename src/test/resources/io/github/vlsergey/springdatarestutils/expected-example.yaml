@@ -426,7 +426,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupRequest'
+                $ref: '#/components/schemas/Group'
         "404":
           description: Entity is missing
 components:

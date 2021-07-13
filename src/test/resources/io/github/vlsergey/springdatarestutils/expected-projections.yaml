@@ -214,7 +214,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestEntityRequest'
+                $ref: '#/components/schemas/TestEntity'
         "404":
           description: Entity is missing
 components:
