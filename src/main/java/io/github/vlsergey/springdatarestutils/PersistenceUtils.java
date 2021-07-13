@@ -34,6 +34,8 @@ class PersistenceUtils {
 
     static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
+    static final Optional<Method> METHOD_COLUMN_NULLABLE = CLASS_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
 
     static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
@@ -70,6 +72,12 @@ class PersistenceUtils {
 	} catch (Exception exc) {
 	    return null;
 	}
+    }
+
+    static boolean isColumnNullable(PropertyDescriptor pd) {
+	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
+		.flatMap(ann -> METHOD_COLUMN_NULLABLE.map(method -> getOrNull(method, ann, boolean.class)))
+		.orElse(true);
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {

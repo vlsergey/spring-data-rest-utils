@@ -217,6 +217,20 @@ paths:
                 $ref: '#/components/schemas/TestEntity'
         "404":
           description: Entity is missing
+    delete:
+      tags:
+      - TestEntity
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: ok
 components:
   schemas:
     Link:
