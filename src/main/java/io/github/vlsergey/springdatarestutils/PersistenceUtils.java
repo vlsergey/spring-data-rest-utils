@@ -2,12 +2,10 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
 class PersistenceUtils {
@@ -43,33 +41,13 @@ class PersistenceUtils {
     static final Optional<Method> METHOD_DISCRIMINATOR_COLUMN_NAME = CLASS_DISCRIMINATOR_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
 
-    private static <T extends Annotation> Optional<T> findAnnotationOnReadMethodOfField(final @NonNull Class<T> cls,
-	    final @NonNull PropertyDescriptor pd) {
-	if (pd.getReadMethod() != null) {
-	    final T annotation = pd.getReadMethod().getAnnotation(cls);
-	    if (annotation != null) {
-		return Optional.of(annotation);
-	    }
-	}
-	try {
-	    final Field field = pd.getReadMethod().getDeclaringClass().getDeclaredField(pd.getName());
-	    final T annotation = field.getAnnotation(cls);
-	    if (annotation != null) {
-		return Optional.of(annotation);
-	    }
-	} catch (Exception exc) {
-	    // no field
-	}
-	return Optional.empty();
-    }
-
     static Optional<Boolean> getBasicOptional(final PropertyDescriptor pd) {
-	return CLASS_BASIC.flatMap(cls -> findAnnotationOnReadMethodOfField(cls, pd))
+	return CLASS_BASIC.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
 		.flatMap(ann -> METHOD_BASIC_OPTIONAL.map(method -> getOrNull(method, ann, Boolean.class)));
     }
 
     static String getColumnName(PropertyDescriptor pd) {
-	return CLASS_DISCRIMINATOR_VALUE.flatMap(cls -> findAnnotationOnReadMethodOfField(cls, pd))
+	return CLASS_DISCRIMINATOR_VALUE.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
 		.flatMap(ann -> METHOD_DISCRIMINATOR_VALUE_VALUE.map(method -> getOrNull(method, ann, String.class)))
 		.orElse(toColumnName(pd.getName()));
     }
@@ -95,11 +73,13 @@ class PersistenceUtils {
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {
-	return CLASS_GENERATED_VALUE.map(cls -> findAnnotationOnReadMethodOfField(cls, pd).isPresent()).orElse(false);
+	return CLASS_GENERATED_VALUE.map(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd).isPresent())
+		.orElse(false);
     }
 
     static boolean isId(final PropertyDescriptor pd) {
-	return CLASS_ID.map(cls -> findAnnotationOnReadMethodOfField(cls, pd).isPresent()).orElse(false);
+	return CLASS_ID.map(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd).isPresent())
+		.orElse(false);
     }
 
     private static boolean isUnderscoreRequired(char before, char current, char after) {
