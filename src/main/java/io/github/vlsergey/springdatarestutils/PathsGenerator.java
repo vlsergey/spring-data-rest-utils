@@ -57,6 +57,10 @@ public class PathsGenerator {
 
     private final @NonNull TaskProperties taskProperties;
 
+    private static boolean isNullable(PropertyDescriptor pd) {
+	return PersistenceUtils.getJoinColumnNullable(pd).or(() -> PersistenceUtils.getColumnNullable(pd)).orElse(true);
+    }
+
     private @NonNull Content buildRefContent(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
 	return SchemaUtils.toContent(buildRefSchema(cls, mode));
     }
@@ -262,7 +266,7 @@ public class PathsGenerator {
 		    .addParametersItem(mainIdParameter) //
 		    .responses(missingResponse));
 
-	    if (PersistenceUtils.isColumnNullable(pd)) {
+	    if (isNullable(pd)) {
 		pathItem.delete(new Operation() //
 			.addTagsItem(tag) //
 			.addParametersItem(mainIdParameter) //
