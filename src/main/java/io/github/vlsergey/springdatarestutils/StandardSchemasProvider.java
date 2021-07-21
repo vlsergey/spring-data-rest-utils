@@ -38,12 +38,19 @@ public class StandardSchemasProvider {
 	standardSchemas.put(long.class, () -> new IntegerSchema().format("int64").nullable(Boolean.FALSE));
     }
 
-    public static Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls, boolean withXSortable) {
+    public static Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls, boolean withXJavaClassName,
+	    boolean withXJavaComparable) {
 	return standardSchemas.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(cls)).map(Entry::getValue)
-		.<Supplier<Schema>>map(schemaProvider -> withXSortable
+		.<Supplier<Schema>>map(schemaProvider -> (withXJavaClassName || withXJavaComparable)
 			&& (URL.class.isAssignableFrom(cls) || Comparable.class.isAssignableFrom(cls)) ? () -> {
 			    Schema<?> result = schemaProvider.get();
-			    result.addExtension(ExtensionConstants.X_SORTABLE, Boolean.TRUE);
+			    if (withXJavaClassName) {
+				result.addExtension(ExtensionConstants.X_JAVA_CLASS_NAME, cls.getName());
+			    }
+			    if (withXJavaComparable) {
+				result.addExtension(ExtensionConstants.X_JAVA_COMPARABLE,
+					Comparable.class.isAssignableFrom(cls));
+			    }
 			    return result;
 			} : schemaProvider)
 		.findFirst();

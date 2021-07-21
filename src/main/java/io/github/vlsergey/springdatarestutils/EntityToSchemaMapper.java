@@ -133,15 +133,20 @@ public class EntityToSchemaMapper {
 	linksSchema.setProperties(new TreeMap<>());
 	links.forEach((key, linkClass) -> {
 	    final Schema<?> refSchema = buildRefSchema(Link.class, ClassMappingMode.DATA_ITEM);
-	    if (!taskProperties.isAddXLinkedEntity()) {
+	    if (!taskProperties.isAddXJavaClassName() && !taskProperties.isAddXLinkedEntity()) {
 		linksSchema.getProperties().put(key, refSchema);
 		return;
 	    }
 
 	    ComposedSchema composedSchema = new ComposedSchema();
 	    composedSchema.addAllOfItem(refSchema);
-	    composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
-		    getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED_RETURN));
+	    if (taskProperties.isAddXLinkedEntity()) {
+		composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
+			getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED_RETURN));
+	    }
+	    if (taskProperties.isAddXJavaClassName()) {
+		composedSchema.addExtension(ExtensionConstants.X_JAVA_CLASS_NAME, linkClass.getName());
+	    }
 	    linksSchema.getProperties().put(key, composedSchema);
 	});
 
@@ -220,8 +225,8 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
-	    final Optional<Supplier<Schema>> standardSchemaSupplier = StandardSchemasProvider
-		    .getStandardSchemaSupplier(propertyType, taskProperties.isAddXSortable());
+	    final Optional<Supplier<Schema>> standardSchemaSupplier = StandardSchemasProvider.getStandardSchemaSupplier(
+		    propertyType, taskProperties.isAddXJavaClassName(), taskProperties.isAddXJavaComparable());
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 
@@ -313,7 +318,8 @@ public class EntityToSchemaMapper {
 	}
 
 	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider
-		.getStandardSchemaSupplier(cls, taskProperties.isAddXSortable());
+		.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
+			taskProperties.isAddXJavaComparable());
 	if (entityStandardSchemaSupplier.isPresent()) {
 	    return entityStandardSchemaSupplier.get().get();
 	}

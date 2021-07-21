@@ -13,9 +13,11 @@ import lombok.Data;
 @Data
 public class TaskProperties {
 
-    private boolean addXLinkedEntity = false;
+    private boolean addXJavaClassName = false;
 
-    private boolean addXSortable = false;
+    private boolean addXJavaComparable = false;
+
+    private boolean addXLinkedEntity = false;
 
     private String basePackage = null;
 

@@ -16,8 +16,9 @@ abstract class PluginProperties {
     public PluginProperties() {
 	final TaskProperties defaults = new TaskProperties();
 
+	getAddXJavaComparable().convention(defaults.isAddXJavaComparable());
+	getAddXJavaClassName().convention(defaults.isAddXJavaClassName());
 	getAddXLinkedEntity().convention(defaults.isAddXLinkedEntity());
-	getAddXSortable().convention(defaults.isAddXSortable());
 	getBasePackage().convention(defaults.getBasePackage());
 	getBaseTypePrefix().convention(defaults.getBaseTypePrefix());
 	getDefaultTypeSuffix().convention(defaults.getDefaultTypeSuffix());
@@ -39,9 +40,11 @@ abstract class PluginProperties {
 	getWithLinksTypeSuffix().convention(defaults.getWithLinksTypeSuffix());
     }
 
-    abstract Property<Boolean> getAddXLinkedEntity();
+    abstract Property<Boolean> getAddXJavaClassName();
 
-    abstract Property<Boolean> getAddXSortable();
+    abstract Property<Boolean> getAddXJavaComparable();
+
+    abstract Property<Boolean> getAddXLinkedEntity();
 
     abstract Property<String> getBasePackage();
 
@@ -73,8 +76,9 @@ abstract class PluginProperties {
 
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
+		.setAddXJavaClassName(getAddXJavaClassName().get()) //
+		.setAddXJavaComparable(getAddXJavaComparable().get()) //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
-		.setAddXSortable(getAddXSortable().get()) //
 		.setBasePackage(getBasePackage().get()) //
 		.setBaseTypePrefix(getBaseTypePrefix().get()) //
 		.setDefaultTypeSuffix(getDefaultTypeSuffix().get()) //

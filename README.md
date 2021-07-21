@@ -52,8 +52,9 @@ Currently following tasks are supported:
 Include the following snippet into `build.gradle`
 ```groovy
 springdatarestutils {
+    addXJavaClassName = true;
+    addXJavaComparable = true;
     addXLinkedEntity = true;
-    addXSortable = true;
     basePackage = 'org.myname.myapp';
     info.get().with {
         title = 'MyApplication Data API';
@@ -66,8 +67,9 @@ springdatarestutils {
 
 | Property                    | Type      |  Default value | Description |
 | --------------------------- | --------- | -------------- | ----------- |
+| addXJavaClassName           | `boolean` | `false`        | Include additional string `x-java-class-name` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas to indicate source java class.
+| addXJavaComparable          | `boolean` | `false`        | Include additional boolean `x-java-comparable` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas to indicate if source java class implements `java.lang.Comparable` interface. Note, that `java.net.URL` does not implement it.
 | addXLinkedEntity            | `boolean` | `false`        | Include additional `x-linked-entity` [extension](https://swagger.io/docs/specification/openapi-extensions/) to every `link` entry to indicate type of entity returned by corresponding `href` URL  
-| addXSortable                | `boolean` | `false`        | Include additional `x-sortable` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas that are sortable from plugin author point of view. Currently it includes all entries implementing `java.lang.Comparable` and `java.net.URL`. Feel free to submit patch to [StandardSchemasProvider.java](https://github.com/vlsergey/spring-data-rest-utils/blob/master/src/main/java/io/github/vlsergey/springdatarestutils/StandardSchemasProvider.java) class better behavior.
 | basePackage                 | `String`  | `""`           | Base package to search JPA repository interfaces in.
 | baseTypePrefix              | `String`  | `"Base"`       | Prefix to add to component's name that contains properties from root classes when inheritance is used.
 | defaultTypeSuffix           | `String`  | `""`           | Suffix to add to TypeScript interfaces to everything except enum classes

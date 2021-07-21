@@ -52,7 +52,8 @@ class EntityToSchemaMapperTest {
 
     @Test
     void testMapAsExposed() throws Exception {
-	final TaskProperties taskProperties = new TaskProperties().setAddXSortable(true);
+	final TaskProperties taskProperties = new TaskProperties().setAddXJavaClassName(true)
+		.setAddXJavaComparable(true);
 	final EntityToSchemaMapper mapper = new EntityToSchemaMapper((a, b) -> b.getName(taskProperties, a),
 		TestEntity.class::equals, emptyScanResult, taskProperties);
 
@@ -69,16 +70,19 @@ class EntityToSchemaMapperTest {
 		"    type: string\n" + //
 		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    x-sortable: true\n" + //
+		"    x-java-class-name: java.time.Instant\n" + //
+		"    x-java-comparable: true\n" + //
 		"  id:\n" + //
 		"    type: string\n" + //
 		"    format: uuid\n" + //
-		"    x-sortable: true\n" + //
+		"    x-java-class-name: java.util.UUID\n" + //
+		"    x-java-comparable: true\n" + //
 		"  updated:\n" + //
 		"    type: string\n" + //
 		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"    x-sortable: true\n" + //
+		"    x-java-class-name: java.time.Instant\n" + //
+		"    x-java-comparable: true\n" + //
 		"", json);
     }
 

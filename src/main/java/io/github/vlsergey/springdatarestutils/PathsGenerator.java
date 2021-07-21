@@ -79,9 +79,15 @@ public class PathsGenerator {
 	return paths;
     }
 
+    @SuppressWarnings("rawtypes")
+    private Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls) {
+	return StandardSchemasProvider.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
+		taskProperties.isAddXJavaComparable());
+    }
+
     public Schema<?> methodInOutsToSchema(Class<?> cls) {
 	@SuppressWarnings("rawtypes")
-	final Optional<Supplier<Schema>> schema = StandardSchemasProvider.getStandardSchemaSupplier(cls, false);
+	final Optional<Supplier<Schema>> schema = getStandardSchemaSupplier(cls);
 	if (!schema.isPresent()) {
 	    throw new UnsupportedOperationException("Unsupported class: " + cls.getName());
 	}
@@ -91,12 +97,11 @@ public class PathsGenerator {
     @SneakyThrows
     private void populateOperationWithPageable(Operation operation) {
 	operation.addParametersItem(new Parameter().description("Results page you want to retrieve (0..N)").in(IN_QUERY)
-		.name("page").schema(StandardSchemasProvider.getStandardSchemaSupplier(int.class, false).get().get()
-			.minimum(BigDecimal.ZERO)));
+		.name("page").schema(getStandardSchemaSupplier(int.class).get().get().minimum(BigDecimal.ZERO)));
 
 	operation.addParametersItem(new Parameter().description("Number of records per page").in(IN_QUERY).name("size")
-		.schema(StandardSchemasProvider.getStandardSchemaSupplier(int.class, false).get().get()
-			.minimum(BigDecimal.ONE).maximum(BigDecimal.valueOf(100))));
+		.schema(getStandardSchemaSupplier(int.class).get().get().minimum(BigDecimal.ONE)
+			.maximum(BigDecimal.valueOf(100))));
 
 	operation.addParametersItem(new Parameter().description("Sorting parameters").explode(Boolean.TRUE).in(IN_QUERY)
 		.name("sort").schema(new ArraySchema().items(new StringSchema())).style(StyleEnum.FORM));
@@ -112,7 +117,7 @@ public class PathsGenerator {
 	    }
 	    final Class<?> propertyType = pd.getPropertyType();
 
-	    StandardSchemasProvider.getStandardSchemaSupplier(propertyType, false).ifPresent(schemaSupplier -> {
+	    getStandardSchemaSupplier(propertyType).ifPresent(schemaSupplier -> {
 		operation.addParametersItem(
 			new Parameter().in(IN_QUERY).name(pd.getName()).schema(schemaSupplier.get()));
 	    });
