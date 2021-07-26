@@ -475,9 +475,14 @@ components:
   schemas:
     Group:
       required:
+      - countOfStudents
       - groupId
       type: object
       properties:
+        countOfStudents:
+          type: integer
+          format: int64
+          nullable: false
         groupId:
           type: string
           format: uuid
@@ -498,6 +503,10 @@ components:
     GroupPatch:
       type: object
       properties:
+        countOfStudents:
+          type: integer
+          format: int64
+          nullable: false
         groupId:
           type: string
           format: uuid
@@ -506,6 +515,10 @@ components:
     GroupRequest:
       type: object
       properties:
+        countOfStudents:
+          type: integer
+          format: int64
+          nullable: false
         groupId:
           type: string
           format: uuid
