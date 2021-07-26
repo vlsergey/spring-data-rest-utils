@@ -10,42 +10,43 @@ import lombok.SneakyThrows;
 
 class PersistenceUtils {
 
-    static final String CLASSNAME_BASIC = "javax.persistence.Basic";
-    static final String CLASSNAME_COLUMN = "javax.persistence.Column";
-    static final String CLASSNAME_DISCRIMINATOR_COLUMN = "javax.persistence.DiscriminatorColumn";
-    static final String CLASSNAME_DISCRIMINATOR_VALUE = "javax.persistence.DiscriminatorValue";
-    static final String CLASSNAME_GENERATED_VALUE = "javax.persistence.GeneratedValue";
-    static final String CLASSNAME_ID = "javax.persistence.Id";
-    static final String CLASSNAME_INHERITANCE = "javax.persistence.Inheritance";
-    static final String CLASSNAME_JOIN_COLUMN = "javax.persistence.JoinColumn";
+    private static final String CLASSNAME_BASIC = "javax.persistence.Basic";
+    private static final String CLASSNAME_COLUMN = "javax.persistence.Column";
+    private static final String CLASSNAME_DISCRIMINATOR_COLUMN = "javax.persistence.DiscriminatorColumn";
+    private static final String CLASSNAME_DISCRIMINATOR_VALUE = "javax.persistence.DiscriminatorValue";
+    private static final String CLASSNAME_GENERATED_VALUE = "javax.persistence.GeneratedValue";
+    private static final String CLASSNAME_ID = "javax.persistence.Id";
+    private static final String CLASSNAME_INHERITANCE = "javax.persistence.Inheritance";
+    private static final String CLASSNAME_JOIN_COLUMN = "javax.persistence.JoinColumn";
 
-    static final Optional<Class<Annotation>> CLASS_BASIC = ReflectionUtils.findClass(CLASSNAME_BASIC);
-    static final Optional<Class<Annotation>> CLASS_COLUMN = ReflectionUtils.findClass(CLASSNAME_COLUMN);
-    static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_COLUMN = ReflectionUtils
+    private static final Optional<Class<Annotation>> CLASS_BASIC = ReflectionUtils.findClass(CLASSNAME_BASIC);
+    private static final Optional<Class<Annotation>> CLASS_COLUMN = ReflectionUtils.findClass(CLASSNAME_COLUMN);
+    private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_COLUMN = ReflectionUtils
 	    .findClass(CLASSNAME_DISCRIMINATOR_COLUMN);
-    static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
+    private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
 	    .findClass(CLASSNAME_DISCRIMINATOR_VALUE);
-    static final Optional<Class<Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
+    private static final Optional<Class<Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
 	    .findClass(CLASSNAME_GENERATED_VALUE);
-    static final Optional<Class<Annotation>> CLASS_ID = ReflectionUtils.findClass(CLASSNAME_ID);
+    private static final Optional<Class<Annotation>> CLASS_ID = ReflectionUtils.findClass(CLASSNAME_ID);
     static final Optional<Class<Annotation>> CLASS_INHERITANCE = ReflectionUtils.findClass(CLASSNAME_INHERITANCE);
-    static final Optional<Class<Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils.findClass(CLASSNAME_JOIN_COLUMN);
+    private static final Optional<Class<Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
+	    .findClass(CLASSNAME_JOIN_COLUMN);
 
-    static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_COLUMN
+    private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "optional"));
 
-    static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN
+    private static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
-    static final Optional<Method> METHOD_COLUMN_NULLABLE = CLASS_COLUMN
+    private static final Optional<Method> METHOD_COLUMN_NULLABLE = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
 
-    static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
+    private static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
 
-    static final Optional<Method> METHOD_DISCRIMINATOR_COLUMN_NAME = CLASS_DISCRIMINATOR_COLUMN
+    private static final Optional<Method> METHOD_DISCRIMINATOR_COLUMN_NAME = CLASS_DISCRIMINATOR_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
 
-    static final Optional<Method> METHOD_JOIN_COLUMN_NULLABLE = CLASS_JOIN_COLUMN
+    private static final Optional<Method> METHOD_JOIN_COLUMN_NULLABLE = CLASS_JOIN_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
 
     static Optional<Boolean> getBasicOptional(final PropertyDescriptor pd) {
@@ -54,8 +55,8 @@ class PersistenceUtils {
     }
 
     static String getColumnName(PropertyDescriptor pd) {
-	return CLASS_DISCRIMINATOR_VALUE.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_DISCRIMINATOR_VALUE_VALUE.map(method -> getOrNull(method, ann, String.class)))
+	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
+		.flatMap(ann -> METHOD_COLUMN_NAME.map(method -> getOrNull(method, ann, String.class)))
 		.orElse(toColumnName(pd.getName()));
     }
 
@@ -90,13 +91,11 @@ class PersistenceUtils {
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {
-	return CLASS_GENERATED_VALUE.map(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd).isPresent())
-		.orElse(false);
+	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_GENERATED_VALUE, pd);
     }
 
     static boolean isId(final PropertyDescriptor pd) {
-	return CLASS_ID.map(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd).isPresent())
-		.orElse(false);
+	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_ID, pd);
     }
 
     private static boolean isUnderscoreRequired(char before, char current, char after) {
