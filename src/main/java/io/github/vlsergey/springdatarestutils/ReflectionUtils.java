@@ -59,4 +59,9 @@ class ReflectionUtils {
 
     }
 
+    static <T extends Annotation> boolean hasAnnotationOnReadMethodOfField(
+	    final @NonNull Optional<Class<T>> annotationClass, final @NonNull PropertyDescriptor pd) {
+	return annotationClass.flatMap(cls -> findAnnotationOnReadMethodOfField(cls, pd)).isPresent();
+    }
+
 }

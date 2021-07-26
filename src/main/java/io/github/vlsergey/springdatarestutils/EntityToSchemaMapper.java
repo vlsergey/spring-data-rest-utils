@@ -80,7 +80,7 @@ public class EntityToSchemaMapper {
 
     private static boolean isGeneratedValue(PropertyDescriptor pd) {
 	return PersistenceUtils.isGeneratedValue(pd) || HibernateUtils.isCreationTimestamp(pd)
-		|| HibernateUtils.isUpdateTimestamp(pd);
+		|| HibernateUtils.isFormula(pd) || HibernateUtils.isUpdateTimestamp(pd);
     }
 
     @SneakyThrows
