@@ -78,7 +78,7 @@ public class ToOpenApiActionImpl {
 	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, isExposed, scanResult,
 		taskProperties);
 
-	apiModel.setPaths(new PathsGenerator(classToRefResolver, isExposed, taskProperties).generate(mapper,
+	apiModel.setPaths(new PathsGenerator(classToRefResolver, isExposed, scanResult, taskProperties).generate(mapper,
 		scanResult.getRepositories(), scanResult.getQueryMethodsCandidates()));
 
 	scanResult.getRepositories().forEach(meta -> {

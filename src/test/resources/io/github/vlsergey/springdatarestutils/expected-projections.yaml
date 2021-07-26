@@ -39,6 +39,14 @@ paths:
           type: array
           items:
             type: string
+      - name: projection
+        in: query
+        description: The name of projection
+        required: false
+        schema:
+          type: string
+          enum:
+          - testProjection
       responses:
         "200":
           description: Success

@@ -5,6 +5,8 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -16,10 +18,15 @@ import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.rest.core.Path;
 import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.data.rest.core.config.Projection;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
+import static java.util.stream.Collectors.toList;
+
+import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
@@ -44,7 +51,7 @@ public class PathsGenerator {
     private static final String CLASSNAME_QUERYDSL_PREDICATE = "com.querydsl.core.types.Predicate";
     private static final String CLASSNAME_SPRING_PAGEABLE = "org.springframework.data.domain.Pageable";
 
-    private static final String IN_QUERY = "query";
+    private static final String IN_QUERY = ParameterIn.QUERY.toString();
 
     private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
@@ -53,6 +60,8 @@ public class PathsGenerator {
     private final ClassToRefResolver classToRefResolver;
 
     private final @NonNull Predicate<Class<?>> isExposed;
+
+    private final @NonNull ScanResult scanResult;
 
     private final @NonNull TaskProperties taskProperties;
 
@@ -100,7 +109,7 @@ public class PathsGenerator {
     }
 
     @SneakyThrows
-    private void populateOperationWithPredicate(@NonNull RepositoryMetadata meta, Operation operation) {
+    private void populateOperationWithPredicate(@NonNull RepositoryMetadata meta, final @NonNull Operation operation) {
 	final Class<?> cls = meta.getDomainType();
 	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
 	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
@@ -114,6 +123,24 @@ public class PathsGenerator {
 			new Parameter().in(IN_QUERY).name(pd.getName()).schema(schemaSupplier.get()));
 	    });
 	}
+    }
+
+    private void populateOperationWithProjection(final @NonNull RepositoryMetadata meta,
+	    final @NonNull Operation operation) {
+	final List<Class<?>> projections = this.scanResult.getProjections().stream().filter(
+		cls -> Arrays.asList(cls.getAnnotation(Projection.class).types()).contains(meta.getDomainType()))
+		.collect(toList());
+	if (projections.isEmpty())
+	    return;
+
+	final Schema<String> schema = new StringSchema();
+	schema.setEnum(projections.stream()
+		.map(cls -> Optional.ofNullable(
+			org.apache.commons.lang3.StringUtils.trimToNull(cls.getAnnotation(Projection.class).name()))
+			.orElseGet(cls::getSimpleName))
+		.collect(toList()));
+	operation.addParametersItem(new Parameter().description("The name of projection").in(IN_QUERY)
+		.name("projection").schema(schema).required(false));
     }
 
     @SneakyThrows
@@ -150,6 +177,7 @@ public class PathsGenerator {
 	    if (method.isPresent()) {
 		populateOperationWithPredicate(meta, operation);
 		populateOperationWithPageable(operation);
+		populateOperationWithProjection(meta, operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
@@ -158,6 +186,7 @@ public class PathsGenerator {
 		    CLASSNAME_SPRING_PAGEABLE);
 	    if (method.isPresent()) {
 		populateOperationWithPageable(operation);
+		populateOperationWithProjection(meta, operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
