@@ -31,6 +31,21 @@ public class EntityToSchemaMapper {
     private final @NonNull TaskProperties taskProperties;
 
     @SuppressWarnings("rawtypes")
+    static Schema<?> buildOneToManyCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
+	ObjectSchema result = new ObjectSchema();
+	result.setRequired(Arrays.asList("_embedded", "_links", "page"));
+
+	result.addProperties("_embedded", new ObjectSchema().addRequiredItem(collectionKey).addProperties(collectionKey,
+		new ArraySchema().items(itemRefSchema)));
+
+	final Schema<?> linkSchema = new Schema<>().$ref("#/components/schemas/" + linkTypeName);
+
+	result.addProperties("_links", new ObjectSchema().addRequiredItem("self").addProperties("self", linkSchema));
+
+	return result;
+    }
+
+    @SuppressWarnings("rawtypes")
     static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
 	ObjectSchema result = new ObjectSchema();
 	result.setRequired(Arrays.asList("_embedded", "_links", "page"));
