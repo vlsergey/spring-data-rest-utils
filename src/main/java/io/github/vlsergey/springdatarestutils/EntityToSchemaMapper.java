@@ -75,7 +75,7 @@ public class EntityToSchemaMapper {
 
     private static boolean isGeneratedValue(PropertyDescriptor pd) {
 	return PersistenceUtils.isGeneratedValue(pd) || HibernateUtils.isCreationTimestamp(pd)
-		|| HibernateUtils.isFormula(pd) || HibernateUtils.isUpdateTimestamp(pd);
+		|| HibernateUtils.isUpdateTimestamp(pd);
     }
 
     @SneakyThrows
@@ -210,7 +210,7 @@ public class EntityToSchemaMapper {
 		break;
 	    }
 	    case CREATE_OR_UPDATE:
-		if (nullable != null && !nullable && !isGeneratedValue(pd))
+		if (nullable != null && !nullable && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    }
@@ -234,7 +234,7 @@ public class EntityToSchemaMapper {
 		    case PATCH:
 			break;
 		    case CREATE_OR_UPDATE:
-			if (nullableBySchema && !isGeneratedValue(pd))
+			if (nullableBySchema && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
 			    objectSchema.addRequiredItem(pd.getName());
 			break;
 		    case RESPONSE:

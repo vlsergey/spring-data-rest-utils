@@ -244,6 +244,10 @@ paths:
       - Student
       description: Find entities
       parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
       - name: studentId
         in: query
         schema:
@@ -483,6 +487,9 @@ components:
           type: integer
           format: int64
           nullable: false
+        firstStudentName:
+          type: string
+          nullable: true
         groupId:
           type: string
           format: uuid
@@ -507,6 +514,9 @@ components:
           type: integer
           format: int64
           nullable: false
+        firstStudentName:
+          type: string
+          nullable: true
         groupId:
           type: string
           format: uuid
@@ -519,6 +529,9 @@ components:
           type: integer
           format: int64
           nullable: false
+        firstStudentName:
+          type: string
+          nullable: true
         groupId:
           type: string
           format: uuid
@@ -566,9 +579,13 @@ components:
           nullable: false
     Student:
       required:
+      - name
       - studentId
       type: object
       properties:
+        name:
+          type: string
+          nullable: false
         studentId:
           type: string
           format: uuid
@@ -589,12 +606,20 @@ components:
     StudentPatch:
       type: object
       properties:
+        name:
+          type: string
+          nullable: false
         studentId:
           type: string
           format: uuid
     StudentRequest:
+      required:
+      - name
       type: object
       properties:
+        name:
+          type: string
+          nullable: false
         studentId:
           type: string
           format: uuid

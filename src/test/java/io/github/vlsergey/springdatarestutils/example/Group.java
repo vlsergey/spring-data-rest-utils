@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Formula;
@@ -21,6 +22,11 @@ public class Group {
     @Basic(fetch = FetchType.LAZY)
     @Formula("(SELECT COUNT(1) FROM students s WHERE s.group_id={alias}.group_id)")
     private long countOfStudents;
+
+    @Nullable
+    @Basic(fetch = FetchType.LAZY)
+    @Formula("(SELECT MIN(name) FROM students s WHERE s.group_id={alias}.group_id)")
+    private String firstStudentName;
 
     @Id
     @Basic(optional = false)
