@@ -1,10 +1,8 @@
 package io.github.vlsergey.springdatarestutils;
 
 import java.beans.BeanInfo;
-import java.beans.FeatureDescriptor;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
@@ -23,12 +21,6 @@ import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class EntityToSchemaMapper {
-
-    private static final Field shortDescriptionField;
-
-    static {
-	shortDescriptionField = getDeclaredField(FeatureDescriptor.class, "shortDescription");
-    }
 
     private final ClassToRefResolver classToRefResolver;
 
@@ -64,18 +56,6 @@ public class EntityToSchemaMapper {
 		.addProperties("totalPages", int32NonNegativeSchema).addProperties("number", int32NonNegativeSchema));
 
 	return result;
-    }
-
-    @SneakyThrows
-    private static Field getDeclaredField(Class<?> cls, String fieldName) {
-	final Field field = cls.getDeclaredField(fieldName);
-	field.setAccessible(true);
-	return field;
-    }
-
-    @SneakyThrows
-    private static boolean hasShortDescription(FeatureDescriptor pd) {
-	return shortDescriptionField.get(pd) != null;
     }
 
     private static boolean isGeneratedValue(PropertyDescriptor pd) {
