@@ -1,6 +1,6 @@
 package io.github.vlsergey.springdatarestutils;
 
-import org.springframework.hateoas.Link;
+import java.util.function.Function;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,97 +12,45 @@ public enum ClassMappingMode {
      * Class is not part of exported entities set, considered as POJO. Enums are
      * also goes here.
      */
-    DATA_ITEM(true) {
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    if (cls.isEnum()) {
-		return cls.getSimpleName() + props.getEnumTypeSuffix();
-	    } else {
-		return cls.getSimpleName() + props.getDefaultTypeSuffix();
-	    }
-	}
-    },
+    DATA_ITEM(true, x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Class is part of exported entities set, but this mode is for patch
      */
-    EXPOSED_PATCH(false) {
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getPatchTypeSuffix();
-	}
-    },
-
-    EXPOSED_RETURN(false) {
-	@Override
-	public boolean generatedValuesMustPresent() {
-	    return true;
-	}
-    },
-
-    EXPOSED_SUBMIT(false) {
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getRequestTypeSuffix();
-	}
-    },
+    EXPOSED(false, x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Container for properties that present in hierarchy base class.
      */
-    INHERITANCE_BASE(false) {
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    return props.getBaseTypePrefix() + cls.getSimpleName() + props.getDefaultTypeSuffix();
-	}
-    },
+    INHERITANCE_BASE(false, TaskProperties::getBaseTypePrefix, TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Extends {@link ClassMappingMode#INHERITANCE_BASE} and includes own
      * properties.
      */
-    INHERITANCE_CHILD(false),
+    INHERITANCE_CHILD(false, x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * The part of entity where _links property is described
      */
-    LINKS(false) {
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getLinksTypeSuffix();
-	}
-    },
+    LINKS(false, x -> "", TaskProperties::getLinksTypeSuffix),
 
-    WITH_LINKS(false) {
-	@Override
-	public boolean generatedValuesMustPresent() {
-	    return true;
-	}
-
-	@Override
-	public String getName(TaskProperties props, Class<?> cls) {
-	    return cls.getSimpleName() + props.getWithLinksTypeSuffix();
-	}
-    },
+    WITH_LINKS(false, x -> "", TaskProperties::getWithLinksTypeSuffix),
 
     /**
      * Class is projection, top level
      */
-    PROJECTION(true),
+    PROJECTION(true, x -> "", TaskProperties::getDefaultTypeSuffix),
 
     ;
 
     @Getter
     private final boolean mappedEntitiesExpoded;
 
-    public boolean generatedValuesMustPresent() {
-	return false;
-    }
+    @Getter
+    private final Function<TaskProperties, String> prefix;
 
-    public String getName(TaskProperties props, Class<?> cls) {
-	if (cls.isAssignableFrom(Link.class)) {
-	    return props.getLinkTypeName();
-	}
-	return cls.getSimpleName() + props.getDefaultTypeSuffix();
-    }
+    @Getter
+    private final Function<TaskProperties, String> suffix;
+
 }

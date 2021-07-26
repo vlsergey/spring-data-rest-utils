@@ -9,19 +9,19 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
-import org.springframework.data.util.Pair;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,36 +47,38 @@ public class ToOpenApiActionImpl {
 	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
 
-	Queue<Pair<Class<?>, ClassMappingMode>> toProcess = new LinkedList<>();
-	Set<Pair<Class<?>, ClassMappingMode>> queued = new HashSet<>();
+	Queue<Triple<Class<?>, ClassMappingMode, RequestType>> toProcess = new LinkedList<>();
+	Set<Triple<Class<?>, ClassMappingMode, RequestType>> queued = new HashSet<>();
 
 	OpenAPI apiModel = new OpenAPI();
 	setApiInfo(apiModel);
 	apiModel.setServers(this.taskProperties.getServers());
 
 	Consumer<Class<?>> onProjection = projectionClass -> {
-	    final Pair<Class<?>, ClassMappingMode> projectionKey = Pair.of(projectionClass,
-		    ClassMappingMode.PROJECTION);
+	    final Triple<Class<?>, ClassMappingMode, RequestType> projectionKey = Triple.of(projectionClass,
+		    ClassMappingMode.PROJECTION, RequestType.RESPONSE);
 	    if (!queued.contains(projectionKey)) {
 		toProcess.add(projectionKey);
 		queued.add(projectionKey);
 	    }
 	};
 
-	final BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName = (cls, mode) -> {
-	    Pair<Class<?>, ClassMappingMode> key = Pair.of(cls, mode);
+	final ClassToRefResolver classToRefResolver = (@NonNull Class<?> cls,
+		@NonNull ClassMappingMode classMappingMode, @NonNull RequestType requestType) -> {
+
+	    final Triple<Class<?>, ClassMappingMode, RequestType> key = Triple.of(cls, classMappingMode, requestType);
 	    if (!queued.contains(key)) {
 		toProcess.add(key);
 		queued.add(key);
 	    }
 
-	    return mode.getName(ToOpenApiActionImpl.this.taskProperties, cls);
+	    return ClassToRefResolver.generateName(taskProperties, cls, classMappingMode, requestType);
 	};
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(getReferencedTypeName, isExposed, scanResult,
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, isExposed, scanResult,
 		taskProperties);
 
-	apiModel.setPaths(new PathsGenerator(getReferencedTypeName, isExposed, taskProperties).generate(mapper,
+	apiModel.setPaths(new PathsGenerator(classToRefResolver, isExposed, taskProperties).generate(mapper,
 		scanResult.getRepositories(), scanResult.getQueryMethodsCandidates()));
 
 	scanResult.getRepositories().forEach(meta -> {
@@ -91,9 +93,14 @@ public class ToOpenApiActionImpl {
 	scanResult.getProjections().stream().forEach(onProjection);
 
 	while (!toProcess.isEmpty()) {
-	    final Pair<Class<?>, ClassMappingMode> head = toProcess.poll();
-	    Schema<?> schema = mapper.mapEntity(head.getFirst(), head.getSecond());
-	    apiModel.schema(head.getSecond().getName(this.taskProperties, head.getFirst()), schema);
+	    final Triple<Class<?>, ClassMappingMode, RequestType> head = toProcess.poll();
+
+	    final Class<?> cls = head.getLeft();
+	    final ClassMappingMode mode = head.getMiddle();
+	    final RequestType requestType = head.getRight();
+
+	    Schema<?> schema = mapper.mapEntity(cls, mode, requestType);
+	    apiModel.schema(ClassToRefResolver.generateName(this.taskProperties, cls, mode, requestType), schema);
 	}
 
 	SchemaUtils.sortMapByKeys(apiModel.getComponents().getSchemas());

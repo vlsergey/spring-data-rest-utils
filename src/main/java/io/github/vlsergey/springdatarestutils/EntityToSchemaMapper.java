@@ -7,7 +7,6 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -31,7 +30,7 @@ public class EntityToSchemaMapper {
 	shortDescriptionField = getDeclaredField(FeatureDescriptor.class, "shortDescription");
     }
 
-    private final BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName;
+    private final ClassToRefResolver classToRefResolver;
 
     private final @NonNull Predicate<@NonNull Class<?>> isExposed;
 
@@ -112,7 +111,8 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    private Schema<?> buildEntityLinksSchema(Class<?> cls, ClassMappingMode mode) {
+    private Schema<?> buildEntityLinksSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
+	    final @NonNull RequestType requestType) {
 	final Map<String, Class<?>> links = new TreeMap<>();
 	links.put("self", cls);
 	links.put(StringUtils.uncapitalize(cls.getSimpleName()), cls);
@@ -132,7 +132,8 @@ public class EntityToSchemaMapper {
 	ObjectSchema linksSchema = new ObjectSchema();
 	linksSchema.setProperties(new TreeMap<>());
 	links.forEach((key, linkClass) -> {
-	    final Schema<?> refSchema = buildRefSchema(Link.class, ClassMappingMode.DATA_ITEM);
+	    final Schema<?> refSchema = classToRefResolver.getRefSchema(Link.class, ClassMappingMode.DATA_ITEM,
+		    requestType);
 	    if (!taskProperties.isAddXJavaClassName() && !taskProperties.isAddXLinkedEntity()) {
 		linksSchema.getProperties().put(key, refSchema);
 		return;
@@ -142,7 +143,7 @@ public class EntityToSchemaMapper {
 	    composedSchema.addAllOfItem(refSchema);
 	    if (taskProperties.isAddXLinkedEntity()) {
 		composedSchema.addExtension(ExtensionConstants.X_LINKED_ENTITY,
-			getReferencedTypeName.apply(linkClass, ClassMappingMode.EXPOSED_RETURN));
+			classToRefResolver.getRefName(linkClass, ClassMappingMode.EXPOSED, requestType));
 	    }
 	    if (taskProperties.isAddXJavaClassName()) {
 		composedSchema.addExtension(ExtensionConstants.X_JAVA_CLASS_NAME, linkClass.getName());
@@ -151,13 +152,14 @@ public class EntityToSchemaMapper {
 	});
 
 	final ObjectSchema objectSchema = new ObjectSchema();
-	objectSchema.setName(getReferencedTypeName.apply(cls, mode));
+	objectSchema.setName(classToRefResolver.getRefName(cls, mode, requestType));
 	objectSchema.addRequiredItem("_links");
 	initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
 	return objectSchema;
     }
 
-    private @NonNull ComposedSchema buildHierarchyRootSchema(final @NonNull Class<?> cls) {
+    private @NonNull ComposedSchema buildHierarchyRootSchema(final @NonNull Class<?> cls,
+	    final @NonNull RequestType requestType) {
 	ComposedSchema composedSchema = new ComposedSchema();
 
 	String discriminatorColumnName = PersistenceUtils.getDiscriminatorColumnName(cls).orElse("DTYPE");
@@ -174,19 +176,21 @@ public class EntityToSchemaMapper {
 
 	    PersistenceUtils.getDiscriminatorValue(childClass).ifPresent(discriminatorValue -> {
 		if (composedSchema.getDiscriminator() != null) {
-		    composedSchema.getDiscriminator().mapping(discriminatorValue, buildRef(childClass, childClassMode));
+		    composedSchema.getDiscriminator().mapping(discriminatorValue,
+			    classToRefResolver.getRefUrl(childClass, childClassMode, requestType));
 		}
 	    });
 
-	    composedSchema.addAnyOfItem(buildRefSchema(childClass, childClassMode));
+	    composedSchema.addAnyOfItem(classToRefResolver.getRefSchema(childClass, childClassMode, requestType));
 	});
 
 	return composedSchema;
     }
 
-    private ObjectSchema buildObjectSchema(Class<?> cls, ClassMappingMode mode) {
+    private ObjectSchema buildObjectSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
+	    final @NonNull RequestType requestType) {
 	final ObjectSchema objectSchema = new ObjectSchema();
-	objectSchema.setName(getReferencedTypeName.apply(cls, mode));
+	objectSchema.setName(classToRefResolver.getRefName(cls, mode, requestType));
 
 	withBeanProperties(cls, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
@@ -201,27 +205,24 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
-	    switch (mode) {
-	    case EXPOSED_PATCH:
+	    switch (requestType) {
+	    case PATCH:
 		// never add as required
 		break;
-	    case EXPOSED_RETURN: {
+	    case RESPONSE: {
 		if ((nullable != null && !nullable) || isGeneratedValue(pd) || PersistenceUtils.isId(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    }
-	    case EXPOSED_SUBMIT:
+	    case CREATE_OR_UPDATE:
 		if (nullable != null && !nullable && !isGeneratedValue(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
-	    default:
-		if (nullable != null && !nullable)
-		    objectSchema.addRequiredItem(pd.getName());
 	    }
 
 	    if (propertyType.isEnum()) {
 		initPropertiesIfNotYet(objectSchema).put(pd.getName(),
-			buildRefSchema(pd.getPropertyType(), ClassMappingMode.DATA_ITEM));
+			classToRefResolver.getRefSchema(pd.getPropertyType(), ClassMappingMode.DATA_ITEM, requestType));
 		return;
 	    }
 
@@ -234,14 +235,14 @@ public class EntityToSchemaMapper {
 		if (objectSchema.getRequired() == null || !objectSchema.getRequired().contains(pd.getName())) {
 		    final boolean nullableBySchema = schema.getNullable() != null && !schema.getNullable();
 
-		    switch (mode) {
-		    case EXPOSED_PATCH:
+		    switch (requestType) {
+		    case PATCH:
 			break;
-		    case EXPOSED_SUBMIT:
+		    case CREATE_OR_UPDATE:
 			if (nullableBySchema && !isGeneratedValue(pd))
 			    objectSchema.addRequiredItem(pd.getName());
 			break;
-		    default:
+		    case RESPONSE:
 			if (nullableBySchema)
 			    objectSchema.addRequiredItem(pd.getName());
 		    }
@@ -260,28 +261,19 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
-	    final ClassMappingMode childPropertyMappingMode = isMappedEntityType
-		    ? (mode.generatedValuesMustPresent() ? ClassMappingMode.EXPOSED_RETURN
-			    : ClassMappingMode.EXPOSED_SUBMIT)
-		    : ClassMappingMode.DATA_ITEM;
+	    final ClassMappingMode childPropertyMappingMode = isMappedEntityType ? mode : ClassMappingMode.DATA_ITEM;
 	    initPropertiesIfNotYet(objectSchema).put(pd.getName(),
-		    buildRefSchema(propertyType, childPropertyMappingMode));
+		    classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode, requestType));
 	});
 	return objectSchema;
     }
 
-    private String buildRef(Class<?> cls, ClassMappingMode mode) {
-	return "#/components/schemas/" + getReferencedTypeName.apply(cls, mode);
-    }
-
-    Schema<?> buildRefSchema(Class<?> cls, ClassMappingMode mode) {
-	return new Schema<>().$ref(buildRef(cls, mode));
-    }
-
     @SneakyThrows
-    private Schema<?> buildWithLinksSchema(Class<?> cls) {
-	final @NonNull Schema<?> withoutLinks = buildRefSchema(cls, ClassMappingMode.EXPOSED_RETURN);
-	final @NonNull Schema<?> links = buildRefSchema(cls, ClassMappingMode.LINKS);
+    private Schema<?> buildWithLinksSchema(final @NonNull Class<?> cls) {
+	final @NonNull Schema<?> withoutLinks = classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED,
+		RequestType.RESPONSE);
+	final @NonNull Schema<?> links = classToRefResolver.getRefSchema(cls, ClassMappingMode.LINKS,
+		RequestType.RESPONSE);
 
 	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
     }
@@ -295,9 +287,10 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    public Schema<?> mapEntity(Class<?> cls, ClassMappingMode mode) {
+    public Schema<?> mapEntity(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
+	    final @NonNull RequestType requestType) {
 	if (mode == ClassMappingMode.LINKS) {
-	    return buildEntityLinksSchema(cls, mode);
+	    return buildEntityLinksSchema(cls, mode, requestType);
 	}
 
 	if (mode == ClassMappingMode.WITH_LINKS) {
@@ -308,8 +301,9 @@ public class EntityToSchemaMapper {
 	    ComposedSchema composedSchema = new ComposedSchema();
 	    final Class<?> baseClass = scanResult.getInheritance().entrySet().stream()
 		    .filter(e -> e.getValue().contains(cls)).findAny().get().getKey();
-	    composedSchema.addAllOfItem(buildRefSchema(baseClass, ClassMappingMode.INHERITANCE_BASE));
-	    composedSchema.addAllOfItem(buildObjectSchema(cls, mode));
+	    composedSchema.addAllOfItem(
+		    classToRefResolver.getRefSchema(baseClass, ClassMappingMode.INHERITANCE_BASE, requestType));
+	    composedSchema.addAllOfItem(buildObjectSchema(cls, mode, requestType));
 	    return composedSchema;
 	}
 
@@ -324,11 +318,12 @@ public class EntityToSchemaMapper {
 	    return entityStandardSchemaSupplier.get().get();
 	}
 
-	if (mode == ClassMappingMode.EXPOSED_RETURN && this.scanResult.getInheritance().containsKey(cls)) {
-	    return buildHierarchyRootSchema(cls);
+	if (mode == ClassMappingMode.EXPOSED && requestType == RequestType.RESPONSE
+		&& this.scanResult.getInheritance().containsKey(cls)) {
+	    return buildHierarchyRootSchema(cls, requestType);
 	}
 
-	return buildObjectSchema(cls, mode);
+	return buildObjectSchema(cls, mode, requestType);
     }
 
     private <T extends Enum<T>> StringSchema mapEnum(Class<T> cls) {

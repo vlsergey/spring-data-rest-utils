@@ -275,6 +275,8 @@ components:
         id:
           type: string
           format: uuid
+        parent:
+          $ref: '#/components/schemas/TestEntity'
         updated:
           type: string
           format: date-time
@@ -283,12 +285,12 @@ components:
       type: object
       properties:
         grandParent:
-          $ref: '#/components/schemas/TestEntityRequest'
+          $ref: '#/components/schemas/TestEntity'
         id:
           type: string
           format: uuid
         parent:
-          $ref: '#/components/schemas/TestEntityRequest'
+          $ref: '#/components/schemas/TestEntity'
         parentId:
           type: string
           format: uuid

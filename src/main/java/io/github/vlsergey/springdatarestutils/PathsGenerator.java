@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -51,7 +50,7 @@ public class PathsGenerator {
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
     private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
 
-    private final BiFunction<Class<?>, ClassMappingMode, String> getReferencedTypeName;
+    private final ClassToRefResolver classToRefResolver;
 
     private final @NonNull Predicate<Class<?>> isExposed;
 
@@ -61,19 +60,11 @@ public class PathsGenerator {
 	return PersistenceUtils.getJoinColumnNullable(pd).or(() -> PersistenceUtils.getColumnNullable(pd)).orElse(true);
     }
 
-    private @NonNull Content buildRefContent(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
-	return SchemaUtils.toContent(buildRefSchema(cls, mode));
-    }
-
-    private @NonNull Schema<Object> buildRefSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode) {
-	return new Schema<>().$ref("#/components/schemas/" + getReferencedTypeName.apply(cls, mode));
-    }
-
     public Paths generate(final @NonNull EntityToSchemaMapper mapper, final @NonNull Iterable<RepositoryMetadata> metas,
 	    final Set<Method> allQueryCandidates) {
 	Paths paths = new Paths();
 	metas.forEach(meta -> {
-	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM);
+	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM, RequestType.PARAMETER);
 	    populatePathItems(meta, allQueryCandidates, idSchema, paths);
 	});
 	return paths;
@@ -96,12 +87,13 @@ public class PathsGenerator {
 
     @SneakyThrows
     private void populateOperationWithPageable(Operation operation) {
+	final Supplier<Schema> intSchemaSupplier = getStandardSchemaSupplier(int.class).get();
+
 	operation.addParametersItem(new Parameter().description("Results page you want to retrieve (0..N)").in(IN_QUERY)
-		.name("page").schema(getStandardSchemaSupplier(int.class).get().get().minimum(BigDecimal.ZERO)));
+		.name("page").schema(intSchemaSupplier.get().minimum(BigDecimal.ZERO)));
 
 	operation.addParametersItem(new Parameter().description("Number of records per page").in(IN_QUERY).name("size")
-		.schema(getStandardSchemaSupplier(int.class).get().get().minimum(BigDecimal.ONE)
-			.maximum(BigDecimal.valueOf(100))));
+		.schema(intSchemaSupplier.get().minimum(BigDecimal.ONE).maximum(BigDecimal.valueOf(100))));
 
 	operation.addParametersItem(new Parameter().description("Sorting parameters").explode(Boolean.TRUE).in(IN_QUERY)
 		.name("sort").schema(new ArraySchema().items(new StringSchema())).style(StyleEnum.FORM));
@@ -134,8 +126,8 @@ public class PathsGenerator {
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
 
-	final Content entityContentWithLinks = SchemaUtils
-		.toContent(buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
+	final Content entityContentWithLinks = classToRefResolver.getRefContent(domainType, ClassMappingMode.WITH_LINKS,
+		RequestType.RESPONSE);
 
 	final String tag = domainType.getSimpleName();
 	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
@@ -148,7 +140,7 @@ public class PathsGenerator {
 
 	    final Schema<?> responseSchema = EntityToSchemaMapper.buildRootCollectionSchema(
 		    taskProperties.getLinkTypeName(), collectionKey,
-		    buildRefSchema(domainType, ClassMappingMode.WITH_LINKS));
+		    classToRefResolver.getRefSchema(domainType, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE));
 
 	    operation.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
 		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success")));
@@ -190,13 +182,13 @@ public class PathsGenerator {
 	    withIdPathItem.setPatch(new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idParameter) //
-		    .requestBody(new RequestBody().required(Boolean.TRUE)
-			    .content(buildRefContent(domainType, ClassMappingMode.EXPOSED_PATCH))) //
+		    .requestBody(
+			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.PATCH)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated"))));
 
-	    final RequestBody requestBody = new RequestBody().required(Boolean.TRUE)
-		    .content(buildRefContent(domainType, ClassMappingMode.EXPOSED_SUBMIT));
+	    final RequestBody requestBody = classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED,
+		    RequestType.CREATE_OR_UPDATE);
 
 	    noIdPathItem.setPost(new Operation() //
 		    .addTagsItem(tag) //
@@ -233,10 +225,9 @@ public class PathsGenerator {
 	    paths.addPathItem(basePath + "/{id}", withIdPathItem);
 	}
 
-	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
-	    // expose additional methods to get linked entity by main entity ID
-	    populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths);
-	});
+	crudMethods.getFindOneMethod().ifPresent(findOneMethod ->
+	// expose additional methods to get linked entity by main entity ID
+	populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths));
 
 	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
     }
@@ -258,8 +249,8 @@ public class PathsGenerator {
 	    final PathItem pathItem = new PathItem();
 
 	    // TODO: move to components
-	    final ApiResponse okResponse = new ApiResponse()
-		    .content(SchemaUtils.toContent(buildRefSchema(propertyType, ClassMappingMode.EXPOSED_RETURN)))
+	    final ApiResponse okResponse = new ApiResponse().content(
+		    classToRefResolver.getRefContent(propertyType, ClassMappingMode.EXPOSED, RequestType.RESPONSE))
 		    .description("Entity is present");
 
 	    // TODO: move to components
