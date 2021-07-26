@@ -200,6 +200,7 @@ components:
   schemas:
     BaseBaseEntity:
       required:
+      - id
       - kind
       type: object
       properties:
