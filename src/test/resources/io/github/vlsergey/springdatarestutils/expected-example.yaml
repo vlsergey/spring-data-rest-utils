@@ -196,6 +196,48 @@ paths:
       responses:
         "204":
           description: Entity has been updated
+  /groups/{id}/students:
+    get:
+      tags:
+      - Group
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - students
+                    type: object
+                    properties:
+                      students:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StudentWithLinks'
+                  _links:
+                    required:
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+        "404":
+          description: Entity is missing
   /students:
     get:
       tags:
@@ -501,6 +543,14 @@ components:
           type: string
         type:
           type: string
+    Set:
+      required:
+      - empty
+      type: object
+      properties:
+        empty:
+          type: boolean
+          nullable: false
     Student:
       required:
       - studentId

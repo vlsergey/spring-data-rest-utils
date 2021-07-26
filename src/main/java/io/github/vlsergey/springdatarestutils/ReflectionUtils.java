@@ -4,7 +4,10 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -57,6 +60,42 @@ class ReflectionUtils {
 		}) //
 		.findAny();
 
+    }
+
+    static Optional<Class<?>> getCollectionGenericTypeArgument(PropertyDescriptor pd) {
+	if (!Collection.class.isAssignableFrom(pd.getPropertyType()))
+	    return Optional.empty();
+
+	return getGenericType(pd).map(type -> {
+	    try {
+		if (type instanceof ParameterizedType) {
+		    Type[] genericArguments = ((ParameterizedType) type).getActualTypeArguments();
+		    return Class.forName(genericArguments[0].getTypeName());
+		}
+	    } catch (ClassNotFoundException exc) {
+		// ignore
+	    }
+	    return null;
+	});
+    }
+
+    static Optional<Type> getGenericType(PropertyDescriptor pd) {
+	if (pd.getReadMethod() != null) {
+	    final Type result = pd.getReadMethod().getGenericReturnType();
+	    if (result != null) {
+		return Optional.of(result);
+	    }
+	}
+	try {
+	    final Field field = pd.getReadMethod().getDeclaringClass().getDeclaredField(pd.getName());
+	    final Type result = field.getGenericType();
+	    if (result != null) {
+		return Optional.of(result);
+	    }
+	} catch (Exception exc) {
+	    // no field
+	}
+	return Optional.empty();
     }
 
     static <T extends Annotation> boolean hasAnnotationOnReadMethodOfField(

@@ -270,9 +270,12 @@ public class PathsGenerator {
 	final BeanInfo beanInfo = Introspector.getBeanInfo(bean);
 
 	// expose additional methods to get linked entity by main entity ID
+
+	// expose one-to-one / many-to-one links
 	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
 	    final Class<?> propertyType = pd.getPropertyType();
-	    if (!isExposed.test(propertyType)) {
+	    if (!isExposed.test(propertyType)
+		    && !ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()) {
 		continue;
 	    }
 	    final PathItem pathItem = new PathItem();
@@ -300,12 +303,42 @@ public class PathsGenerator {
 	    }
 
 	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
-
-	    /*
-	     * There is no need to go deeper -- Spring Data REST can't handle deeper links
-	     */
 	}
 
+	// expose one-to-many / many-to-many links
+	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd)
+		    .filter(isExposed);
+	    if (!opLinkedType.isPresent())
+		continue;
+
+	    final Class<?> linkedType = opLinkedType.get();
+	    final PathItem pathItem = new PathItem();
+
+	    final String collectionKey = English.plural(StringUtils.uncapitalize(linkedType.getSimpleName()));
+
+	    final Schema<?> responseSchema = EntityToSchemaMapper.buildOneToManyCollectionSchema(
+		    taskProperties.getLinkTypeName(), collectionKey,
+		    classToRefResolver.getRefSchema(linkedType, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE));
+
+	    final ApiResponses apiResponses = new ApiResponses();
+
+	    apiResponses.addApiResponse(RESPONSE_CODE_OK,
+		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success"));
+
+	    apiResponses.addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
+
+	    pathItem.get(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(mainIdParameter) //
+		    .responses(apiResponses));
+
+	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
+	}
+
+	/*
+	 * There is no need to go deeper -- Spring Data REST can't handle deeper links
+	 */
     }
 
     private void populatePathItemsWithSearchQueries(final RepositoryMetadata meta, final Set<Method> allQueryCandidates,
