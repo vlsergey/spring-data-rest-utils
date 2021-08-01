@@ -55,8 +55,6 @@ class EntityToSchemaMapperTest {
 		"  rel:\n" + //
 		"    type: string\n" + //
 		"    nullable: false\n" + //
-		"  template:\n" + //
-		"    $ref: '#/components/schemas/UriTemplate'\n" + //
 		"  templated:\n" + //
 		"    type: boolean\n" + //
 		"    nullable: false\n" + //

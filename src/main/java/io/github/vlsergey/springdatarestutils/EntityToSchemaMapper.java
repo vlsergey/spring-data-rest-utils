@@ -228,6 +228,10 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
+	    if (requestType != RequestType.PARAMETER && JacksonUtils.isJsonIgnore(pd)) {
+		return;
+	    }
+
 	    switch (requestType) {
 	    case PATCH:
 		// never add as required

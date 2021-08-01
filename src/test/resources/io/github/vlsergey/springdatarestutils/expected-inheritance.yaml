@@ -306,8 +306,6 @@ components:
         rel:
           type: string
           nullable: false
-        template:
-          $ref: '#/components/schemas/UriTemplate'
         templated:
           type: boolean
           nullable: false
@@ -317,5 +315,3 @@ components:
         type:
           type: string
           nullable: false
-    UriTemplate:
-      type: object

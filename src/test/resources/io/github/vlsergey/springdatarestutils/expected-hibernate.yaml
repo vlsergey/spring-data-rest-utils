@@ -222,8 +222,6 @@ components:
         rel:
           type: string
           nullable: false
-        template:
-          $ref: '#/components/schemas/UriTemplate'
         templated:
           type: boolean
           nullable: false
@@ -294,5 +292,3 @@ components:
       allOf:
       - $ref: '#/components/schemas/TestEntity'
       - $ref: '#/components/schemas/TestEntityLinks'
-    UriTemplate:
-      type: object
