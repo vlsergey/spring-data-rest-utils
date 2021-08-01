@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
-import lombok.SneakyThrows;
-
 class PersistenceUtils {
 
     private static final String CLASSNAME_BASIC = "javax.persistence.Basic";
@@ -50,44 +48,35 @@ class PersistenceUtils {
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
 
     static Optional<Boolean> getBasicOptional(final PropertyDescriptor pd) {
-	return CLASS_BASIC.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_BASIC_OPTIONAL.map(method -> getOrNull(method, ann, Boolean.class)));
+	return CLASS_BASIC.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
+		ann -> METHOD_BASIC_OPTIONAL.map(method -> ReflectionUtils.getOrNull(method, ann, Boolean.class)));
     }
 
     static String getColumnName(PropertyDescriptor pd) {
 	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_COLUMN_NAME.map(method -> getOrNull(method, ann, String.class)))
+		.flatMap(ann -> METHOD_COLUMN_NAME.map(method -> ReflectionUtils.getOrNull(method, ann, String.class)))
 		.orElse(toColumnName(pd.getName()));
     }
 
     static Optional<Boolean> getColumnNullable(PropertyDescriptor pd) {
-	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_COLUMN_NULLABLE.map(method -> getOrNull(method, ann, boolean.class)));
+	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
+		ann -> METHOD_COLUMN_NULLABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)));
     }
 
     static Optional<String> getDiscriminatorColumnName(Class<?> cls) {
-	return CLASS_DISCRIMINATOR_COLUMN.map(cls::getAnnotation)
-		.flatMap(ann -> METHOD_DISCRIMINATOR_COLUMN_NAME.map(method -> getOrNull(method, ann, String.class)));
+	return CLASS_DISCRIMINATOR_COLUMN.map(cls::getAnnotation).flatMap(ann -> METHOD_DISCRIMINATOR_COLUMN_NAME
+		.map(method -> ReflectionUtils.getOrNull(method, ann, String.class)));
     }
 
     static Optional<String> getDiscriminatorValue(Class<?> cls) {
-	return CLASS_DISCRIMINATOR_VALUE.map(cls::getAnnotation)
-		.flatMap(ann -> METHOD_DISCRIMINATOR_VALUE_VALUE.map(method -> getOrNull(method, ann, String.class)));
+	return CLASS_DISCRIMINATOR_VALUE.map(cls::getAnnotation).flatMap(ann -> METHOD_DISCRIMINATOR_VALUE_VALUE
+		.map(method -> ReflectionUtils.getOrNull(method, ann, String.class)));
     }
 
     static Optional<Boolean> getJoinColumnNullable(PropertyDescriptor pd) {
 	return CLASS_JOIN_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_JOIN_COLUMN_NULLABLE.map(method -> getOrNull(method, ann, boolean.class)));
-    }
-
-    @SneakyThrows
-    @SuppressWarnings("unchecked")
-    private static <T> T getOrNull(Method method, Annotation obj, Class<T> resultClass) {
-	try {
-	    return (T) method.invoke(obj);
-	} catch (Exception exc) {
-	    return null;
-	}
+		.flatMap(ann -> METHOD_JOIN_COLUMN_NULLABLE
+			.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)));
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {

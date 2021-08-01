@@ -200,6 +200,7 @@ components:
   schemas:
     BaseBaseEntity:
       required:
+      - fromBase
       - id
       - kind
       type: object
@@ -209,6 +210,7 @@ components:
         id:
           type: string
           format: uuid
+          nullable: false
         kind:
           type: string
           nullable: false
@@ -245,10 +247,9 @@ components:
           format: uuid
         kind:
           type: string
-          nullable: false
     BaseEntityRequest:
       required:
-      - kind
+      - fromBase
       type: object
       properties:
         fromBase:
@@ -266,36 +267,45 @@ components:
     ChildA:
       allOf:
       - $ref: '#/components/schemas/BaseBaseEntity'
-      - type: object
+      - required:
+        - fromA
+        type: object
         properties:
           fromA:
             type: string
     ChildB:
       allOf:
       - $ref: '#/components/schemas/BaseBaseEntity'
-      - type: object
+      - required:
+        - fromB
+        type: object
         properties:
           fromB:
             type: string
     Link:
-      required:
-      - templated
       type: object
       properties:
         deprecation:
           type: string
+          nullable: false
         href:
           type: string
+          nullable: false
         hreflang:
           type: string
+          nullable: false
         media:
           type: string
+          nullable: false
         name:
           type: string
+          nullable: false
         profile:
           type: string
+          nullable: false
         rel:
           type: string
+          nullable: false
         template:
           $ref: '#/components/schemas/UriTemplate'
         templated:
@@ -303,7 +313,9 @@ components:
           nullable: false
         title:
           type: string
+          nullable: false
         type:
           type: string
+          nullable: false
     UriTemplate:
       type: object

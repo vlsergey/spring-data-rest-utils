@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 class ReflectionUtils {
 
@@ -96,6 +97,16 @@ class ReflectionUtils {
 	    // no field
 	}
 	return Optional.empty();
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    static <T> T getOrNull(Method method, Annotation obj, Class<T> resultClass) {
+	try {
+	    return (T) method.invoke(obj);
+	} catch (Exception exc) {
+	    return null;
+	}
     }
 
     static <T extends Annotation> boolean hasAnnotationOnReadMethodOfField(

@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -13,7 +14,9 @@ import org.springframework.util.ReflectionUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-public class AnnotationHelper {
+class NullableUtils {
+
+    private static final Optional<Boolean> OP_TRUE = Optional.of(Boolean.TRUE);
 
     @SneakyThrows
     private static @Nullable Boolean getNullable(@NonNull Annotation[] annotations) {
@@ -42,7 +45,11 @@ public class AnnotationHelper {
 	return null;
     }
 
-    public static @Nullable Boolean getNullable(final @NonNull Class<?> owner, final @NonNull PropertyDescriptor pd) {
+    public static Optional<Boolean> getNullable(final @NonNull Class<?> owner, final @NonNull PropertyDescriptor pd) {
+	if (pd.getPropertyType().isPrimitive()) {
+	    return OP_TRUE;
+	}
+
 	final Method readMethod = pd.getReadMethod();
 	Boolean result = null;
 
@@ -55,7 +62,7 @@ public class AnnotationHelper {
 		result = getNullable(field.getAnnotations());
 	    }
 	}
-	return result;
+	return Optional.ofNullable(result);
     }
 
 }

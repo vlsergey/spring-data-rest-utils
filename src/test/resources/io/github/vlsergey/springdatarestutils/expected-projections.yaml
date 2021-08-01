@@ -242,24 +242,29 @@ paths:
 components:
   schemas:
     Link:
-      required:
-      - templated
       type: object
       properties:
         deprecation:
           type: string
+          nullable: false
         href:
           type: string
+          nullable: false
         hreflang:
           type: string
+          nullable: false
         media:
           type: string
+          nullable: false
         name:
           type: string
+          nullable: false
         profile:
           type: string
+          nullable: false
         rel:
           type: string
+          nullable: false
         template:
           $ref: '#/components/schemas/UriTemplate'
         templated:
@@ -267,12 +272,15 @@ components:
           nullable: false
         title:
           type: string
+          nullable: false
         type:
           type: string
+          nullable: false
     TestEntity:
       required:
       - created
       - id
+      - parent
       - updated
       type: object
       properties:
@@ -283,23 +291,35 @@ components:
         id:
           type: string
           format: uuid
+          nullable: false
         parent:
-          $ref: '#/components/schemas/TestEntity'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TestEntity'
         updated:
           type: string
           format: date-time
           nullable: false
     TestEntityDefaultProjection:
+      required:
+      - grandParent
+      - id
+      - parent
+      - parentId
       type: object
       properties:
         grandParent:
-          $ref: '#/components/schemas/TestEntity'
-        id:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TestEntity'
+        parent:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/TestEntity'
+        parentId:
           type: string
           format: uuid
-        parent:
-          $ref: '#/components/schemas/TestEntity'
-        parentId:
+        id:
           type: string
           format: uuid
     TestEntityLinks:
@@ -322,18 +342,13 @@ components:
         created:
           type: string
           format: date-time
-          nullable: false
         id:
           type: string
           format: uuid
         updated:
           type: string
           format: date-time
-          nullable: false
     TestEntityRequest:
-      required:
-      - created
-      - updated
       type: object
       properties:
         created:

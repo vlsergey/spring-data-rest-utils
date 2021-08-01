@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.UriTemplate;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
@@ -26,6 +28,48 @@ class EntityToSchemaMapperTest {
 	    emptyScanResult, taskProperties);
 
     @Test
+    void testLink() throws Exception {
+	final Schema<?> schema = mapper.mapEntity(Link.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
+	String json = SchemaUtils.writeValueAsString(false, schema);
+
+	assertEquals("type: object\n" + //
+		"properties:\n" + //
+		"  deprecation:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  href:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  hreflang:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  media:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  name:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  profile:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  rel:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  template:\n" + //
+		"    $ref: '#/components/schemas/UriTemplate'\n" + //
+		"  templated:\n" + //
+		"    type: boolean\n" + //
+		"    nullable: false\n" + //
+		"  title:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"  type:\n" + //
+		"    type: string\n" + //
+		"    nullable: false\n" + //
+		"", json);
+    }
+
+    @Test
     void testMapAsDataItem() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
 	String json = SchemaUtils.writeValueAsString(false, schema);
@@ -33,6 +77,7 @@ class EntityToSchemaMapperTest {
 	assertEquals("required:\n" + //
 		"- created\n" + //
 		"- id\n" + //
+		"- parent\n" + //
 		"- updated\n" + //
 		"type: object\n" + //
 		"properties:\n" + //
@@ -43,8 +88,11 @@ class EntityToSchemaMapperTest {
 		"  id:\n" + //
 		"    type: string\n" + //
 		"    format: uuid\n" + //
+		"    nullable: false\n" + //
 		"  parent:\n" + //
-		"    $ref: '#/components/schemas/TestEntity'\n" + //
+		"    nullable: true\n" + //
+		"    oneOf:\n" + //
+		"    - $ref: '#/components/schemas/TestEntity'\n" + //
 		"  updated:\n" + //
 		"    type: string\n" + //
 		"    format: date-time\n" + //
@@ -70,6 +118,7 @@ class EntityToSchemaMapperTest {
 		"  id:\n" + //
 		"    type: string\n" + //
 		"    format: uuid\n" + //
+		"    nullable: false\n" + //
 		"  updated:\n" + //
 		"    type: string\n" + //
 		"    format: date-time\n" + //
@@ -101,6 +150,15 @@ class EntityToSchemaMapperTest {
 		"        allOf:\n" + //
 		"        - $ref: '#/components/schemas/Link'\n" + //
 		"        x-linked-entity: TestEntity\n" + //
+		"", json);
+    }
+
+    @Test
+    void testUriTemplate() throws Exception {
+	final Schema<?> schema = mapper.mapEntity(UriTemplate.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
+	String json = SchemaUtils.writeValueAsString(false, schema);
+
+	assertEquals("type: object\n" + //
 		"", json);
     }
 

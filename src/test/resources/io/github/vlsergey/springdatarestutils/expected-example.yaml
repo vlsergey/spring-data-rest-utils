@@ -480,19 +480,22 @@ components:
     Group:
       required:
       - countOfStudents
+      - firstStudentName
       - groupId
+      - title
       type: object
       properties:
         countOfStudents:
           type: integer
           format: int64
-          nullable: false
+          nullable: true
         firstStudentName:
           type: string
           nullable: true
         groupId:
           type: string
           format: uuid
+          nullable: false
         title:
           type: string
     GroupLinks:
@@ -516,19 +519,20 @@ components:
           nullable: false
         firstStudentName:
           type: string
-          nullable: true
         groupId:
           type: string
           format: uuid
         title:
           type: string
     GroupRequest:
+      required:
+      - title
       type: object
       properties:
         countOfStudents:
           type: integer
           format: int64
-          nullable: false
+          nullable: true
         firstStudentName:
           type: string
           nullable: true
@@ -542,24 +546,29 @@ components:
       - $ref: '#/components/schemas/Group'
       - $ref: '#/components/schemas/GroupLinks'
     Link:
-      required:
-      - templated
       type: object
       properties:
         deprecation:
           type: string
+          nullable: false
         href:
           type: string
+          nullable: false
         hreflang:
           type: string
+          nullable: false
         media:
           type: string
+          nullable: false
         name:
           type: string
+          nullable: false
         profile:
           type: string
+          nullable: false
         rel:
           type: string
+          nullable: false
         template:
           $ref: '#/components/schemas/UriTemplate'
         templated:
@@ -567,8 +576,10 @@ components:
           nullable: false
         title:
           type: string
+          nullable: false
         type:
           type: string
+          nullable: false
     Set:
       required:
       - empty
@@ -576,7 +587,7 @@ components:
       properties:
         empty:
           type: boolean
-          nullable: false
+          nullable: true
     Student:
       required:
       - name
@@ -589,6 +600,7 @@ components:
         studentId:
           type: string
           format: uuid
+          nullable: false
     StudentLinks:
       required:
       - _links
@@ -608,13 +620,10 @@ components:
       properties:
         name:
           type: string
-          nullable: false
         studentId:
           type: string
           format: uuid
     StudentRequest:
-      required:
-      - name
       type: object
       properties:
         name:

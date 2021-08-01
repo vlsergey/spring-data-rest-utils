@@ -30,6 +30,17 @@ public class EntityToSchemaMapper {
 
     private final @NonNull TaskProperties taskProperties;
 
+    @SafeVarargs
+    private static Optional<Boolean> and(Optional<Boolean>... args) {
+	if (Arrays.stream(args).anyMatch(op -> op.isPresent() && !op.get().booleanValue())) {
+	    return Optional.of(Boolean.FALSE);
+	}
+	if (Arrays.stream(args).anyMatch(Optional::isEmpty)) {
+	    return Optional.empty();
+	}
+	return Optional.of(Boolean.TRUE);
+    }
+
     @SuppressWarnings("rawtypes")
     static Schema<?> buildOneToManyCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
 	ObjectSchema result = new ObjectSchema();
@@ -76,6 +87,13 @@ public class EntityToSchemaMapper {
     private static boolean isGeneratedValue(PropertyDescriptor pd) {
 	return PersistenceUtils.isGeneratedValue(pd) || HibernateUtils.isCreationTimestamp(pd)
 		|| HibernateUtils.isUpdateTimestamp(pd);
+    }
+
+    private static Schema<?> makeNullable(Schema schema) {
+	ComposedSchema composedSchema = new ComposedSchema();
+	composedSchema.setNullable(Boolean.TRUE);
+	composedSchema.addOneOfItem(schema);
+	return composedSchema;
     }
 
     @SneakyThrows
@@ -149,7 +167,7 @@ public class EntityToSchemaMapper {
 	final ObjectSchema objectSchema = new ObjectSchema();
 	objectSchema.setName(classToRefResolver.getRefName(cls, mode, requestType));
 	objectSchema.addRequiredItem("_links");
-	initPropertiesIfNotYet(objectSchema).put("_links", linksSchema);
+	objectSchema.addProperties("_links", linksSchema);
 	return objectSchema;
     }
 
@@ -189,9 +207,14 @@ public class EntityToSchemaMapper {
 
 	withBeanProperties(cls, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
-	    final Boolean nullable = AnnotationHelper.getNullable(cls, pd);
+	    final Optional<Boolean> nullable = NullableUtils.getNullable(cls, pd);
 
 	    if (mode == ClassMappingMode.INHERITANCE_CHILD && !pd.getReadMethod().getDeclaringClass().equals(cls)) {
+		return;
+	    }
+
+	    if (ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()
+		    && !mode.isMappedEntitiesExpoded()) {
 		return;
 	    }
 
@@ -200,23 +223,42 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
+	    if (Collection.class.isAssignableFrom(propertyType)) {
+		// not yet implemented
+		return;
+	    }
+
 	    switch (requestType) {
 	    case PATCH:
 		// never add as required
 		break;
-	    case RESPONSE: {
-		if ((nullable != null && !nullable) || isGeneratedValue(pd) || PersistenceUtils.isId(pd))
+	    case RESPONSE:
+		if (JacksonUtils.nullIncludedInJson(cls).orElse(false)) {
+		    // field will always present in response, but may be null
 		    objectSchema.addRequiredItem(pd.getName());
+		}
 		break;
-	    }
 	    case CREATE_OR_UPDATE:
-		if (nullable != null && !nullable && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
+		if (nullable.orElse(true) && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    }
 
+	    final Optional<Boolean> dstNullable;
+	    switch (requestType) {
+	    case RESPONSE:
+		dstNullable = and(nullable, Optional.of(!isGeneratedValue(pd)), JacksonUtils.nullIncludedInJson(cls));
+		break;
+	    case CREATE_OR_UPDATE:
+		dstNullable = nullable;
+		break;
+	    default:
+		dstNullable = Optional.empty();
+		break;
+	    }
+
 	    if (propertyType.isEnum()) {
-		initPropertiesIfNotYet(objectSchema).put(pd.getName(),
+		objectSchema.addProperties(pd.getName(),
 			classToRefResolver.getRefSchema(pd.getPropertyType(), ClassMappingMode.DATA_ITEM, requestType));
 		return;
 	    }
@@ -225,40 +267,15 @@ public class EntityToSchemaMapper {
 		    propertyType, taskProperties.isAddXJavaClassName(), taskProperties.isAddXJavaComparable());
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
-
-		// if not yet added as required, second check
-		if (objectSchema.getRequired() == null || !objectSchema.getRequired().contains(pd.getName())) {
-		    final boolean nullableBySchema = schema.getNullable() != null && !schema.getNullable();
-
-		    switch (requestType) {
-		    case PATCH:
-			break;
-		    case CREATE_OR_UPDATE:
-			if (nullableBySchema && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
-			    objectSchema.addRequiredItem(pd.getName());
-			break;
-		    case RESPONSE:
-			if (nullableBySchema)
-			    objectSchema.addRequiredItem(pd.getName());
-		    }
-
-		}
-
-		if (null != nullable) {
-		    schema.setNullable(nullable);
-		}
-		initPropertiesIfNotYet(objectSchema).put(pd.getName(), schema);
-		return;
-	    }
-
-	    if (Collection.class.isAssignableFrom(propertyType)) {
-		// not yet implemented
+		dstNullable.ifPresent(schema::setNullable);
+		objectSchema.addProperties(pd.getName(), schema);
 		return;
 	    }
 
 	    final ClassMappingMode childPropertyMappingMode = isMappedEntityType ? mode : ClassMappingMode.DATA_ITEM;
-	    initPropertiesIfNotYet(objectSchema).put(pd.getName(),
-		    classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode, requestType));
+	    final Schema<Object> refSchema = classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode,
+		    requestType);
+	    objectSchema.addProperties(pd.getName(), dstNullable.orElse(true) ? makeNullable(refSchema) : refSchema);
 	});
 	return objectSchema;
     }
@@ -271,14 +288,6 @@ public class EntityToSchemaMapper {
 		RequestType.RESPONSE);
 
 	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
-    }
-
-    @SuppressWarnings("rawtypes")
-    private Map<String, Schema> initPropertiesIfNotYet(final ObjectSchema objectSchema) {
-	if (objectSchema.getProperties() == null) {
-	    objectSchema.setProperties(new TreeMap<>());
-	}
-	return objectSchema.getProperties();
     }
 
     @SneakyThrows

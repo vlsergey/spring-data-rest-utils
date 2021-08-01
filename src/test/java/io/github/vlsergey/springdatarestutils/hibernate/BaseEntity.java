@@ -1,13 +1,15 @@
 package io.github.vlsergey.springdatarestutils.hibernate;
 
-import lombok.*;
+import java.time.Instant;
+
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import java.time.Instant;
+import lombok.*;
 
 @Getter
 @MappedSuperclass

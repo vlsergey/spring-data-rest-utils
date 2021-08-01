@@ -199,24 +199,29 @@ paths:
 components:
   schemas:
     Link:
-      required:
-      - templated
       type: object
       properties:
         deprecation:
           type: string
+          nullable: false
         href:
           type: string
+          nullable: false
         hreflang:
           type: string
+          nullable: false
         media:
           type: string
+          nullable: false
         name:
           type: string
+          nullable: false
         profile:
           type: string
+          nullable: false
         rel:
           type: string
+          nullable: false
         template:
           $ref: '#/components/schemas/UriTemplate'
         templated:
@@ -224,8 +229,10 @@ components:
           nullable: false
         title:
           type: string
+          nullable: false
         type:
           type: string
+          nullable: false
     TestEntity:
       required:
       - created
@@ -240,6 +247,7 @@ components:
         entityId:
           type: string
           format: uuid
+          nullable: false
         updated:
           type: string
           format: date-time
@@ -262,14 +270,12 @@ components:
         created:
           type: string
           format: date-time
-          nullable: false
         entityId:
           type: string
           format: uuid
         updated:
           type: string
           format: date-time
-          nullable: false
     TestEntityRequest:
       type: object
       properties:
