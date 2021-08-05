@@ -30,10 +30,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.*;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.Parameter.StyleEnum;
 import io.swagger.v3.oas.models.parameters.RequestBody;
@@ -79,15 +76,13 @@ public class PathsGenerator {
 	return paths;
     }
 
-    @SuppressWarnings("rawtypes")
-    private Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls) {
+    private Optional<Supplier<Schema<?>>> getStandardSchemaSupplier(Class<?> cls) {
 	return StandardSchemasProvider.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
 		taskProperties.isAddXJavaComparable());
     }
 
     public Schema<?> methodInOutsToSchema(Class<?> cls) {
-	@SuppressWarnings("rawtypes")
-	final Optional<Supplier<Schema>> schema = getStandardSchemaSupplier(cls);
+	final Optional<Supplier<Schema<?>>> schema = getStandardSchemaSupplier(cls);
 	if (!schema.isPresent()) {
 	    throw new UnsupportedOperationException("Unsupported class: " + cls.getName());
 	}
@@ -96,13 +91,12 @@ public class PathsGenerator {
 
     @SneakyThrows
     private void populateOperationWithPageable(Operation operation) {
-	final Supplier<Schema> intSchemaSupplier = getStandardSchemaSupplier(int.class).get();
-
 	operation.addParametersItem(new Parameter().description("Results page you want to retrieve (0..N)").in(IN_QUERY)
-		.name("page").schema(intSchemaSupplier.get().minimum(BigDecimal.ZERO)));
+		.name("page").schema(new IntegerSchema().nullable(Boolean.FALSE).minimum(BigDecimal.ZERO)));
 
 	operation.addParametersItem(new Parameter().description("Number of records per page").in(IN_QUERY).name("size")
-		.schema(intSchemaSupplier.get().minimum(BigDecimal.ONE).maximum(BigDecimal.valueOf(100))));
+		.schema(new IntegerSchema().nullable(Boolean.FALSE).minimum(BigDecimal.ONE)
+			.maximum(BigDecimal.valueOf(100))));
 
 	operation.addParametersItem(new Parameter().description("Sorting parameters").explode(Boolean.TRUE).in(IN_QUERY)
 		.name("sort").schema(new ArraySchema().items(new StringSchema())).style(StyleEnum.FORM));

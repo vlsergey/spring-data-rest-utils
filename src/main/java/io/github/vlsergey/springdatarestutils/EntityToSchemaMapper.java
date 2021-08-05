@@ -290,8 +290,9 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
-	    final Optional<Supplier<Schema>> standardSchemaSupplier = StandardSchemasProvider.getStandardSchemaSupplier(
-		    propertyType, taskProperties.isAddXJavaClassName(), taskProperties.isAddXJavaComparable());
+	    final Optional<Supplier<Schema<?>>> standardSchemaSupplier = StandardSchemasProvider
+		    .getStandardSchemaSupplier(propertyType, taskProperties.isAddXJavaClassName(),
+			    taskProperties.isAddXJavaComparable());
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 		dstNullable.ifPresent(schema::setNullable);
@@ -343,7 +344,7 @@ public class EntityToSchemaMapper {
 	    return mapEnum((Class) cls);
 	}
 
-	final Optional<Supplier<Schema>> entityStandardSchemaSupplier = StandardSchemasProvider
+	final Optional<Supplier<Schema<?>>> entityStandardSchemaSupplier = StandardSchemasProvider
 		.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
 			taskProperties.isAddXJavaComparable());
 	if (entityStandardSchemaSupplier.isPresent()) {

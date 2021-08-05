@@ -13,10 +13,9 @@ import java.util.function.Supplier;
 import io.swagger.v3.oas.models.media.*;
 import lombok.NonNull;
 
-@SuppressWarnings({ "rawtypes" })
 public class StandardSchemasProvider {
 
-    private static final @NonNull Map<Class<?>, Supplier<Schema>> standardSchemas = new LinkedHashMap<>();
+    private static final @NonNull Map<Class<?>, Supplier<Schema<?>>> standardSchemas = new LinkedHashMap<>();
 
     static {
 	standardSchemas.put(Instant.class, DateTimeSchema::new);
@@ -38,10 +37,10 @@ public class StandardSchemasProvider {
 	standardSchemas.put(long.class, () -> new IntegerSchema().format("int64").nullable(Boolean.FALSE));
     }
 
-    public static Optional<Supplier<Schema>> getStandardSchemaSupplier(Class<?> cls, boolean withXJavaClassName,
+    public static Optional<Supplier<Schema<?>>> getStandardSchemaSupplier(Class<?> cls, boolean withXJavaClassName,
 	    boolean withXJavaComparable) {
 	return standardSchemas.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(cls)).map(Entry::getValue)
-		.<Supplier<Schema>>map(schemaProvider -> (withXJavaClassName || withXJavaComparable)
+		.<Supplier<Schema<?>>>map(schemaProvider -> (withXJavaClassName || withXJavaComparable)
 			&& (URL.class.isAssignableFrom(cls) || Comparable.class.isAssignableFrom(cls)) ? () -> {
 			    Schema<?> result = schemaProvider.get();
 			    if (withXJavaClassName) {
