@@ -21,7 +21,7 @@ Examples:
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.31.0"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.31.1"
 }
 ```
 
@@ -34,7 +34,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.31.0"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.31.1"
   }
 }
 
