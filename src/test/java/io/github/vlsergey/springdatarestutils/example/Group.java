@@ -40,6 +40,8 @@ public class Group {
     @ToString.Exclude
     private @NonNull Set<Student> students = new HashSet<>();
 
+    private String[] subjects;
+
     @Basic(optional = false)
     @SingleLine
     private @NonNull String title;

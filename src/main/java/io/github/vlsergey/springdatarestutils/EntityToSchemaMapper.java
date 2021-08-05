@@ -219,8 +219,75 @@ public class EntityToSchemaMapper {
 	return composedSchema;
     }
 
-    private ObjectSchema buildObjectSchema(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
+    @SneakyThrows
+    private Schema<?> buildWithLinksSchema(final @NonNull Class<?> cls) {
+	final @NonNull Schema<?> withoutLinks = classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED,
+		RequestType.RESPONSE);
+	final @NonNull Schema<?> links = classToRefResolver.getRefSchema(cls, ClassMappingMode.LINKS,
+		RequestType.RESPONSE);
+
+	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
+    }
+
+    @SneakyThrows
+    public Schema<?> mapEntity(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
 	    final @NonNull RequestType requestType) {
+	if (mode == ClassMappingMode.LINKS) {
+	    return buildEntityLinksSchema(cls, mode, requestType);
+	}
+
+	if (mode == ClassMappingMode.WITH_LINKS) {
+	    return buildWithLinksSchema(cls);
+	}
+
+	if (mode == ClassMappingMode.INHERITANCE_CHILD) {
+	    ComposedSchema composedSchema = new ComposedSchema();
+	    final Class<?> baseClass = scanResult.getInheritance().entrySet().stream()
+		    .filter(e -> e.getValue().contains(cls)).findAny().get().getKey();
+	    composedSchema.addAllOfItem(
+		    classToRefResolver.getRefSchema(baseClass, ClassMappingMode.INHERITANCE_BASE, requestType));
+	    composedSchema.addAllOfItem(toObjectSchema(mode, requestType, cls));
+	    return composedSchema;
+	}
+
+	if (cls.isEnum()) {
+	    return mapEnum((Class) cls);
+	}
+
+	final Optional<Supplier<Schema<?>>> entityStandardSchemaSupplier = StandardSchemasProvider
+		.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
+			taskProperties.isAddXJavaComparable());
+	if (entityStandardSchemaSupplier.isPresent()) {
+	    return entityStandardSchemaSupplier.get().get();
+	}
+
+	if (mode == ClassMappingMode.EXPOSED && requestType == RequestType.RESPONSE
+		&& this.scanResult.getInheritance().containsKey(cls)) {
+	    return buildHierarchyRootSchema(cls, requestType);
+	}
+
+	return toObjectSchema(mode, requestType, cls);
+    }
+
+    private <T extends Enum<T>> StringSchema mapEnum(Class<T> cls) {
+	final StringSchema stringSchema = new StringSchema();
+	for (T constant : cls.getEnumConstants()) {
+	    stringSchema.addEnumItem(constant.name());
+	}
+	return stringSchema;
+    }
+
+    private void populateSchema(PropertyDescriptor pd, Schema<?> schema) {
+	ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
+	ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
+
+	this.customAnnotations
+		.forEach((extensionName, annClass) -> ReflectionUtils.findAnnotationOnReadMethodOfField(annClass, pd)
+			.ifPresent(ann -> schema.addExtension(extensionName, Boolean.TRUE)));
+    }
+
+    private ObjectSchema toObjectSchema(final @NonNull ClassMappingMode mode, final @NonNull RequestType requestType,
+	    final @NonNull Class<?> cls) {
 	final ObjectSchema objectSchema = new ObjectSchema();
 	objectSchema.setName(classToRefResolver.getRefName(cls, mode, requestType));
 
@@ -284,96 +351,40 @@ public class EntityToSchemaMapper {
 		break;
 	    }
 
-	    if (propertyType.isEnum()) {
-		objectSchema.addProperties(pd.getName(),
-			classToRefResolver.getRefSchema(pd.getPropertyType(), ClassMappingMode.DATA_ITEM, requestType));
-		return;
-	    }
-
-	    final Optional<Supplier<Schema<?>>> standardSchemaSupplier = StandardSchemasProvider
-		    .getStandardSchemaSupplier(propertyType, taskProperties.isAddXJavaClassName(),
-			    taskProperties.isAddXJavaComparable());
-	    if (standardSchemaSupplier.isPresent()) {
-		final Schema<?> schema = standardSchemaSupplier.get().get();
-		dstNullable.ifPresent(schema::setNullable);
+	    Schema<?> schema = toSchema(mode, requestType, propertyType, dstNullable);
+	    if (schema.get$ref() == null) {
 		populateSchema(pd, schema);
-		objectSchema.addProperties(pd.getName(), schema);
-		return;
 	    }
-
-	    final ClassMappingMode childPropertyMappingMode = isMappedEntityType ? mode : ClassMappingMode.DATA_ITEM;
-	    final Schema<Object> refSchema = classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode,
-		    requestType);
-	    objectSchema.addProperties(pd.getName(), dstNullable.orElse(true) ? makeNullable(refSchema) : refSchema);
+	    objectSchema.addProperties(pd.getName(), schema);
 	});
 	return objectSchema;
     }
 
-    @SneakyThrows
-    private Schema<?> buildWithLinksSchema(final @NonNull Class<?> cls) {
-	final @NonNull Schema<?> withoutLinks = classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED,
-		RequestType.RESPONSE);
-	final @NonNull Schema<?> links = classToRefResolver.getRefSchema(cls, ClassMappingMode.LINKS,
-		RequestType.RESPONSE);
-
-	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
-    }
-
-    @SneakyThrows
-    public Schema<?> mapEntity(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
-	    final @NonNull RequestType requestType) {
-	if (mode == ClassMappingMode.LINKS) {
-	    return buildEntityLinksSchema(cls, mode, requestType);
+    public Schema<?> toSchema(final @NonNull ClassMappingMode mode, final @NonNull RequestType requestType,
+	    Class<?> propertyType, Optional<Boolean> nullable) {
+	if (propertyType.isEnum()) {
+	    return classToRefResolver.getRefSchema(propertyType, ClassMappingMode.DATA_ITEM, requestType);
 	}
 
-	if (mode == ClassMappingMode.WITH_LINKS) {
-	    return buildWithLinksSchema(cls);
+	if (propertyType.isArray()) {
+	    ArraySchema schema = new ArraySchema();
+	    schema.setItems(toSchema(mode, requestType, propertyType.getComponentType(), Optional.empty()));
+	    return schema;
 	}
 
-	if (mode == ClassMappingMode.INHERITANCE_CHILD) {
-	    ComposedSchema composedSchema = new ComposedSchema();
-	    final Class<?> baseClass = scanResult.getInheritance().entrySet().stream()
-		    .filter(e -> e.getValue().contains(cls)).findAny().get().getKey();
-	    composedSchema.addAllOfItem(
-		    classToRefResolver.getRefSchema(baseClass, ClassMappingMode.INHERITANCE_BASE, requestType));
-	    composedSchema.addAllOfItem(buildObjectSchema(cls, mode, requestType));
-	    return composedSchema;
+	final Optional<Supplier<Schema<?>>> standardSchemaSupplier = StandardSchemasProvider.getStandardSchemaSupplier(
+		propertyType, taskProperties.isAddXJavaClassName(), taskProperties.isAddXJavaComparable());
+	if (standardSchemaSupplier.isPresent()) {
+	    final Schema<?> schema = standardSchemaSupplier.get().get();
+	    nullable.ifPresent(schema::setNullable);
+	    return schema;
 	}
 
-	if (cls.isEnum()) {
-	    return mapEnum((Class) cls);
-	}
-
-	final Optional<Supplier<Schema<?>>> entityStandardSchemaSupplier = StandardSchemasProvider
-		.getStandardSchemaSupplier(cls, taskProperties.isAddXJavaClassName(),
-			taskProperties.isAddXJavaComparable());
-	if (entityStandardSchemaSupplier.isPresent()) {
-	    return entityStandardSchemaSupplier.get().get();
-	}
-
-	if (mode == ClassMappingMode.EXPOSED && requestType == RequestType.RESPONSE
-		&& this.scanResult.getInheritance().containsKey(cls)) {
-	    return buildHierarchyRootSchema(cls, requestType);
-	}
-
-	return buildObjectSchema(cls, mode, requestType);
-    }
-
-    private <T extends Enum<T>> StringSchema mapEnum(Class<T> cls) {
-	final StringSchema stringSchema = new StringSchema();
-	for (T constant : cls.getEnumConstants()) {
-	    stringSchema.addEnumItem(constant.name());
-	}
-	return stringSchema;
-    }
-
-    private void populateSchema(PropertyDescriptor pd, Schema<?> schema) {
-	ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
-	ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
-
-	this.customAnnotations
-		.forEach((extensionName, annClass) -> ReflectionUtils.findAnnotationOnReadMethodOfField(annClass, pd)
-			.ifPresent(ann -> schema.addExtension(extensionName, Boolean.TRUE)));
+	final ClassMappingMode childPropertyMappingMode = isExposed.test(propertyType) ? mode
+		: ClassMappingMode.DATA_ITEM;
+	final Schema<Object> refSchema = classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode,
+		requestType);
+	return nullable.orElse(true) ? makeNullable(refSchema) : refSchema;
     }
 
 }

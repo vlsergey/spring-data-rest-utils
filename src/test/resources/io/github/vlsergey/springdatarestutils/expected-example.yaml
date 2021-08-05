@@ -482,6 +482,7 @@ components:
       - countOfStudents
       - firstStudentName
       - groupId
+      - subjects
       - title
       type: object
       properties:
@@ -498,6 +499,10 @@ components:
           type: string
           format: uuid
           nullable: false
+        subjects:
+          type: array
+          items:
+            type: string
         title:
           type: string
           x-single-line: true
@@ -519,17 +524,26 @@ components:
         groupId:
           type: string
           format: uuid
+        subjects:
+          type: array
+          items:
+            type: string
         title:
           type: string
           x-single-line: true
     GroupRequest:
       required:
+      - subjects
       - title
       type: object
       properties:
         groupId:
           type: string
           format: uuid
+        subjects:
+          type: array
+          items:
+            type: string
         title:
           type: string
           x-single-line: true
