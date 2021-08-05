@@ -21,7 +21,10 @@ import org.openapi4j.parser.validation.v3.OpenApi3Validator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.github.vlsergey.springdatarestutils.example.SingleLine;
 
 class ToOpenApiActionImplTest {
 
@@ -79,6 +82,8 @@ class ToOpenApiActionImplTest {
 
     @Test
     void testExample() throws Exception {
+	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
+
 	withTempFile(tempFile -> {
 	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".example", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());

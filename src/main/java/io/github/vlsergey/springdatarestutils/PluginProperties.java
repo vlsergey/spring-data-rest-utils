@@ -16,6 +16,7 @@ abstract class PluginProperties {
     public PluginProperties() {
 	final TaskProperties defaults = new TaskProperties();
 
+	getAddXCustomAnnotations().convention(defaults.getAddXCustomAnnotations());
 	getAddXJavaComparable().convention(defaults.isAddXJavaComparable());
 	getAddXJavaClassName().convention(defaults.isAddXJavaClassName());
 	getAddXLinkedEntity().convention(defaults.isAddXLinkedEntity());
@@ -39,6 +40,8 @@ abstract class PluginProperties {
 	getServers().convention(defaults.getServers());
 	getWithLinksTypeSuffix().convention(defaults.getWithLinksTypeSuffix());
     }
+
+    abstract ListProperty<String> getAddXCustomAnnotations();
 
     abstract Property<Boolean> getAddXJavaClassName();
 
@@ -76,6 +79,7 @@ abstract class PluginProperties {
 
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
+		.setAddXCustomAnnotations(getAddXCustomAnnotations().get()) //
 		.setAddXJavaClassName(getAddXJavaClassName().get()) //
 		.setAddXJavaComparable(getAddXJavaComparable().get()) //
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //

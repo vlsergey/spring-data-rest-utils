@@ -28,6 +28,7 @@ public class Group {
     @Nullable
     @Basic(fetch = FetchType.LAZY)
     @Formula("(SELECT MIN(name) FROM students s WHERE s.group_id={alias}.group_id)")
+    @SingleLine
     private String firstStudentName;
 
     @Id
@@ -40,7 +41,7 @@ public class Group {
     private @NonNull Set<Student> students = new HashSet<>();
 
     @Basic(optional = false)
-    @ToString.Exclude
+    @SingleLine
     private @NonNull String title;
 
 }

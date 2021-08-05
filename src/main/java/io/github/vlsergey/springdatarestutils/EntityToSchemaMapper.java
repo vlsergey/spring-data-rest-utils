@@ -3,6 +3,7 @@ package io.github.vlsergey.springdatarestutils;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
@@ -13,22 +14,40 @@ import java.util.stream.Stream;
 import org.springframework.hateoas.Link;
 import org.springframework.util.StringUtils;
 
+import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.models.media.*;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-@AllArgsConstructor
 public class EntityToSchemaMapper {
 
     private final ClassToRefResolver classToRefResolver;
+
+    private final @NonNull Map<String, Class<? extends Annotation>> customAnnotations;
 
     private final @NonNull Predicate<@NonNull Class<?>> isExposed;
 
     private final @NonNull ScanResult scanResult;
 
     private final @NonNull TaskProperties taskProperties;
+
+    public EntityToSchemaMapper(ClassToRefResolver classToRefResolver, @NonNull Predicate<@NonNull Class<?>> isExposed,
+	    @NonNull ScanResult scanResult, @NonNull TaskProperties taskProperties) {
+	super();
+	this.classToRefResolver = classToRefResolver;
+	this.isExposed = isExposed;
+	this.scanResult = scanResult;
+	this.taskProperties = taskProperties;
+
+	this.customAnnotations = Optional.ofNullable(taskProperties.getAddXCustomAnnotations()).orElse(emptyList())
+		.stream().map(clsName -> ReflectionUtils.<Annotation>findClass(clsName).orElse(null))
+		.filter(Objects::nonNull)
+		.collect(toMap(cls -> "x-" + CaseUtils.camelToKebab(cls.getSimpleName()), identity()));
+    }
 
     @SafeVarargs
     private static Optional<Boolean> and(Optional<Boolean>... args) {
@@ -89,7 +108,7 @@ public class EntityToSchemaMapper {
 		|| HibernateUtils.isUpdateTimestamp(pd);
     }
 
-    private static Schema<?> makeNullable(Schema schema) {
+    private static Schema<?> makeNullable(Schema<?> schema) {
 	ComposedSchema composedSchema = new ComposedSchema();
 	composedSchema.setNullable(Boolean.TRUE);
 	composedSchema.addOneOfItem(schema);
@@ -276,10 +295,7 @@ public class EntityToSchemaMapper {
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 		dstNullable.ifPresent(schema::setNullable);
-
-		ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
-		ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
-
+		populateSchema(pd, schema);
 		objectSchema.addProperties(pd.getName(), schema);
 		return;
 	    }
@@ -348,6 +364,15 @@ public class EntityToSchemaMapper {
 	    stringSchema.addEnumItem(constant.name());
 	}
 	return stringSchema;
+    }
+
+    private void populateSchema(PropertyDescriptor pd, Schema<?> schema) {
+	ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
+	ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
+
+	this.customAnnotations
+		.forEach((extensionName, annClass) -> ReflectionUtils.findAnnotationOnReadMethodOfField(annClass, pd)
+			.ifPresent(ann -> schema.addExtension(extensionName, Boolean.TRUE)));
     }
 
 }

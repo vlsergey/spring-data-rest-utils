@@ -20,6 +20,7 @@ public class Student {
 
     @Basic(optional = false)
     @Column(nullable = false)
+    @SingleLine
     private String name;
 
     @Id

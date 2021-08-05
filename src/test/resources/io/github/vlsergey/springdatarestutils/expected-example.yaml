@@ -493,12 +493,14 @@ components:
         firstStudentName:
           type: string
           nullable: true
+          x-single-line: true
         groupId:
           type: string
           format: uuid
           nullable: false
         title:
           type: string
+          x-single-line: true
     GroupLinks:
       required:
       - _links
@@ -519,6 +521,7 @@ components:
           format: uuid
         title:
           type: string
+          x-single-line: true
     GroupRequest:
       required:
       - title
@@ -529,6 +532,7 @@ components:
           format: uuid
         title:
           type: string
+          x-single-line: true
     GroupWithLinks:
       allOf:
       - $ref: '#/components/schemas/Group'
@@ -583,6 +587,7 @@ components:
         name:
           type: string
           nullable: false
+          x-single-line: true
         studentId:
           type: string
           format: uuid
@@ -606,6 +611,7 @@ components:
       properties:
         name:
           type: string
+          x-single-line: true
         studentId:
           type: string
           format: uuid
@@ -615,6 +621,7 @@ components:
         name:
           type: string
           nullable: false
+          x-single-line: true
         studentId:
           type: string
           format: uuid

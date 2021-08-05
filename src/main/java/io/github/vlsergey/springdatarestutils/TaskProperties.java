@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import io.swagger.v3.oas.models.info.Info;
@@ -12,6 +13,8 @@ import lombok.Data;
 
 @Data
 public class TaskProperties {
+
+    private List<String> addXCustomAnnotations = emptyList();
 
     private boolean addXJavaClassName = false;
 
