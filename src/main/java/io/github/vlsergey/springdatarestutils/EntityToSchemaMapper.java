@@ -232,6 +232,10 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
+	    if (requestType != RequestType.RESPONSE && HibernateUtils.isFormula(pd)) {
+		return;
+	    }
+
 	    switch (requestType) {
 	    case PATCH:
 		// never add as required

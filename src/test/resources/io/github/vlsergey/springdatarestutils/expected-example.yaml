@@ -514,13 +514,6 @@ components:
     GroupPatch:
       type: object
       properties:
-        countOfStudents:
-          minimum: 0
-          type: integer
-          format: int64
-          nullable: false
-        firstStudentName:
-          type: string
         groupId:
           type: string
           format: uuid
@@ -531,14 +524,6 @@ components:
       - title
       type: object
       properties:
-        countOfStudents:
-          minimum: 0
-          type: integer
-          format: int64
-          nullable: true
-        firstStudentName:
-          type: string
-          nullable: true
         groupId:
           type: string
           format: uuid
