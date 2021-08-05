@@ -250,6 +250,7 @@ components:
     BaseEntityRequest:
       required:
       - fromBase
+      - kind
       type: object
       properties:
         fromBase:
@@ -257,6 +258,7 @@ components:
         id:
           type: string
           format: uuid
+          nullable: false
         kind:
           type: string
           nullable: false

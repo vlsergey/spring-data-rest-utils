@@ -30,7 +30,7 @@ class PersistenceUtils {
     private static final Optional<Class<Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
 	    .findClass(CLASSNAME_JOIN_COLUMN);
 
-    private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_COLUMN
+    private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_BASIC
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "optional"));
 
     private static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN

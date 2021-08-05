@@ -284,6 +284,7 @@ components:
         entityId:
           type: string
           format: uuid
+          nullable: false
         updated:
           type: string
           format: date-time

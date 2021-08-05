@@ -49,17 +49,6 @@ public class EntityToSchemaMapper {
 		.collect(toMap(cls -> "x-" + CaseUtils.camelToKebab(cls.getSimpleName()), identity()));
     }
 
-    @SafeVarargs
-    private static Optional<Boolean> and(Optional<Boolean>... args) {
-	if (Arrays.stream(args).anyMatch(op -> op.isPresent() && !op.get().booleanValue())) {
-	    return Optional.of(Boolean.FALSE);
-	}
-	if (Arrays.stream(args).anyMatch(Optional::isEmpty)) {
-	    return Optional.empty();
-	}
-	return Optional.of(Boolean.TRUE);
-    }
-
     @SuppressWarnings("rawtypes")
     static Schema<?> buildOneToManyCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
 	ObjectSchema result = new ObjectSchema();
@@ -293,7 +282,7 @@ public class EntityToSchemaMapper {
 
 	withBeanProperties(cls, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
-	    final Optional<Boolean> nullable = NullableUtils.getNullable(cls, pd);
+	    final Optional<Boolean> nullable = NullableUtils.getNullable(pd);
 
 	    if (mode == ClassMappingMode.INHERITANCE_CHILD && !pd.getReadMethod().getDeclaringClass().equals(cls)) {
 		return;
@@ -333,7 +322,7 @@ public class EntityToSchemaMapper {
 		}
 		break;
 	    case CREATE_OR_UPDATE:
-		if (nullable.orElse(true) && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
+		if (!nullable.orElse(false) && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
 	    }
@@ -341,7 +330,8 @@ public class EntityToSchemaMapper {
 	    final Optional<Boolean> dstNullable;
 	    switch (requestType) {
 	    case RESPONSE:
-		dstNullable = and(nullable, Optional.of(!isGeneratedValue(pd)), JacksonUtils.nullIncludedInJson(cls));
+		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!isGeneratedValue(pd)),
+			JacksonUtils.nullIncludedInJson(cls));
 		break;
 	    case CREATE_OR_UPDATE:
 		dstNullable = nullable;

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.persistence.Column;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.UriTemplate;
@@ -16,6 +18,7 @@ import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.github.vlsergey.springdatarestutils.projections.TestEntityDefaultProjection;
 import io.github.vlsergey.springdatarestutils.test.TestEntity;
 import io.swagger.v3.oas.models.media.Schema;
+import lombok.Getter;
 
 class EntityToSchemaMapperTest {
 
@@ -26,6 +29,31 @@ class EntityToSchemaMapperTest {
     private final EntityToSchemaMapper mapper = new EntityToSchemaMapper(
 	    (a, b, c) -> ClassToRefResolver.generateName(taskProperties, a, b, c), TestEntity.class::equals,
 	    emptyScanResult, taskProperties);
+
+    @Test
+    void nullableArrayIsExposedAsNullable() {
+	// it's required in response, because server will fill it (but may be with null)
+	assertEquals("required:\n" + //
+		"- nullableArray\n" + //
+		"type: object\n" + //
+		"properties:\n" + //
+		"  nullableArray:\n" + //
+		"    type: array\n" + //
+		"    items:\n" + //
+		"      type: string\n" + //
+		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,
+			ClassMappingMode.EXPOSED, RequestType.RESPONSE)));
+
+	// but optional in create/update request
+	assertEquals("type: object\n" + //
+		"properties:\n" + //
+		"  nullableArray:\n" + //
+		"    type: array\n" + //
+		"    items:\n" + //
+		"      type: string\n" + //
+		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,
+			ClassMappingMode.EXPOSED, RequestType.CREATE_OR_UPDATE)));
+    }
 
     @Test
     void testLink() throws Exception {
@@ -165,6 +193,12 @@ class EntityToSchemaMapperTest {
 	List<String> props = new ArrayList<>();
 	EntityToSchemaMapper.withBeanProperties(TestEntityDefaultProjection.class, pd -> props.add(pd.getName()));
 	assertEquals(Arrays.asList("grandParent", "parent", "parentId", "id"), props);
+    }
+
+    @Getter
+    public static class ClassWithNullableArray {
+	@Column(nullable = true)
+	private String[] nullableArray;
     }
 
 }

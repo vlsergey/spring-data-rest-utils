@@ -490,7 +490,7 @@ components:
           minimum: 0
           type: integer
           format: int64
-          nullable: true
+          nullable: false
         firstStudentName:
           type: string
           nullable: true
@@ -505,6 +505,7 @@ components:
             type: string
         title:
           type: string
+          nullable: false
           x-single-line: true
     GroupLinks:
       required:
@@ -540,12 +541,14 @@ components:
         groupId:
           type: string
           format: uuid
+          nullable: false
         subjects:
           type: array
           items:
             type: string
         title:
           type: string
+          nullable: false
           x-single-line: true
     GroupWithLinks:
       allOf:
@@ -591,7 +594,7 @@ components:
       properties:
         empty:
           type: boolean
-          nullable: true
+          nullable: false
     Student:
       required:
       - name
@@ -630,6 +633,8 @@ components:
           type: string
           format: uuid
     StudentRequest:
+      required:
+      - name
       type: object
       properties:
         name:
@@ -639,6 +644,7 @@ components:
         studentId:
           type: string
           format: uuid
+          nullable: false
     StudentWithLinks:
       allOf:
       - $ref: '#/components/schemas/Student'

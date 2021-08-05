@@ -347,6 +347,9 @@ components:
           type: string
           format: date-time
     TestEntityRequest:
+      required:
+      - created
+      - updated
       type: object
       properties:
         created:
@@ -356,6 +359,7 @@ components:
         id:
           type: string
           format: uuid
+          nullable: false
         updated:
           type: string
           format: date-time
