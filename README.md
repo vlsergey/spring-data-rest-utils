@@ -21,7 +21,7 @@ Examples:
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.29.0"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.30.0"
 }
 ```
 
@@ -34,7 +34,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.29.0"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.30.0"
   }
 }
 
@@ -52,6 +52,7 @@ Currently following tasks are supported:
 Include the following snippet into `build.gradle`
 ```groovy
 springdatarestutils {
+    addXCustomAnnotations = ['org.tempuri.data.MyAnnotation'];
     addXJavaClassName = true;
     addXJavaComparable = true;
     addXLinkedEntity = true;
@@ -65,8 +66,9 @@ springdatarestutils {
 }
 ```
 
-| Property                    | Type      |  Default value | Description |
-| --------------------------- | --------- | -------------- | ----------- |
+| Property                    | Type           |  Default value | Description |
+| --------------------------- | -------------- | -------------- | ----------- |
+| addXCustomAnnotations       | `List<String>` | empty list     | Include additional `x-annotation-simple-name` [extension](https://swagger.io/docs/specification/openapi-extensions/) to property when field (read method) is annotated with annotation of such classes. Can be used for custom validation or UI improvements like provising `@Multiline` to generate `textarea` instead of `input`.
 | addXJavaClassName           | `boolean` | `false`        | Include additional string `x-java-class-name` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas to indicate source java class.
 | addXJavaComparable          | `boolean` | `false`        | Include additional boolean `x-java-comparable` [extension](https://swagger.io/docs/specification/openapi-extensions/) to schemas to indicate if source java class implements `java.lang.Comparable` interface. Note, that `java.net.URL` does not implement it.
 | addXLinkedEntity            | `boolean` | `false`        | Include additional `x-linked-entity` [extension](https://swagger.io/docs/specification/openapi-extensions/) to every `link` entry to indicate type of entity returned by corresponding `href` URL  
