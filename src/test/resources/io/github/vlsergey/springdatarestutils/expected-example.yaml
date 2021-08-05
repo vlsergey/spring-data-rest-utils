@@ -486,6 +486,7 @@ components:
       type: object
       properties:
         countOfStudents:
+          minimum: 0
           type: integer
           format: int64
           nullable: true
@@ -514,6 +515,7 @@ components:
       type: object
       properties:
         countOfStudents:
+          minimum: 0
           type: integer
           format: int64
           nullable: false
@@ -530,6 +532,7 @@ components:
       type: object
       properties:
         countOfStudents:
+          minimum: 0
           type: integer
           format: int64
           nullable: true

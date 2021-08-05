@@ -272,6 +272,10 @@ public class EntityToSchemaMapper {
 	    if (standardSchemaSupplier.isPresent()) {
 		final Schema<?> schema = standardSchemaSupplier.get().get();
 		dstNullable.ifPresent(schema::setNullable);
+
+		ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
+		ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
+
 		objectSchema.addProperties(pd.getName(), schema);
 		return;
 	    }

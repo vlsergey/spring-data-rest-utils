@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Min;
 
 import org.hibernate.annotations.Formula;
 
@@ -19,6 +20,7 @@ import lombok.ToString;
 @Setter
 public class Group {
 
+    @Min(0)
     @Basic(fetch = FetchType.LAZY)
     @Formula("(SELECT COUNT(1) FROM students s WHERE s.group_id={alias}.group_id)")
     private long countOfStudents;
