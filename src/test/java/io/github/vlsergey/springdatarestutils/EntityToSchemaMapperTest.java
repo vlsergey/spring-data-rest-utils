@@ -32,13 +32,14 @@ class EntityToSchemaMapperTest {
 
     @Test
     void nullableArrayIsExposedAsNullable() {
-	// it's required in response, because server will fill it (but may be with null)
+	// it's required in response, because server will fill it (but may be null)
 	assertEquals("required:\n" + //
 		"- nullableArray\n" + //
 		"type: object\n" + //
 		"properties:\n" + //
 		"  nullableArray:\n" + //
 		"    type: array\n" + //
+		"    nullable: true\n" + //
 		"    items:\n" + //
 		"      type: string\n" + //
 		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,
@@ -49,6 +50,7 @@ class EntityToSchemaMapperTest {
 		"properties:\n" + //
 		"  nullableArray:\n" + //
 		"    type: array\n" + //
+		"    nullable: true\n" + //
 		"    items:\n" + //
 		"      type: string\n" + //
 		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,

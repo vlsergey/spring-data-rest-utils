@@ -359,6 +359,7 @@ public class EntityToSchemaMapper {
 	if (propertyType.isArray()) {
 	    ArraySchema schema = new ArraySchema();
 	    schema.setItems(toSchema(mode, requestType, propertyType.getComponentType(), Optional.empty()));
+	    nullable.ifPresent(schema::setNullable);
 	    return schema;
 	}
 
