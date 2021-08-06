@@ -40,6 +40,7 @@ class NullableUtils {
 	return OptionalUtils.coalesce( //
 		PersistenceUtils.getBasicOptional(pd), //
 		PersistenceUtils.getColumnNullable(pd), //
+		PersistenceUtils.getJoinColumnNullable(pd), //
 		getNullableAnnotationPresent(pd));
     }
 
