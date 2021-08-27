@@ -44,7 +44,6 @@ public enum ClassMappingMode {
 
     ;
 
-    @Getter
     private final boolean mappedEntitiesExpoded;
 
     @Getter

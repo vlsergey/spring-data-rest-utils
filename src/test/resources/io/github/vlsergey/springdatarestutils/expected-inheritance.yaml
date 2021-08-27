@@ -108,7 +108,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BaseEntityRequest'
+              $ref: '#/components/schemas/NewBaseEntityRequest'
         required: true
       responses:
         "200":
@@ -250,7 +250,6 @@ components:
     BaseEntityRequest:
       required:
       - fromBase
-      - kind
       type: object
       properties:
         fromBase:
@@ -258,9 +257,6 @@ components:
         id:
           type: string
           format: uuid
-          nullable: false
-        kind:
-          type: string
           nullable: false
     BaseEntityWithLinks:
       allOf:
@@ -316,4 +312,15 @@ components:
           nullable: false
         type:
           type: string
+          nullable: false
+    NewBaseEntityRequest:
+      required:
+      - fromBase
+      type: object
+      properties:
+        fromBase:
+          type: string
+        id:
+          type: string
+          format: uuid
           nullable: false

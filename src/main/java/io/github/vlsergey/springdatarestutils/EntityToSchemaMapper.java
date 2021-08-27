@@ -288,14 +288,18 @@ public class EntityToSchemaMapper {
 		return;
 	    }
 
-	    if (ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()
-		    && !mode.isMappedEntitiesExpoded()) {
-		return;
-	    }
-
-	    boolean isMappedEntityType = isExposed.test(propertyType);
-	    if (isMappedEntityType && !mode.isMappedEntitiesExpoded()) {
-		return;
+	    if (isExposed.test(propertyType)
+		    || ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()) {
+		switch (mode) {
+		case PROJECTION:
+		case DATA_ITEM:
+		    break;
+		default:
+		    if (requestType == RequestType.RESPONSE) {
+			// exposed as link only
+			return;
+		    }
+		}
 	    }
 
 	    if (Collection.class.isAssignableFrom(propertyType)) {
@@ -306,7 +310,14 @@ public class EntityToSchemaMapper {
 	    if (requestType != RequestType.PARAMETER && JacksonUtils.isJsonIgnore(pd)) {
 		return;
 	    }
-
+	    if (requestType == RequestType.CREATE
+		    && (!PersistenceUtils.isColumnInsertable(pd) || HibernateUtils.isCreationTimestamp(pd))) {
+		return;
+	    }
+	    if (requestType == RequestType.UPDATE
+		    && (!PersistenceUtils.isColumnUpdatable(pd) || HibernateUtils.isUpdateTimestamp(pd))) {
+		return;
+	    }
 	    if (requestType != RequestType.RESPONSE && HibernateUtils.isFormula(pd)) {
 		return;
 	    }
@@ -321,7 +332,8 @@ public class EntityToSchemaMapper {
 		    objectSchema.addRequiredItem(pd.getName());
 		}
 		break;
-	    case CREATE_OR_UPDATE:
+	    case CREATE:
+	    case UPDATE:
 		if (!nullable.orElse(false) && !isGeneratedValue(pd) && !HibernateUtils.isFormula(pd))
 		    objectSchema.addRequiredItem(pd.getName());
 		break;
@@ -333,7 +345,8 @@ public class EntityToSchemaMapper {
 		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!isGeneratedValue(pd)),
 			JacksonUtils.nullIncludedInJson(cls));
 		break;
-	    case CREATE_OR_UPDATE:
+	    case CREATE:
+	    case UPDATE:
 		dstNullable = nullable;
 		break;
 	    default:
@@ -354,6 +367,13 @@ public class EntityToSchemaMapper {
 	    Class<?> propertyType, Optional<Boolean> nullable) {
 	if (propertyType.isEnum()) {
 	    return classToRefResolver.getRefSchema(propertyType, ClassMappingMode.DATA_ITEM, requestType);
+	}
+
+	if ((mode != ClassMappingMode.PROJECTION && mode != ClassMappingMode.DATA_ITEM)
+		&& isExposed.test(propertyType)) {
+	    StringSchema schema = new StringSchema();
+	    nullable.ifPresent(schema::setNullable);
+	    return schema;
 	}
 
 	if (propertyType.isArray()) {

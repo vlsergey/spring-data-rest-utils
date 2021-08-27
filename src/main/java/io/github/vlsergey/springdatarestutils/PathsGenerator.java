@@ -33,7 +33,6 @@ import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.*;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.Parameter.StyleEnum;
-import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import lombok.AllArgsConstructor;
@@ -206,12 +205,10 @@ public class PathsGenerator {
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated"))));
 
-	    final RequestBody requestBody = classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED,
-		    RequestType.CREATE_OR_UPDATE);
-
 	    noIdPathItem.setPost(new Operation() //
 		    .addTagsItem(tag) //
-		    .requestBody(requestBody) //
+		    .requestBody(
+			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.CREATE)) //
 		    .responses(new ApiResponses()
 			    .addApiResponse(RESPONSE_CODE_OK,
 				    new ApiResponse().content(entityContentWithLinks)
@@ -222,7 +219,8 @@ public class PathsGenerator {
 	    withIdPathItem.setPut(new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idParameter) //
-		    .requestBody(requestBody) //
+		    .requestBody(
+			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.UPDATE)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated"))));
 	});

@@ -22,6 +22,7 @@ public interface ClassToRefResolver {
 	}
 
 	final StringBuilder sb = new StringBuilder();
+	sb.append(requestType.getPrefix().apply(taskProperties));
 	sb.append(classMappingMode.getPrefix().apply(taskProperties));
 	sb.append(cls.getSimpleName());
 	if (cls.isEnum()) {

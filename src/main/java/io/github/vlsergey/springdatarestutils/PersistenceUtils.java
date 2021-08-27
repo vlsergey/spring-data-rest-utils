@@ -8,41 +8,38 @@ import java.util.Optional;
 
 class PersistenceUtils {
 
-    private static final String CLASSNAME_BASIC = "javax.persistence.Basic";
-    private static final String CLASSNAME_COLUMN = "javax.persistence.Column";
-    private static final String CLASSNAME_DISCRIMINATOR_COLUMN = "javax.persistence.DiscriminatorColumn";
-    private static final String CLASSNAME_DISCRIMINATOR_VALUE = "javax.persistence.DiscriminatorValue";
-    private static final String CLASSNAME_GENERATED_VALUE = "javax.persistence.GeneratedValue";
-    private static final String CLASSNAME_ID = "javax.persistence.Id";
-    private static final String CLASSNAME_INHERITANCE = "javax.persistence.Inheritance";
-    private static final String CLASSNAME_JOIN_COLUMN = "javax.persistence.JoinColumn";
-
-    private static final Optional<Class<Annotation>> CLASS_BASIC = ReflectionUtils.findClass(CLASSNAME_BASIC);
-    private static final Optional<Class<Annotation>> CLASS_COLUMN = ReflectionUtils.findClass(CLASSNAME_COLUMN);
+    private static final Optional<Class<Annotation>> CLASS_BASIC = ReflectionUtils.findClass("javax.persistence.Basic");
+    private static final Optional<Class<Annotation>> CLASS_COLUMN = ReflectionUtils
+	    .findClass("javax.persistence.Column");
     private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_COLUMN = ReflectionUtils
-	    .findClass(CLASSNAME_DISCRIMINATOR_COLUMN);
+	    .findClass("javax.persistence.DiscriminatorColumn");
     private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
-	    .findClass(CLASSNAME_DISCRIMINATOR_VALUE);
+	    .findClass("javax.persistence.DiscriminatorValue");
     private static final Optional<Class<Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
-	    .findClass(CLASSNAME_GENERATED_VALUE);
-    private static final Optional<Class<Annotation>> CLASS_ID = ReflectionUtils.findClass(CLASSNAME_ID);
-    static final Optional<Class<Annotation>> CLASS_INHERITANCE = ReflectionUtils.findClass(CLASSNAME_INHERITANCE);
+	    .findClass("javax.persistence.GeneratedValue");
+    private static final Optional<Class<Annotation>> CLASS_ID = ReflectionUtils.findClass("javax.persistence.Id");
+    static final Optional<Class<Annotation>> CLASS_INHERITANCE = ReflectionUtils
+	    .findClass("javax.persistence.Inheritance");
     private static final Optional<Class<Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
-	    .findClass(CLASSNAME_JOIN_COLUMN);
+	    .findClass("javax.persistence.JoinColumn");
 
     private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_BASIC
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "optional"));
 
+    private static final Optional<Method> METHOD_COLUMN_INSERTABLE = CLASS_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "insertable"));
     private static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
     private static final Optional<Method> METHOD_COLUMN_NULLABLE = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
-
-    private static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
-	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
+    private static final Optional<Method> METHOD_COLUMN_UPDATABLE = CLASS_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "updatable"));
 
     private static final Optional<Method> METHOD_DISCRIMINATOR_COLUMN_NAME = CLASS_DISCRIMINATOR_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
+
+    private static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
 
     private static final Optional<Method> METHOD_JOIN_COLUMN_NULLABLE = CLASS_JOIN_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
@@ -79,6 +76,18 @@ class PersistenceUtils {
 			.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)));
     }
 
+    static boolean isColumnInsertable(PropertyDescriptor pd) {
+	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
+		ann -> METHOD_COLUMN_INSERTABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)))
+		.orElse(true);
+    }
+
+    static boolean isColumnUpdatable(PropertyDescriptor pd) {
+	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
+		ann -> METHOD_COLUMN_UPDATABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)))
+		.orElse(true);
+    }
+
     static boolean isGeneratedValue(final PropertyDescriptor pd) {
 	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_GENERATED_VALUE, pd);
     }
@@ -106,7 +115,7 @@ class PersistenceUtils {
 
     public boolean isInheritanceRoot(Class<?> cls) {
 	return Arrays.stream(cls.getAnnotations())
-		.anyMatch(ann -> CLASSNAME_INHERITANCE.equals(ann.annotationType().getName()));
+		.anyMatch(ann -> "javax.persistence.Inheritance".equals(ann.annotationType().getName()));
     }
 
 }

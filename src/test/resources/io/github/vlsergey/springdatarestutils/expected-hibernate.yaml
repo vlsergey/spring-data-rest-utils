@@ -108,7 +108,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestEntityRequest'
+              $ref: '#/components/schemas/NewTestEntityRequest'
         required: true
       responses:
         "200":
@@ -231,6 +231,13 @@ components:
         type:
           type: string
           nullable: false
+    NewTestEntityRequest:
+      type: object
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          nullable: false
     TestEntity:
       required:
       - created
@@ -277,17 +284,9 @@ components:
     TestEntityRequest:
       type: object
       properties:
-        created:
-          type: string
-          format: date-time
-          nullable: false
         entityId:
           type: string
           format: uuid
-          nullable: false
-        updated:
-          type: string
-          format: date-time
           nullable: false
     TestEntityWithLinks:
       allOf:

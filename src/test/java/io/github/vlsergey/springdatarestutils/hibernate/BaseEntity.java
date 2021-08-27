@@ -23,6 +23,7 @@ public abstract class BaseEntity {
     private @NonNull Instant created;
 
     @LastModifiedDate
+    @CreationTimestamp
     @UpdateTimestamp
     @Column(name = "updated", nullable = false)
     private @NonNull Instant updated;
