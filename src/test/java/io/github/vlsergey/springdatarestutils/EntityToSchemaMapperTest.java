@@ -53,8 +53,8 @@ class EntityToSchemaMapperTest {
 		"    nullable: true\n" + //
 		"    items:\n" + //
 		"      type: string\n" + //
-		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,
-			ClassMappingMode.EXPOSED, RequestType.CREATE_OR_UPDATE)));
+		"", SchemaUtils.writeValueAsString(false,
+			mapper.mapEntity(ClassWithNullableArray.class, ClassMappingMode.EXPOSED, RequestType.CREATE)));
     }
 
     @Test

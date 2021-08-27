@@ -118,6 +118,17 @@ class ToOpenApiActionImplTest {
 	});
     }
 
+    @Test
+    void testUserProjectRoles() throws Exception {
+	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
+
+	withTempFile(tempFile -> {
+	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".userprojectroles", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-userprojectroles.yaml"), tempFile);
+	});
+    }
+
     @FunctionalInterface
     interface FailableConsumer<O> {
 	void accept(O object) throws Exception;

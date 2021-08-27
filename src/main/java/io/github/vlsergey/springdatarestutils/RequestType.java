@@ -10,21 +10,28 @@ import lombok.NonNull;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum RequestType {
 
-    PATCH(TaskProperties::getPatchTypeSuffix),
+    CREATE(TaskProperties::getCreateTypePrefix, TaskProperties::getCreateTypeSuffix),
+
+    PATCH(x -> "", TaskProperties::getPatchTypeSuffix),
 
     /**
      * This is part of 'parameter' argument in URL path
      */
-    PARAMETER(x -> ""),
+    PARAMETER(x -> "", x -> ""),
 
-    CREATE_OR_UPDATE(TaskProperties::getRequestTypeSuffix),
-
-    RESPONSE(x -> "") {
+    RESPONSE(x -> "", x -> "") {
 	@Override
 	public boolean generatedValuesWillPresent() {
 	    return true;
 	}
-    };
+    },
+
+    UPDATE(TaskProperties::getUpdateTypePrefix, TaskProperties::getUpdateTypeSuffix),
+
+    ;
+
+    @Getter
+    private final @NonNull Function<TaskProperties, String> prefix;
 
     @Getter
     private final @NonNull Function<TaskProperties, String> suffix;

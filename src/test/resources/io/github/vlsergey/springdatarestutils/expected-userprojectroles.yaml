@@ -7,10 +7,10 @@ info:
 servers:
 - url: /api
 paths:
-  /groups:
+  /projects:
     get:
       tags:
-      - Group
+      - Project
       description: Find entities
       parameters:
       - name: page
@@ -53,13 +53,13 @@ paths:
                 properties:
                   _embedded:
                     required:
-                    - groups
+                    - projects
                     type: object
                     properties:
-                      groups:
+                      projects:
                         type: array
                         items:
-                          $ref: '#/components/schemas/GroupWithLinks'
+                          $ref: '#/components/schemas/ProjectWithLinks'
                   _links:
                     required:
                     - profile
@@ -103,12 +103,12 @@ paths:
                         nullable: false
     post:
       tags:
-      - Group
+      - Project
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewGroupRequest'
+              $ref: '#/components/schemas/NewProjectRequest'
         required: true
       responses:
         "200":
@@ -116,13 +116,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupWithLinks'
+                $ref: '#/components/schemas/ProjectWithLinks'
         "204":
           description: Entity has been created
-  /groups/{id}:
+  /projects/{id}:
     get:
       tags:
-      - Group
+      - Project
       description: Retrieves an entity by its id
       parameters:
       - name: id
@@ -138,12 +138,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupWithLinks'
+                $ref: '#/components/schemas/ProjectWithLinks'
         "404":
           description: Entity is missing
     put:
       tags:
-      - Group
+      - Project
       parameters:
       - name: id
         in: path
@@ -156,14 +156,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GroupRequest'
+              $ref: '#/components/schemas/ProjectRequest'
         required: true
       responses:
         "204":
           description: Entity has been updated
     delete:
       tags:
-      - Group
+      - Project
       description: Deletes the entity with the given id
       parameters:
       - name: id
@@ -178,7 +178,7 @@ paths:
           description: Entity has been deleted or already didn't exists
     patch:
       tags:
-      - Group
+      - Project
       parameters:
       - name: id
         in: path
@@ -191,15 +191,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GroupPatch'
+              $ref: '#/components/schemas/ProjectPatch'
         required: true
       responses:
         "204":
           description: Entity has been updated
-  /groups/{id}/students:
+  /projects/{id}/userProjectRoles:
     get:
       tags:
-      - Group
+      - Project
       parameters:
       - name: id
         in: path
@@ -222,13 +222,13 @@ paths:
                 properties:
                   _embedded:
                     required:
-                    - students
+                    - userProjectRoles
                     type: object
                     properties:
-                      students:
+                      userProjectRoles:
                         type: array
                         items:
-                          $ref: '#/components/schemas/StudentWithLinks'
+                          $ref: '#/components/schemas/UserProjectRoleWithLinks'
                   _links:
                     required:
                     - self
@@ -238,21 +238,12 @@ paths:
                         $ref: '#/components/schemas/Link'
         "404":
           description: Entity is missing
-  /students:
+  /userProjectRoles:
     get:
       tags:
-      - Student
+      - UserProjectRole
       description: Find entities
       parameters:
-      - name: name
-        in: query
-        schema:
-          type: string
-      - name: studentId
-        in: query
-        schema:
-          type: string
-          format: uuid
       - name: page
         in: query
         description: Results page you want to retrieve (0..N)
@@ -293,13 +284,13 @@ paths:
                 properties:
                   _embedded:
                     required:
-                    - students
+                    - userProjectRoles
                     type: object
                     properties:
-                      students:
+                      userProjectRoles:
                         type: array
                         items:
-                          $ref: '#/components/schemas/StudentWithLinks'
+                          $ref: '#/components/schemas/UserProjectRoleWithLinks'
                   _links:
                     required:
                     - profile
@@ -343,12 +334,12 @@ paths:
                         nullable: false
     post:
       tags:
-      - Student
+      - UserProjectRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewStudentRequest'
+              $ref: '#/components/schemas/NewUserProjectRoleRequest'
         required: true
       responses:
         "200":
@@ -356,31 +347,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StudentWithLinks'
+                $ref: '#/components/schemas/UserProjectRoleWithLinks'
         "204":
           description: Entity has been created
-  /students/search/countByGroupGroupId:
+  /userProjectRoles/{id}:
     get:
       tags:
-      - Student
-      parameters:
-      - name: groupId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      responses:
-        "200":
-          description: ok
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int64
-  /students/{id}:
-    get:
-      tags:
-      - Student
+      - UserProjectRole
       description: Retrieves an entity by its id
       parameters:
       - name: id
@@ -389,19 +362,18 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
       responses:
         "200":
           description: Entity is present
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StudentWithLinks'
+                $ref: '#/components/schemas/UserProjectRoleWithLinks'
         "404":
           description: Entity is missing
     put:
       tags:
-      - Student
+      - UserProjectRole
       parameters:
       - name: id
         in: path
@@ -409,19 +381,18 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudentRequest'
+              $ref: '#/components/schemas/UserProjectRoleRequest'
         required: true
       responses:
         "204":
           description: Entity has been updated
     delete:
       tags:
-      - Student
+      - UserProjectRole
       description: Deletes the entity with the given id
       parameters:
       - name: id
@@ -430,13 +401,12 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
     patch:
       tags:
-      - Student
+      - UserProjectRole
       parameters:
       - name: id
         in: path
@@ -444,20 +414,19 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudentPatch'
+              $ref: '#/components/schemas/UserProjectRolePatch'
         required: true
       responses:
         "204":
           description: Entity has been updated
-  /students/{id}/group:
+  /userProjectRoles/{id}/project:
     get:
       tags:
-      - Student
+      - UserProjectRole
       parameters:
       - name: id
         in: path
@@ -465,95 +434,263 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
       responses:
         "200":
           description: Entity is present
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
+                $ref: '#/components/schemas/Project'
+        "404":
+          description: Entity is missing
+  /userProjectRoles/{id}/user:
+    get:
+      tags:
+      - UserProjectRole
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Entity is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "404":
+          description: Entity is missing
+  /users:
+    get:
+      tags:
+      - User
+      description: Find entities
+      parameters:
+      - name: page
+        in: query
+        description: Results page you want to retrieve (0..N)
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          nullable: false
+      - name: size
+        in: query
+        description: Number of records per page
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          nullable: false
+      - name: sort
+        in: query
+        description: Sorting parameters
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - users
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
+                  page:
+                    required:
+                    - number
+                    - size
+                    - totalElements
+                    - totalPages
+                    type: object
+                    properties:
+                      size:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      totalElements:
+                        minimum: 0
+                        type: integer
+                        format: int64
+                        nullable: false
+                      totalPages:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      number:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+    post:
+      tags:
+      - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUserRequest'
+        required: true
+      responses:
+        "200":
+          description: Entity has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithLinks'
+        "204":
+          description: Entity has been created
+  /users/{id}:
+    get:
+      tags:
+      - User
+      description: Retrieves an entity by its id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Entity is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithLinks'
+        "404":
+          description: Entity is missing
+    put:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+    delete:
+      tags:
+      - User
+      description: Deletes the entity with the given id
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Entity has been deleted or already didn't exists
+    patch:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+  /users/{id}/userProjectRoles:
+    get:
+      tags:
+      - User
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - userProjectRoles
+                    type: object
+                    properties:
+                      userProjectRoles:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserProjectRoleWithLinks'
+                  _links:
+                    required:
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
         "404":
           description: Entity is missing
 components:
   schemas:
-    Group:
-      required:
-      - countOfStudents
-      - firstStudentName
-      - groupId
-      - subjects
-      - title
-      type: object
-      properties:
-        countOfStudents:
-          minimum: 0
-          type: integer
-          format: int64
-          nullable: false
-        firstStudentName:
-          type: string
-          nullable: true
-          x-single-line: true
-        groupId:
-          type: string
-          format: uuid
-          nullable: false
-        subjects:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
-          nullable: false
-          x-single-line: true
-    GroupLinks:
-      required:
-      - _links
-      type: object
-      properties:
-        _links:
-          type: object
-          properties:
-            group:
-              $ref: '#/components/schemas/Link'
-            self:
-              $ref: '#/components/schemas/Link'
-    GroupPatch:
-      type: object
-      properties:
-        groupId:
-          type: string
-          format: uuid
-        subjects:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
-          x-single-line: true
-    GroupRequest:
-      required:
-      - subjects
-      - title
-      type: object
-      properties:
-        groupId:
-          type: string
-          format: uuid
-          nullable: false
-        subjects:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
-          nullable: false
-          x-single-line: true
-    GroupWithLinks:
-      allOf:
-      - $ref: '#/components/schemas/Group'
-      - $ref: '#/components/schemas/GroupLinks'
     Link:
       type: object
       properties:
@@ -587,42 +724,7 @@ components:
         type:
           type: string
           nullable: false
-    NewGroupRequest:
-      required:
-      - subjects
-      - title
-      type: object
-      properties:
-        groupId:
-          type: string
-          format: uuid
-          nullable: false
-        subjects:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
-          nullable: false
-          x-single-line: true
-    NewStudentRequest:
-      required:
-      - group
-      - name
-      type: object
-      properties:
-        group:
-          type: string
-          nullable: false
-        name:
-          type: string
-          nullable: false
-          x-single-line: true
-        studentId:
-          type: string
-          format: uuid
-          nullable: false
-    Set:
+    List:
       required:
       - empty
       type: object
@@ -630,21 +732,67 @@ components:
         empty:
           type: boolean
           nullable: false
-    Student:
+    NewProjectRequest:
       required:
-      - name
-      - studentId
+      - label
       type: object
       properties:
-        name:
+        label:
           type: string
           nullable: false
-          x-single-line: true
-        studentId:
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+    NewUserProjectRoleRequest:
+      required:
+      - project
+      - role
+      - user
+      type: object
+      properties:
+        project:
+          type: string
+          nullable: false
+        role:
+          type: string
+          nullable: false
+        user:
+          type: string
+          nullable: false
+        userProjectRoleId:
           type: string
           format: uuid
           nullable: false
-    StudentLinks:
+    NewUserRequest:
+      required:
+      - name
+      - username
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: false
+        username:
+          type: string
+          nullable: false
+    Project:
+      required:
+      - label
+      - projectId
+      type: object
+      properties:
+        label:
+          type: string
+          nullable: false
+        projectId:
+          type: string
+          format: uuid
+          nullable: false
+    ProjectLinks:
       required:
       - _links
       type: object
@@ -652,41 +800,166 @@ components:
         _links:
           type: object
           properties:
-            group:
+            project:
               $ref: '#/components/schemas/Link'
             self:
               $ref: '#/components/schemas/Link'
-            student:
-              $ref: '#/components/schemas/Link'
-    StudentPatch:
+    ProjectPatch:
       type: object
       properties:
-        group:
+        label:
           type: string
-        name:
-          type: string
-          x-single-line: true
-        studentId:
+        projectId:
           type: string
           format: uuid
-    StudentRequest:
+    ProjectRequest:
       required:
-      - group
-      - name
+      - label
       type: object
       properties:
-        group:
+        label:
           type: string
           nullable: false
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+    ProjectWithLinks:
+      allOf:
+      - $ref: '#/components/schemas/Project'
+      - $ref: '#/components/schemas/ProjectLinks'
+    User:
+      required:
+      - email
+      - name
+      - username
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
         name:
           type: string
           nullable: false
-          x-single-line: true
-        studentId:
+        username:
+          type: string
+          nullable: false
+    UserLinks:
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+            user:
+              $ref: '#/components/schemas/Link'
+    UserPatch:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        username:
+          type: string
+    UserProjectRole:
+      required:
+      - projectId
+      - role
+      - userProjectRoleId
+      - username
+      type: object
+      properties:
+        projectId:
           type: string
           format: uuid
           nullable: false
-    StudentWithLinks:
+        role:
+          type: string
+          nullable: false
+        userProjectRoleId:
+          type: string
+          format: uuid
+          nullable: false
+        username:
+          type: string
+          nullable: false
+    UserProjectRoleLinks:
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            project:
+              $ref: '#/components/schemas/Link'
+            self:
+              $ref: '#/components/schemas/Link'
+            user:
+              $ref: '#/components/schemas/Link'
+            userProjectRole:
+              $ref: '#/components/schemas/Link'
+    UserProjectRolePatch:
+      type: object
+      properties:
+        project:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        role:
+          type: string
+        user:
+          type: string
+        userProjectRoleId:
+          type: string
+          format: uuid
+        username:
+          type: string
+    UserProjectRoleRequest:
+      required:
+      - project
+      - role
+      - user
+      type: object
+      properties:
+        project:
+          type: string
+          nullable: false
+        role:
+          type: string
+          nullable: false
+        user:
+          type: string
+          nullable: false
+        userProjectRoleId:
+          type: string
+          format: uuid
+          nullable: false
+    UserProjectRoleWithLinks:
       allOf:
-      - $ref: '#/components/schemas/Student'
-      - $ref: '#/components/schemas/StudentLinks'
+      - $ref: '#/components/schemas/UserProjectRole'
+      - $ref: '#/components/schemas/UserProjectRoleLinks'
+    UserRequest:
+      required:
+      - name
+      - username
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: false
+        username:
+          type: string
+          nullable: false
+    UserWithLinks:
+      allOf:
+      - $ref: '#/components/schemas/User'
+      - $ref: '#/components/schemas/UserLinks'

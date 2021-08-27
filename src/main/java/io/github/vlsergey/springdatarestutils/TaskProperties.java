@@ -32,6 +32,14 @@ public class TaskProperties {
 
     private Info info = new Info();
 
+    private String createTypePrefix = "New";
+
+    private String createTypeSuffix = "Request";
+
+    private String updateTypePrefix = "";
+
+    private String updateTypeSuffix = "Request";
+
     private String linksTypeSuffix = "Links";
 
     private String linkTypeName = "Link";
@@ -41,8 +49,6 @@ public class TaskProperties {
     private String patchTypeSuffix = "Patch";
 
     private String repositoryDetectionStrategy = "DEFAULT";
-
-    private String requestTypeSuffix = "Request";
 
     private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));
 

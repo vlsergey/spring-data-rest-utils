@@ -22,6 +22,8 @@ abstract class PluginProperties {
 	getAddXLinkedEntity().convention(defaults.isAddXLinkedEntity());
 	getBasePackage().convention(defaults.getBasePackage());
 	getBaseTypePrefix().convention(defaults.getBaseTypePrefix());
+	getCreateTypePrefix().convention(defaults.getCreateTypePrefix());
+	getCreateTypeSuffix().convention(defaults.getCreateTypeSuffix());
 	getDefaultTypeSuffix().convention(defaults.getDefaultTypeSuffix());
 	getEnumTypeSuffix().convention(defaults.getEnumTypeSuffix());
 	getInfo().convention(defaults.getInfo());
@@ -29,7 +31,6 @@ abstract class PluginProperties {
 	getLinksTypeSuffix().convention(defaults.getLinksTypeSuffix());
 	getPatchTypeSuffix().convention(defaults.getPatchTypeSuffix());
 	getRepositoryDetectionStrategy().convention(defaults.getRepositoryDetectionStrategy());
-	getRequestTypeSuffix().convention(defaults.getRequestTypeSuffix());
 	getOutput().convention(() -> {
 	    try {
 		return new File(new URI(defaults.getOutputUri()));
@@ -38,6 +39,8 @@ abstract class PluginProperties {
 	    }
 	});
 	getServers().convention(defaults.getServers());
+	getUpdateTypePrefix().convention(defaults.getUpdateTypePrefix());
+	getUpdateTypeSuffix().convention(defaults.getUpdateTypeSuffix());
 	getWithLinksTypeSuffix().convention(defaults.getWithLinksTypeSuffix());
     }
 
@@ -52,6 +55,10 @@ abstract class PluginProperties {
     abstract Property<String> getBasePackage();
 
     abstract Property<String> getBaseTypePrefix();
+
+    abstract Property<String> getCreateTypePrefix();
+
+    abstract Property<String> getCreateTypeSuffix();
 
     abstract Property<String> getDefaultTypeSuffix();
 
@@ -71,9 +78,11 @@ abstract class PluginProperties {
 
     abstract Property<String> getRepositoryDetectionStrategy();
 
-    abstract Property<String> getRequestTypeSuffix();
-
     abstract ListProperty<Server> getServers();
+
+    abstract Property<String> getUpdateTypePrefix();
+
+    abstract Property<String> getUpdateTypeSuffix();
 
     abstract Property<String> getWithLinksTypeSuffix();
 
@@ -85,6 +94,8 @@ abstract class PluginProperties {
 		.setAddXLinkedEntity(getAddXLinkedEntity().get()) //
 		.setBasePackage(getBasePackage().get()) //
 		.setBaseTypePrefix(getBaseTypePrefix().get()) //
+		.setCreateTypePrefix(getCreateTypePrefix().get()) //
+		.setCreateTypeSuffix(getCreateTypeSuffix().get()) //
 		.setDefaultTypeSuffix(getDefaultTypeSuffix().get()) //
 		.setEnumTypeSuffix(getEnumTypeSuffix().get()) //
 		.setInfo(getInfo().get()) //
@@ -93,8 +104,9 @@ abstract class PluginProperties {
 		.setPatchTypeSuffix(getPatchTypeSuffix().get()) //
 		.setOutputUri(getOutput().getAsFile().get().toURI().toString()) //
 		.setRepositoryDetectionStrategy(getRepositoryDetectionStrategy().get()) //
-		.setRequestTypeSuffix(getRequestTypeSuffix().get()) //
 		.setServers(getServers().get()) //
+		.setUpdateTypePrefix(getUpdateTypePrefix().get()) //
+		.setUpdateTypeSuffix(getUpdateTypeSuffix().get()) //
 		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get()) //
 	;
     }
