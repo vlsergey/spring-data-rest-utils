@@ -56,7 +56,7 @@ class ToOpenApiAction implements Action<Task> {
 
 	urls.add(ToOpenApiAction.class.getProtectionDomain().getCodeSource().getLocation());
 
-	try (URLClassLoader classLoader = new URLClassLoader(urls.toArray(URL[]::new),
+	try (URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]),
 		ClassLoader.getSystemClassLoader())) {
 
 	    final AtomicReference<Throwable> excHolder = new AtomicReference<>(null);

@@ -13,27 +13,27 @@ import io.github.vlsergey.springdatarestutils.test.TestEntityRepo;
 
 class CodebaseScannerFacadeTest {
 
+    private static final String MY_PACKAGE = "io.github.vlsergey.springdatarestutils";
+
+    @Test
+    void testScanProjections() {
+	final ScanResult scanResult = new CodebaseScannerFacade(MY_PACKAGE + ".projections",
+		RepositoryDetectionStrategies.ALL).scan(getClass().getClassLoader());
+	assertEquals(1, scanResult.getProjections().size());
+
+	final Class<?> projectionClass = scanResult.getProjections().iterator().next();
+	assertEquals(TestEntityDefaultProjection.class, projectionClass);
+    }
+
     @Test
     void testScanSimple() {
-	final ScanResult scanResult = new CodebaseScannerFacade(
-		CodebaseScannerFacadeTest.class.getPackageName() + ".test", RepositoryDetectionStrategies.ALL)
-			.scan(getClass().getClassLoader());
+	final ScanResult scanResult = new CodebaseScannerFacade(MY_PACKAGE + ".test", RepositoryDetectionStrategies.ALL)
+		.scan(getClass().getClassLoader());
 	assertEquals(1, scanResult.getRepositories().size());
 
 	final RepositoryMetadata member = scanResult.getRepositories().iterator().next();
 	assertEquals(TestEntity.class, member.getDomainType());
 	assertEquals(TestEntityRepo.class, member.getRepositoryInterface());
-    }
-
-    @Test
-    void testScanProjections() {
-	final ScanResult scanResult = new CodebaseScannerFacade(
-		CodebaseScannerFacadeTest.class.getPackageName() + ".projections", RepositoryDetectionStrategies.ALL)
-			.scan(getClass().getClassLoader());
-	assertEquals(1, scanResult.getProjections().size());
-
-	final Class<?> projectionClass = scanResult.getProjections().iterator().next();
-	assertEquals(TestEntityDefaultProjection.class, projectionClass);
     }
 
 }

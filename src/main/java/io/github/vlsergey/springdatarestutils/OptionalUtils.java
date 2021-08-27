@@ -16,7 +16,7 @@ class OptionalUtils {
 	if (Arrays.stream(args).anyMatch(IS_FALSE)) {
 	    return OP_FALSE;
 	}
-	if (args.length == 0 || Arrays.stream(args).anyMatch(Optional::isEmpty)) {
+	if (args.length == 0 || Arrays.stream(args).anyMatch(o -> !o.isPresent())) {
 	    return Optional.empty();
 	}
 	return OP_TRUE;

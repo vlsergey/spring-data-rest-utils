@@ -2,7 +2,6 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,6 +19,7 @@ import org.openapi4j.parser.validation.v3.OpenApi3Validator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.Resources;
 
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,15 +28,13 @@ import io.github.vlsergey.springdatarestutils.example.SingleLine;
 
 class ToOpenApiActionImplTest {
 
+    private static final String MY_PACKAGE = "io.github.vlsergey.springdatarestutils";
+
     private TaskProperties taskProperties;
 
     static void assertEquals(URL expectedUrl, File actualFile) throws IOException {
-	String expected;
-	try (InputStream in = expectedUrl.openStream()) {
-	    expected = new String(in.readAllBytes(), StandardCharsets.UTF_8).replace("\r", "");
-	}
-
-	String actual = Files.readString(actualFile.toPath(), StandardCharsets.UTF_8).replace("\r", "");
+	String expected = Resources.toString(expectedUrl, StandardCharsets.UTF_8).replace("\r", "");
+	String actual = new String(Files.readAllBytes(actualFile.toPath()), StandardCharsets.UTF_8).replace("\r", "");
 	Assertions.assertEquals(expected, actual);
     }
 
@@ -75,7 +73,7 @@ class ToOpenApiActionImplTest {
     @Test
     void test() throws Exception {
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".test", tempFile);
+	    generate(MY_PACKAGE + ".test", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	});
     }
@@ -85,7 +83,7 @@ class ToOpenApiActionImplTest {
 	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
 
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".example", tempFile);
+	    generate(MY_PACKAGE + ".example", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-example.yaml"), tempFile);
 	});
@@ -94,7 +92,7 @@ class ToOpenApiActionImplTest {
     @Test
     void testHibernate() throws Exception {
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".hibernate", tempFile);
+	    generate(MY_PACKAGE + ".hibernate", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-hibernate.yaml"), tempFile);
 	});
@@ -103,7 +101,7 @@ class ToOpenApiActionImplTest {
     @Test
     void testInheritance() throws Exception {
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".inheritance", tempFile);
+	    generate(MY_PACKAGE + ".inheritance", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-inheritance.yaml"), tempFile);
 	});
@@ -112,7 +110,7 @@ class ToOpenApiActionImplTest {
     @Test
     void testProjections() throws Exception {
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".projections", tempFile);
+	    generate(MY_PACKAGE + ".projections", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-projections.yaml"), tempFile);
 	});
@@ -123,7 +121,7 @@ class ToOpenApiActionImplTest {
 	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
 
 	withTempFile(tempFile -> {
-	    generate(ToOpenApiActionImplTest.class.getPackageName() + ".userprojectroles", tempFile);
+	    generate(MY_PACKAGE + ".userprojectroles", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-userprojectroles.yaml"), tempFile);
 	});
