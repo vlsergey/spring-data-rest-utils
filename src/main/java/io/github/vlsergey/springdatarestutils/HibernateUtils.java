@@ -10,10 +10,10 @@ class HibernateUtils {
     static final String CLASSNAME_FORMULA = "org.hibernate.annotations.Formula";
     static final String CLASSNAME_UPDATE_TIMESTAMP = "org.hibernate.annotations.UpdateTimestamp";
 
-    static final Optional<Class<Annotation>> CLASS_CREATION_TIMESTAMP = ReflectionUtils
+    static final Optional<Class<? extends Annotation>> CLASS_CREATION_TIMESTAMP = ReflectionUtils
 	    .findClass(CLASSNAME_CREATION_TIMESTAMP);
-    static final Optional<Class<Annotation>> CLASS_FORMULA = ReflectionUtils.findClass(CLASSNAME_FORMULA);
-    static final Optional<Class<Annotation>> CLASS_UPDATE_TIMESTAMP = ReflectionUtils
+    static final Optional<Class<? extends Annotation>> CLASS_FORMULA = ReflectionUtils.findClass(CLASSNAME_FORMULA);
+    static final Optional<Class<? extends Annotation>> CLASS_UPDATE_TIMESTAMP = ReflectionUtils
 	    .findClass(CLASSNAME_UPDATE_TIMESTAMP);
 
     static boolean isCreationTimestamp(final PropertyDescriptor pd) {

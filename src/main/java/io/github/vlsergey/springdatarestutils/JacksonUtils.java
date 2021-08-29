@@ -13,11 +13,11 @@ class JacksonUtils {
     private static final String CLASSNAME_JSON_INCLUDE = "com.fasterxml.jackson.annotation.JsonInclude";
     private static final String CLASSNAME_JSON_INCLUDE_INCLUDE = "com.fasterxml.jackson.annotation.JsonInclude$Include";
 
-    private static final Optional<Class<Annotation>> CLASS_JSON_IGNORE = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_JSON_IGNORE = ReflectionUtils
 	    .findClass(CLASSNAME_JSON_IGNORE);
-    private static final Optional<Class<Annotation>> CLASS_JSON_INCLUDE = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_JSON_INCLUDE = ReflectionUtils
 	    .findClass(CLASSNAME_JSON_INCLUDE);
-    private static final Optional<Class<Enum<?>>> CLASS_JSON_INCLUDE_INCLUDE = ReflectionUtils
+    private static final Optional<Class<? extends Enum<?>>> CLASS_JSON_INCLUDE_INCLUDE = ReflectionUtils
 	    .findClass(CLASSNAME_JSON_INCLUDE_INCLUDE);
 
     private static final Optional<Method> METHOD_JSON_IGNORE_VALUE = CLASS_JSON_IGNORE

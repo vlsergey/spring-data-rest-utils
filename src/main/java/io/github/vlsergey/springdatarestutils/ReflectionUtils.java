@@ -37,7 +37,7 @@ class ReflectionUtils {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> Optional<Class<T>> findClass(String className) {
+    static <T> Optional<Class<? extends T>> findClass(String className) {
 	try {
 	    return Optional.of((Class<T>) Class.forName(className));
 	} catch (Exception exc) {
@@ -45,6 +45,37 @@ class ReflectionUtils {
 	}
     }
 
+    static Optional<Method> findMethod(Class<?> cls, String methodName, Class<?>... paramArgsClasses) {
+	return Arrays.stream(cls.getMethods()) //
+		.filter(method -> Objects.equals(method.getName(), methodName))
+		.filter(method -> method.getParameterCount() == paramArgsClasses.length) //
+		.filter(method -> {
+		    Class<?>[] parameterTypes = method.getParameterTypes();
+		    for (int i = 0; i < parameterTypes.length; i++) {
+			Class<?> arg = parameterTypes[i];
+			if (!Objects.equals(arg.getName(), paramArgsClasses[i].getName())) {
+			    return false;
+			}
+		    }
+		    return true;
+		}) //
+		.findAny();
+    }
+
+    static Optional<Method> findMethod(Class<?> cls, String methodName) {
+	return findMethod(cls, methodName, new Class[0]);
+    }
+
+    @SafeVarargs
+    static Optional<Method> findMethod(Class<?> cls, String methodName, Optional<Class<?>>... paramArgsClasses) {
+	if (Arrays.stream(paramArgsClasses).anyMatch(op -> !op.isPresent()))
+	    return Optional.empty();
+
+	return findMethod(cls, methodName,
+		(Class<?>[]) Arrays.stream(paramArgsClasses).map(Optional::get).toArray(Class[]::new));
+    }
+
+    @Deprecated
     static Optional<Method> findMethod(Class<?> cls, String methodName, String... paramArgsClassNames) {
 	return Arrays.stream(cls.getMethods()) //
 		.filter(method -> Objects.equals(method.getName(), methodName))
@@ -109,8 +140,9 @@ class ReflectionUtils {
 	}
     }
 
-    static <T extends Annotation> boolean hasAnnotationOnReadMethodOfField(
-	    final @NonNull Optional<Class<T>> annotationClass, final @NonNull PropertyDescriptor pd) {
+    static boolean hasAnnotationOnReadMethodOfField(
+	    final @NonNull Optional<Class<? extends Annotation>> annotationClass,
+	    final @NonNull PropertyDescriptor pd) {
 	return annotationClass.flatMap(cls -> findAnnotationOnReadMethodOfField(cls, pd)).isPresent();
     }
 
