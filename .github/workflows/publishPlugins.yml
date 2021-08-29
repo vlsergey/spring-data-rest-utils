@@ -21,9 +21,9 @@ jobs:
         distribution: 'adopt'
 
     - name: Set git environment (user.name)
-      run: git config user.name "GitHub Actions Workflow"
+      run: git config user.name "${{github.actor}}"
     - name: Set git environment (user.email)
-      run: git config user.email "vlsergey+githubactions@gmail.com"
+      run: git config user.email "${{github.actor}}@users.noreply.github.com"
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
