@@ -1,5 +1,7 @@
 package io.github.vlsergey.springdatarestutils;
 
+import static java.util.stream.Collectors.toList;
+
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -23,14 +25,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
-import static java.util.stream.Collectors.toList;
-
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.*;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.Parameter.StyleEnum;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -44,14 +48,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PathsGenerator {
 
-    private static final String CLASSNAME_QUERYDSL_PREDICATE = "com.querydsl.core.types.Predicate";
-    private static final String CLASSNAME_SPRING_PAGEABLE = "org.springframework.data.domain.Pageable";
-
     private static final String IN_QUERY = ParameterIn.QUERY.toString();
 
     private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
     private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
+
+    private static boolean isBaseClassMethod(Class<?> repoInterface, Method method) {
+	if (SpringDataUtils.CLASS_QIERYDSL_PREDICATE_EXECUTOR.<Method>flatMap(cls -> cls.isAssignableFrom(repoInterface)
+		? ReflectionUtils.findMethod(cls, method.getName(), method.getParameterTypes())
+		: Optional.<Method>empty()).isPresent()) {
+	    return true;
+	}
+
+	return SpringDataUtils.CLASS_SIMPLE_JPA_REPOSITORY.map(cls -> org.springframework.util.ReflectionUtils
+		.findMethod(cls, method.getName(), method.getParameterTypes())).isPresent();
+    }
 
     private final ClassToRefResolver classToRefResolver;
 
@@ -162,7 +174,7 @@ public class PathsGenerator {
 		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success")));
 
 	    Optional<Method> method = ReflectionUtils.findMethod(meta.getRepositoryInterface(), findAllMethod.getName(),
-		    CLASSNAME_QUERYDSL_PREDICATE, CLASSNAME_SPRING_PAGEABLE);
+		    SpringDataUtils.CLASS_QIERYDSL_PREDICATE, SpringDataUtils.CLASS_PAGEABLE);
 	    if (method.isPresent()) {
 		populateOperationWithPredicate(meta, operation);
 		populateOperationWithPageable(operation);
@@ -172,7 +184,7 @@ public class PathsGenerator {
 	    }
 
 	    method = ReflectionUtils.findMethod(meta.getRepositoryInterface(), findAllMethod.getName(),
-		    CLASSNAME_SPRING_PAGEABLE);
+		    SpringDataUtils.CLASS_PAGEABLE);
 	    if (method.isPresent()) {
 		populateOperationWithPageable(operation);
 		populateOperationWithProjection(meta, operation);
@@ -331,9 +343,10 @@ public class PathsGenerator {
 
     private void populatePathItemsWithSearchQueries(final RepositoryMetadata meta, final Set<Method> allQueryCandidates,
 	    final Paths paths, final String tag, final String basePath) {
-	for (Method method : meta.getRepositoryInterface().getMethods()) {
-	    method = ClassUtils.getMostSpecificMethod(method, meta.getRepositoryInterface());
-	    if (!allQueryCandidates.contains(method)) {
+	final Class<?> repoInterface = meta.getRepositoryInterface();
+	for (Method method : repoInterface.getMethods()) {
+	    method = ClassUtils.getMostSpecificMethod(method, repoInterface);
+	    if (!allQueryCandidates.contains(method) || isBaseClassMethod(repoInterface, method)) {
 		continue;
 	    }
 

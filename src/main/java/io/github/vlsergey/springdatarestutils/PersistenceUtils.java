@@ -8,19 +8,21 @@ import java.util.Optional;
 
 class PersistenceUtils {
 
-    private static final Optional<Class<Annotation>> CLASS_BASIC = ReflectionUtils.findClass("javax.persistence.Basic");
-    private static final Optional<Class<Annotation>> CLASS_COLUMN = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_BASIC = ReflectionUtils
+	    .findClass("javax.persistence.Basic");
+    private static final Optional<Class<? extends Annotation>> CLASS_COLUMN = ReflectionUtils
 	    .findClass("javax.persistence.Column");
-    private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_COLUMN = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_DISCRIMINATOR_COLUMN = ReflectionUtils
 	    .findClass("javax.persistence.DiscriminatorColumn");
-    private static final Optional<Class<Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
 	    .findClass("javax.persistence.DiscriminatorValue");
-    private static final Optional<Class<Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
 	    .findClass("javax.persistence.GeneratedValue");
-    private static final Optional<Class<Annotation>> CLASS_ID = ReflectionUtils.findClass("javax.persistence.Id");
-    static final Optional<Class<Annotation>> CLASS_INHERITANCE = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_ID = ReflectionUtils
+	    .findClass("javax.persistence.Id");
+    static final Optional<Class<? extends Annotation>> CLASS_INHERITANCE = ReflectionUtils
 	    .findClass("javax.persistence.Inheritance");
-    private static final Optional<Class<Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
+    private static final Optional<Class<? extends Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
 	    .findClass("javax.persistence.JoinColumn");
 
     private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_BASIC

@@ -7,8 +7,10 @@ import java.util.Optional;
 
 class ValidationUtils {
 
-    static final Optional<Class<Annotation>> CLASS_MAX = ReflectionUtils.findClass("javax.validation.constraints.Max");
-    static final Optional<Class<Annotation>> CLASS_MIN = ReflectionUtils.findClass("javax.validation.constraints.Min");
+    static final Optional<Class<? extends Annotation>> CLASS_MAX = ReflectionUtils
+	    .findClass("javax.validation.constraints.Max");
+    static final Optional<Class<? extends Annotation>> CLASS_MIN = ReflectionUtils
+	    .findClass("javax.validation.constraints.Min");
 
     private static final Optional<Method> METHOD_MAX_VALUE = CLASS_MAX
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));

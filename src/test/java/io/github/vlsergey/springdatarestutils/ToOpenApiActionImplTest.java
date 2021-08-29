@@ -99,6 +99,15 @@ class ToOpenApiActionImplTest {
     }
 
     @Test
+    void testBaseRepo() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(MY_PACKAGE + ".baserepo", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-baserepo.yaml"), tempFile);
+	});
+    }
+
+    @Test
     void testInheritance() throws Exception {
 	withTempFile(tempFile -> {
 	    generate(MY_PACKAGE + ".inheritance", tempFile);
