@@ -96,7 +96,7 @@ public class PathsGenerator {
 
     // https://docs.spring.io/spring-data/rest/docs/current/reference/html/#repository-resources.association-resource
     @SneakyThrows
-    void populateAssociationResourceMethods(final @NonNull String tag,
+    private void populateAssociationResourceMethods(final @NonNull String tag,
 	    // TODO: move to components
 	    final @NonNull Parameter mainIdParameter, final @NonNull Class<?> bean, final @NonNull String basePath,
 	    final @NonNull Paths paths) {
@@ -176,7 +176,7 @@ public class PathsGenerator {
 	    pathItem.post(new Operation() //
 		    .addTagsItem(tag) //
 		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
-			    + "Returns an error if resource is already bind.") //
+			    + "Adds specified resource to association. Returns an error if resource is already bind.") //
 		    .addParametersItem(mainIdParameter) //
 		    .requestBody(urisRequestBody)
 		    .responses(new ApiResponses()
@@ -188,7 +188,7 @@ public class PathsGenerator {
 	    pathItem.put(new Operation() //
 		    .addTagsItem(tag) //
 		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
-			    + "Does not return an error if resource is alread bind.") //
+			    + "Overwrites existing assotiation.") //
 		    .addParametersItem(mainIdParameter) //
 		    .requestBody(urisRequestBody)
 		    .responses(new ApiResponses()
