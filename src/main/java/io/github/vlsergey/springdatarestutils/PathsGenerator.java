@@ -1,7 +1,5 @@
 package io.github.vlsergey.springdatarestutils;
 
-import static java.util.stream.Collectors.toList;
-
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -25,18 +23,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
+import static java.util.stream.Collectors.toList;
+
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.IntegerSchema;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.*;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.Parameter.StyleEnum;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import lombok.AllArgsConstructor;
@@ -50,9 +47,18 @@ public class PathsGenerator {
 
     private static final String IN_QUERY = ParameterIn.QUERY.toString();
 
+    private static final String RESPONSE_CODE_CONFLICT = String.valueOf(HttpStatus.CONFLICT.value());
     private static final String RESPONSE_CODE_NO_CONTENT = String.valueOf(HttpStatus.NO_CONTENT.value());
     private static final String RESPONSE_CODE_NOT_FOUND = String.valueOf(HttpStatus.NOT_FOUND.value());
     private static final String RESPONSE_CODE_OK = String.valueOf(HttpStatus.OK.value());
+
+    private final ClassToRefResolver classToRefResolver;
+
+    private final @NonNull Predicate<Class<?>> isExposed;
+
+    private final @NonNull ScanResult scanResult;
+
+    private final @NonNull TaskProperties taskProperties;
 
     private static boolean isBaseClassMethod(Class<?> repoInterface, Method method) {
 	if (SpringDataUtils.CLASS_QIERYDSL_PREDICATE_EXECUTOR.<Method>flatMap(cls -> cls.isAssignableFrom(repoInterface)
@@ -64,14 +70,6 @@ public class PathsGenerator {
 	return SpringDataUtils.CLASS_SIMPLE_JPA_REPOSITORY.map(cls -> org.springframework.util.ReflectionUtils
 		.findMethod(cls, method.getName(), method.getParameterTypes())).isPresent();
     }
-
-    private final ClassToRefResolver classToRefResolver;
-
-    private final @NonNull Predicate<Class<?>> isExposed;
-
-    private final @NonNull ScanResult scanResult;
-
-    private final @NonNull TaskProperties taskProperties;
 
     public Paths generate(final @NonNull EntityToSchemaMapper mapper, final @NonNull Iterable<RepositoryMetadata> metas,
 	    final Set<Method> allQueryCandidates) {
@@ -94,6 +92,125 @@ public class PathsGenerator {
 	    throw new UnsupportedOperationException("Unsupported class: " + cls.getName());
 	}
 	return schema.get().get();
+    }
+
+    // https://docs.spring.io/spring-data/rest/docs/current/reference/html/#repository-resources.association-resource
+    @SneakyThrows
+    void populateAssociationResourceMethods(final @NonNull String tag,
+	    // TODO: move to components
+	    final @NonNull Parameter mainIdParameter, final @NonNull Class<?> bean, final @NonNull String basePath,
+	    final @NonNull Paths paths) {
+
+	final BeanInfo beanInfo = Introspector.getBeanInfo(bean);
+
+	// expose additional methods to get linked entity by main entity ID
+
+	// expose one-to-one / many-to-one links
+	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	    final Class<?> propertyType = pd.getPropertyType();
+
+	    if (!isExposed.test(propertyType)) {
+		continue;
+	    }
+
+	    final PathItem pathItem = new PathItem();
+
+	    // TODO: move to components
+	    final ApiResponse okResponse = new ApiResponse().content(
+		    classToRefResolver.getRefContent(propertyType, ClassMappingMode.EXPOSED, RequestType.RESPONSE))
+		    .description("Entity is present");
+
+	    // TODO: move to components
+	    final ApiResponses withMissingResponse = new ApiResponses().addApiResponse(RESPONSE_CODE_OK, okResponse)
+		    .addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
+
+	    pathItem.get(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(mainIdParameter) //
+		    .responses(withMissingResponse));
+
+	    if (NullableUtils.getNullable(pd).orElse(true)) {
+		pathItem.delete(new Operation() //
+			.addTagsItem(tag) //
+			.addParametersItem(mainIdParameter) //
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+				new ApiResponse().description("ok"))));
+	    }
+
+	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
+	}
+
+	// expose one-to-many / many-to-many links
+	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd)
+		    .filter(isExposed);
+	    if (!opLinkedType.isPresent())
+		continue;
+
+	    final Class<?> linkedType = opLinkedType.get();
+	    final PathItem pathItem = new PathItem();
+
+	    final String collectionKey = English.plural(StringUtils.uncapitalize(linkedType.getSimpleName()));
+
+	    final Schema<?> responseSchema = EntityToSchemaMapper.buildOneToManyCollectionSchema(
+		    taskProperties.getLinkTypeName(), collectionKey,
+		    classToRefResolver.getRefSchema(linkedType, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE));
+
+	    final ApiResponses apiResponses = new ApiResponses();
+
+	    apiResponses.addApiResponse(RESPONSE_CODE_OK,
+		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success"));
+
+	    apiResponses.addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
+
+	    pathItem.get(new Operation() //
+		    .addTagsItem(tag) //
+		    .addParametersItem(mainIdParameter) //
+		    .responses(apiResponses));
+
+	    final RequestBody urisRequestBody = new RequestBody()
+		    .content(new Content().addMediaType("text/uri-list",
+			    new MediaType().example("/children/42\n/children/43").schema(new StringSchema())))
+		    .description("URIs pointing to the resource to bind to the association");
+
+	    pathItem.post(new Operation() //
+		    .addTagsItem(tag) //
+		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
+			    + "Returns an error if resource is already bind.") //
+		    .addParametersItem(mainIdParameter) //
+		    .requestBody(urisRequestBody)
+		    .responses(new ApiResponses()
+			    .addApiResponse(RESPONSE_CODE_NO_CONTENT, new ApiResponse().description("ok"))
+			    .addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"))
+			    .addApiResponse(RESPONSE_CODE_CONFLICT, new ApiResponse()
+				    .description("Problems like key duplication or unique constrain violation"))));
+
+	    pathItem.put(new Operation() //
+		    .addTagsItem(tag) //
+		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
+			    + "Does not return an error if resource is alread bind.") //
+		    .addParametersItem(mainIdParameter) //
+		    .requestBody(urisRequestBody)
+		    .responses(new ApiResponses()
+			    .addApiResponse(RESPONSE_CODE_NO_CONTENT, new ApiResponse().description("ok"))
+			    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
+				    new ApiResponse().description("Entity is missing"))));
+
+	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
+
+	    paths.addPathItem(basePath + "/" + pd.getName() + "/{childId}", new PathItem().delete(new Operation() //
+		    .addTagsItem(tag) //
+		    .description("Unbinds the association") //
+		    .addParametersItem(mainIdParameter) //
+		    .addParametersItem(new Parameter().in("path").schema(new StringSchema().nullable(false))
+			    .name("childId").description("Assotiated entity ID"))
+		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+			    new ApiResponse().description("ok")))));
+	}
+
+	/*
+	 * There is no need to go deeper -- Spring Data REST can't handle deeper links
+	 */
     }
 
     @SneakyThrows
@@ -256,89 +373,9 @@ public class PathsGenerator {
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod ->
 	// expose additional methods to get linked entity by main entity ID
-	populatePathItemsDeeper(tag, idParameter, domainType, basePath + "/{id}", paths));
+	populateAssociationResourceMethods(tag, idParameter, domainType, basePath + "/{id}", paths));
 
 	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
-    }
-
-    @SneakyThrows
-    void populatePathItemsDeeper(final @NonNull String tag,
-	    // TODO: move to components
-	    final @NonNull Parameter mainIdParameter, final @NonNull Class<?> bean, final @NonNull String basePath,
-	    final @NonNull Paths paths) {
-
-	final BeanInfo beanInfo = Introspector.getBeanInfo(bean);
-
-	// expose additional methods to get linked entity by main entity ID
-
-	// expose one-to-one / many-to-one links
-	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-	    final Class<?> propertyType = pd.getPropertyType();
-	    if (!isExposed.test(propertyType)
-		    && !ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()) {
-		continue;
-	    }
-	    final PathItem pathItem = new PathItem();
-
-	    // TODO: move to components
-	    final ApiResponse okResponse = new ApiResponse().content(
-		    classToRefResolver.getRefContent(propertyType, ClassMappingMode.EXPOSED, RequestType.RESPONSE))
-		    .description("Entity is present");
-
-	    // TODO: move to components
-	    final ApiResponses missingResponse = new ApiResponses().addApiResponse(RESPONSE_CODE_OK, okResponse)
-		    .addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
-
-	    pathItem.get(new Operation() //
-		    .addTagsItem(tag) //
-		    .addParametersItem(mainIdParameter) //
-		    .responses(missingResponse));
-
-	    if (NullableUtils.getNullable(pd).orElse(true)) {
-		pathItem.delete(new Operation() //
-			.addTagsItem(tag) //
-			.addParametersItem(mainIdParameter) //
-			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-				new ApiResponse().description("ok"))));
-	    }
-
-	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
-	}
-
-	// expose one-to-many / many-to-many links
-	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd)
-		    .filter(isExposed);
-	    if (!opLinkedType.isPresent())
-		continue;
-
-	    final Class<?> linkedType = opLinkedType.get();
-	    final PathItem pathItem = new PathItem();
-
-	    final String collectionKey = English.plural(StringUtils.uncapitalize(linkedType.getSimpleName()));
-
-	    final Schema<?> responseSchema = EntityToSchemaMapper.buildOneToManyCollectionSchema(
-		    taskProperties.getLinkTypeName(), collectionKey,
-		    classToRefResolver.getRefSchema(linkedType, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE));
-
-	    final ApiResponses apiResponses = new ApiResponses();
-
-	    apiResponses.addApiResponse(RESPONSE_CODE_OK,
-		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success"));
-
-	    apiResponses.addApiResponse(RESPONSE_CODE_NOT_FOUND, new ApiResponse().description("Entity is missing"));
-
-	    pathItem.get(new Operation() //
-		    .addTagsItem(tag) //
-		    .addParametersItem(mainIdParameter) //
-		    .responses(apiResponses));
-
-	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
-	}
-
-	/*
-	 * There is no need to go deeper -- Spring Data REST can't handle deeper links
-	 */
     }
 
     private void populatePathItemsWithSearchQueries(final RepositoryMetadata meta, final Set<Method> allQueryCandidates,
