@@ -238,6 +238,85 @@ paths:
                         $ref: '#/components/schemas/Link'
         "404":
           description: Entity is missing
+    put:
+      tags:
+      - Project
+      description: Binds the resource pointed to by the given URI(s) to the association
+        resource. Does not return an error if resource is alread bind.
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: URIs pointing to the resource to bind to the association
+        content:
+          text/uri-list:
+            schema:
+              type: string
+            example: |-
+              /children/42
+              /children/43
+      responses:
+        "204":
+          description: ok
+        "404":
+          description: Entity is missing
+    post:
+      tags:
+      - Project
+      description: Binds the resource pointed to by the given URI(s) to the association
+        resource. Returns an error if resource is already bind.
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: URIs pointing to the resource to bind to the association
+        content:
+          text/uri-list:
+            schema:
+              type: string
+            example: |-
+              /children/42
+              /children/43
+      responses:
+        "204":
+          description: ok
+        "404":
+          description: Entity is missing
+        "409":
+          description: Problems like key duplication or unique constrain violation
+  /projects/{id}/userProjectRoles/{childId}:
+    delete:
+      tags:
+      - Project
+      description: Unbinds the association
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: childId
+        in: path
+        description: Assotiated entity ID
+        required: true
+        schema:
+          type: string
+          nullable: false
+      responses:
+        "204":
+          description: ok
   /userProjectRoles:
     get:
       tags:
@@ -689,6 +768,82 @@ paths:
                         $ref: '#/components/schemas/Link'
         "404":
           description: Entity is missing
+    put:
+      tags:
+      - User
+      description: Binds the resource pointed to by the given URI(s) to the association
+        resource. Does not return an error if resource is alread bind.
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: URIs pointing to the resource to bind to the association
+        content:
+          text/uri-list:
+            schema:
+              type: string
+            example: |-
+              /children/42
+              /children/43
+      responses:
+        "204":
+          description: ok
+        "404":
+          description: Entity is missing
+    post:
+      tags:
+      - User
+      description: Binds the resource pointed to by the given URI(s) to the association
+        resource. Returns an error if resource is already bind.
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: URIs pointing to the resource to bind to the association
+        content:
+          text/uri-list:
+            schema:
+              type: string
+            example: |-
+              /children/42
+              /children/43
+      responses:
+        "204":
+          description: ok
+        "404":
+          description: Entity is missing
+        "409":
+          description: Problems like key duplication or unique constrain violation
+  /users/{id}/userProjectRoles/{childId}:
+    delete:
+      tags:
+      - User
+      description: Unbinds the association
+      parameters:
+      - name: id
+        in: path
+        description: Entity ID
+        required: true
+        schema:
+          type: string
+      - name: childId
+        in: path
+        description: Assotiated entity ID
+        required: true
+        schema:
+          type: string
+          nullable: false
+      responses:
+        "204":
+          description: ok
 components:
   schemas:
     Link:
@@ -723,14 +878,6 @@ components:
           nullable: false
         type:
           type: string
-          nullable: false
-    List:
-      required:
-      - empty
-      type: object
-      properties:
-        empty:
-          type: boolean
           nullable: false
     NewProjectRequest:
       required:
