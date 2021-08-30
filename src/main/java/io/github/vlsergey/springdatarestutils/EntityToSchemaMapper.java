@@ -105,7 +105,7 @@ public class EntityToSchemaMapper {
     }
 
     @SneakyThrows
-    private static Stream<PropertyDescriptor> withBeanProperties(Class<?> cls) {
+    static Stream<PropertyDescriptor> withBeanProperties(Class<?> cls) {
 	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
 	return Arrays.stream(beanInfo.getPropertyDescriptors())
 		.filter(pd -> !pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang."));

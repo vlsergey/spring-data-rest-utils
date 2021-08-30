@@ -125,13 +125,7 @@ paths:
       - BaseEntity
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/baseEntityId'
       responses:
         "200":
           description: Entity is present
@@ -145,13 +139,7 @@ paths:
       tags:
       - BaseEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/baseEntityId'
       requestBody:
         content:
           application/json:
@@ -166,13 +154,7 @@ paths:
       - BaseEntity
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/baseEntityId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -180,13 +162,7 @@ paths:
       tags:
       - BaseEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/baseEntityId'
       requestBody:
         content:
           application/json:
@@ -324,3 +300,13 @@ components:
           type: string
           format: uuid
           nullable: false
+  parameters:
+    baseEntityId:
+      name: id
+      in: path
+      description: BaseEntity identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false

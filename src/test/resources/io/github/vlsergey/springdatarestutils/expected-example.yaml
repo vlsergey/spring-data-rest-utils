@@ -119,19 +119,13 @@ paths:
                 $ref: '#/components/schemas/GroupWithLinks'
         "204":
           description: Entity has been created
-  /groups/{id}:
+  /groups/{groupId}:
     get:
       tags:
       - Group
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       responses:
         "200":
           description: Entity is present
@@ -145,13 +139,7 @@ paths:
       tags:
       - Group
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       requestBody:
         content:
           application/json:
@@ -166,13 +154,7 @@ paths:
       - Group
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -180,13 +162,7 @@ paths:
       tags:
       - Group
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       requestBody:
         content:
           application/json:
@@ -196,18 +172,12 @@ paths:
       responses:
         "204":
           description: Entity has been updated
-  /groups/{id}/students:
+  /groups/{groupId}/students:
     get:
       tags:
       - Group
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       responses:
         "200":
           description: Success
@@ -242,15 +212,9 @@ paths:
       tags:
       - Group
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Does not return an error if resource is alread bind.
+        resource. Overwrites existing assotiation.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -269,15 +233,10 @@ paths:
       tags:
       - Group
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Returns an error if resource is already bind.
+        resource. Adds specified resource to association. Returns an error if resource
+        is already bind.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/groupId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -294,20 +253,14 @@ paths:
           description: Entity is missing
         "409":
           description: Problems like key duplication or unique constrain violation
-  /groups/{id}/students/{childId}:
+  /groups/{groupId}/students/{studentId}:
     delete:
       tags:
       - Group
       description: Unbinds the association
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: childId
+      - $ref: '#/components/parameters/groupId'
+      - name: studentId
         in: path
         description: Assotiated entity ID
         required: true
@@ -456,19 +409,13 @@ paths:
               schema:
                 type: integer
                 format: int64
-  /students/{id}:
+  /students/{studentId}:
     get:
       tags:
       - Student
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/studentId'
       responses:
         "200":
           description: Entity is present
@@ -482,13 +429,7 @@ paths:
       tags:
       - Student
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/studentId'
       requestBody:
         content:
           application/json:
@@ -503,13 +444,7 @@ paths:
       - Student
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/studentId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -517,13 +452,7 @@ paths:
       tags:
       - Student
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/studentId'
       requestBody:
         content:
           application/json:
@@ -533,18 +462,12 @@ paths:
       responses:
         "204":
           description: Entity has been updated
-  /students/{id}/group:
+  /students/{studentId}/group:
     get:
       tags:
       - Student
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/studentId'
       responses:
         "200":
           description: Entity is present
@@ -761,3 +684,22 @@ components:
       allOf:
       - $ref: '#/components/schemas/Student'
       - $ref: '#/components/schemas/StudentLinks'
+  parameters:
+    groupId:
+      name: groupId
+      in: path
+      description: Group identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    studentId:
+      name: studentId
+      in: path
+      description: Student identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false

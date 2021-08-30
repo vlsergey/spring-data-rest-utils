@@ -5,12 +5,10 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
 import org.atteo.evo.inflector.English;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -27,6 +25,7 @@ import static java.util.stream.Collectors.toList;
 
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
@@ -54,7 +53,13 @@ public class PathsGenerator {
 
     private final ClassToRefResolver classToRefResolver;
 
+    private final @NonNull Components components;
+
     private final @NonNull Predicate<Class<?>> isExposed;
+
+    private final @NonNull EntityToSchemaMapper mapper;
+
+    private final @NonNull Paths paths;
 
     private final @NonNull ScanResult scanResult;
 
@@ -71,14 +76,33 @@ public class PathsGenerator {
 		.findMethod(cls, method.getName(), method.getParameterTypes())).isPresent();
     }
 
-    public Paths generate(final @NonNull EntityToSchemaMapper mapper, final @NonNull Iterable<RepositoryMetadata> metas,
-	    final Set<Method> allQueryCandidates) {
-	Paths paths = new Paths();
-	metas.forEach(meta -> {
-	    Schema<?> idSchema = mapper.mapEntity(meta.getIdType(), ClassMappingMode.DATA_ITEM, RequestType.PARAMETER);
-	    populatePathItems(meta, allQueryCandidates, idSchema, paths);
-	});
-	return paths;
+    public void generate(final @NonNull Iterable<RepositoryMetadata> metas, final Set<Method> allQueryCandidates) {
+	StreamSupport.stream(metas.spliterator(), false)
+		.sorted(Comparator.comparing(meta -> meta.getDomainType().getName())).forEach(meta -> {
+		    populatePathItems(meta, allQueryCandidates);
+		});
+    }
+
+    private @NonNull String getIdPathParameterName(final @NonNull Class<?> domainType) {
+	final String enitityName = StringUtils.uncapitalize(domainType.getSimpleName());
+	return EntityToSchemaMapper.withBeanProperties(domainType).filter(PersistenceUtils::isId)
+		.map(PropertyDescriptor::getName).findAny().orElse(enitityName + "Id");
+    }
+
+    private @NonNull Parameter getIdPathParameterRef(final @NonNull RepositoryMetadata repositoryMetadata) {
+	final @NonNull Class<?> domainType = repositoryMetadata.getDomainType();
+	final @NonNull String paramName = StringUtils.uncapitalize(domainType.getSimpleName()) + "Id";
+
+	if (components.getParameters() == null || !components.getParameters().containsKey(paramName)) {
+	    Schema<?> idSchema = mapper
+		    .mapEntity(repositoryMetadata.getIdType(), ClassMappingMode.DATA_ITEM, RequestType.PARAMETER)
+		    .nullable(false);
+	    components.addParameters(paramName,
+		    new Parameter().in("path").description(domainType.getSimpleName() + " identifier")
+			    .name(getIdPathParameterName(domainType)).schema(idSchema));
+	}
+
+	return new Parameter().$ref("#/components/parameters/" + paramName);
     }
 
     private Optional<Supplier<Schema<?>>> getStandardSchemaSupplier(Class<?> cls) {
@@ -98,7 +122,7 @@ public class PathsGenerator {
     @SneakyThrows
     private void populateAssociationResourceMethods(final @NonNull String tag,
 	    // TODO: move to components
-	    final @NonNull Parameter mainIdParameter, final @NonNull Class<?> bean, final @NonNull String basePath,
+	    final @NonNull Parameter idPathParameterRef, final @NonNull Class<?> bean, final @NonNull String basePath,
 	    final @NonNull Paths paths) {
 
 	final BeanInfo beanInfo = Introspector.getBeanInfo(bean);
@@ -126,13 +150,13 @@ public class PathsGenerator {
 
 	    pathItem.get(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(mainIdParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .responses(withMissingResponse));
 
 	    if (NullableUtils.getNullable(pd).orElse(true)) {
 		pathItem.delete(new Operation() //
 			.addTagsItem(tag) //
-			.addParametersItem(mainIdParameter) //
+			.addParametersItem(idPathParameterRef) //
 			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				new ApiResponse().description("ok"))));
 	    }
@@ -165,7 +189,7 @@ public class PathsGenerator {
 
 	    pathItem.get(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(mainIdParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .responses(apiResponses));
 
 	    final RequestBody urisRequestBody = new RequestBody()
@@ -177,7 +201,7 @@ public class PathsGenerator {
 		    .addTagsItem(tag) //
 		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
 			    + "Adds specified resource to association. Returns an error if resource is already bind.") //
-		    .addParametersItem(mainIdParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(urisRequestBody)
 		    .responses(new ApiResponses()
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT, new ApiResponse().description("ok"))
@@ -189,7 +213,7 @@ public class PathsGenerator {
 		    .addTagsItem(tag) //
 		    .description("Binds the resource pointed to by the given URI(s) to the association resource. "
 			    + "Overwrites existing assotiation.") //
-		    .addParametersItem(mainIdParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(urisRequestBody)
 		    .responses(new ApiResponses()
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT, new ApiResponse().description("ok"))
@@ -198,14 +222,19 @@ public class PathsGenerator {
 
 	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
 
-	    paths.addPathItem(basePath + "/" + pd.getName() + "/{childId}", new PathItem().delete(new Operation() //
-		    .addTagsItem(tag) //
-		    .description("Unbinds the association") //
-		    .addParametersItem(mainIdParameter) //
-		    .addParametersItem(new Parameter().in("path").schema(new StringSchema().nullable(false))
-			    .name("childId").description("Assotiated entity ID"))
-		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-			    new ApiResponse().description("ok")))));
+	    String linkedEntityIdParamName = bean.equals(linkedType)
+		    ? "linked" + StringUtils.capitalize(getIdPathParameterName(linkedType))
+		    : getIdPathParameterName(linkedType);
+
+	    paths.addPathItem(basePath + "/" + pd.getName() + "/{" + linkedEntityIdParamName + "}",
+		    new PathItem().delete(new Operation() //
+			    .addTagsItem(tag) //
+			    .description("Unbinds the association") //
+			    .addParametersItem(idPathParameterRef) //
+			    .addParametersItem(new Parameter().in("path").schema(new StringSchema().nullable(false))
+				    .name(linkedEntityIdParamName).description("Assotiated entity ID"))
+			    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
+				    new ApiResponse().description("ok")))));
 	}
 
 	/*
@@ -262,8 +291,8 @@ public class PathsGenerator {
     }
 
     @SneakyThrows
-    public void populatePathItems(final @NonNull RepositoryMetadata meta, final Set<Method> allQueryCandidates,
-	    final @NonNull Schema<?> idSchema, final @NonNull Paths paths) {
+    public void populatePathItems(final @NonNull RepositoryMetadata meta,
+	    final @NonNull Set<Method> allQueryCandidates) {
 	final Class<?> domainType = meta.getDomainType();
 
 	final PathItem noIdPathItem = new PathItem();
@@ -275,7 +304,8 @@ public class PathsGenerator {
 		RequestType.RESPONSE);
 
 	final String tag = domainType.getSimpleName();
-	final Parameter idParameter = new Parameter().in("path").schema(idSchema).name("id").description("Entity ID");
+	final @NonNull String idPathParameterName = getIdPathParameterName(domainType);
+	final @NonNull Parameter idPathParameterRef = getIdPathParameterRef(meta);
 	final String collectionKey = English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
 	final String basePath = "/" + collectionKey;
 
@@ -313,7 +343,7 @@ public class PathsGenerator {
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
 	    withIdPathItem.setGet(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(idParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .description("Retrieves an entity by its id") //
 		    .responses(
 			    new ApiResponses()
@@ -328,7 +358,7 @@ public class PathsGenerator {
 
 	    withIdPathItem.setPatch(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(idParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.PATCH)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
@@ -347,7 +377,7 @@ public class PathsGenerator {
 
 	    withIdPathItem.setPut(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(idParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.UPDATE)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
@@ -357,7 +387,7 @@ public class PathsGenerator {
 	crudMethods.getDeleteMethod().ifPresent(deleteMethod -> {
 	    withIdPathItem.setDelete(new Operation() //
 		    .addTagsItem(tag) //
-		    .addParametersItem(idParameter) //
+		    .addParametersItem(idPathParameterRef) //
 		    .description("Deletes the entity with the given id") //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
@@ -368,12 +398,13 @@ public class PathsGenerator {
 	}
 
 	if (!withIdPathItem.readOperations().isEmpty()) {
-	    paths.addPathItem(basePath + "/{id}", withIdPathItem);
+	    paths.addPathItem(basePath + "/{" + idPathParameterName + "}", withIdPathItem);
 	}
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod ->
 	// expose additional methods to get linked entity by main entity ID
-	populateAssociationResourceMethods(tag, idParameter, domainType, basePath + "/{id}", paths));
+	populateAssociationResourceMethods(tag, idPathParameterRef, domainType,
+		basePath + "/{" + idPathParameterName + "}", paths));
 
 	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
     }

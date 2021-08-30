@@ -133,13 +133,7 @@ paths:
       - TestEntity
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       responses:
         "200":
           description: Entity is present
@@ -153,13 +147,7 @@ paths:
       tags:
       - TestEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       requestBody:
         content:
           application/json:
@@ -174,13 +162,7 @@ paths:
       - TestEntity
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -188,13 +170,7 @@ paths:
       tags:
       - TestEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       requestBody:
         content:
           application/json:
@@ -209,13 +185,7 @@ paths:
       tags:
       - TestEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       responses:
         "200":
           description: Entity is present
@@ -229,13 +199,7 @@ paths:
       tags:
       - TestEntity
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/testEntityId'
       responses:
         "204":
           description: ok
@@ -372,3 +336,13 @@ components:
       allOf:
       - $ref: '#/components/schemas/TestEntity'
       - $ref: '#/components/schemas/TestEntityLinks'
+  parameters:
+    testEntityId:
+      name: id
+      in: path
+      description: TestEntity identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false

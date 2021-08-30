@@ -119,19 +119,13 @@ paths:
                 $ref: '#/components/schemas/ProjectWithLinks'
         "204":
           description: Entity has been created
-  /projects/{id}:
+  /projects/{projectId}:
     get:
       tags:
       - Project
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       responses:
         "200":
           description: Entity is present
@@ -145,13 +139,7 @@ paths:
       tags:
       - Project
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       requestBody:
         content:
           application/json:
@@ -166,13 +154,7 @@ paths:
       - Project
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -180,13 +162,7 @@ paths:
       tags:
       - Project
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       requestBody:
         content:
           application/json:
@@ -196,18 +172,12 @@ paths:
       responses:
         "204":
           description: Entity has been updated
-  /projects/{id}/userProjectRoles:
+  /projects/{projectId}/userProjectRoles:
     get:
       tags:
       - Project
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       responses:
         "200":
           description: Success
@@ -242,15 +212,9 @@ paths:
       tags:
       - Project
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Does not return an error if resource is alread bind.
+        resource. Overwrites existing assotiation.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -269,15 +233,10 @@ paths:
       tags:
       - Project
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Returns an error if resource is already bind.
+        resource. Adds specified resource to association. Returns an error if resource
+        is already bind.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/projectId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -294,20 +253,14 @@ paths:
           description: Entity is missing
         "409":
           description: Problems like key duplication or unique constrain violation
-  /projects/{id}/userProjectRoles/{childId}:
+  /projects/{projectId}/userProjectRoles/{userProjectRoleId}:
     delete:
       tags:
       - Project
       description: Unbinds the association
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: childId
+      - $ref: '#/components/parameters/projectId'
+      - name: userProjectRoleId
         in: path
         description: Assotiated entity ID
         required: true
@@ -429,18 +382,13 @@ paths:
                 $ref: '#/components/schemas/UserProjectRoleWithLinks'
         "204":
           description: Entity has been created
-  /userProjectRoles/{id}:
+  /userProjectRoles/{userProjectRoleId}:
     get:
       tags:
       - UserProjectRole
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       responses:
         "200":
           description: Entity is present
@@ -454,12 +402,7 @@ paths:
       tags:
       - UserProjectRole
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       requestBody:
         content:
           application/json:
@@ -474,12 +417,7 @@ paths:
       - UserProjectRole
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -487,12 +425,7 @@ paths:
       tags:
       - UserProjectRole
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       requestBody:
         content:
           application/json:
@@ -502,17 +435,12 @@ paths:
       responses:
         "204":
           description: Entity has been updated
-  /userProjectRoles/{id}/project:
+  /userProjectRoles/{userProjectRoleId}/project:
     get:
       tags:
       - UserProjectRole
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       responses:
         "200":
           description: Entity is present
@@ -522,17 +450,12 @@ paths:
                 $ref: '#/components/schemas/Project'
         "404":
           description: Entity is missing
-  /userProjectRoles/{id}/user:
+  /userProjectRoles/{userProjectRoleId}/user:
     get:
       tags:
       - UserProjectRole
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userProjectRoleId'
       responses:
         "200":
           description: Entity is present
@@ -654,18 +577,13 @@ paths:
                 $ref: '#/components/schemas/UserWithLinks'
         "204":
           description: Entity has been created
-  /users/{id}:
+  /users/{username}:
     get:
       tags:
       - User
       description: Retrieves an entity by its id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       responses:
         "200":
           description: Entity is present
@@ -679,12 +597,7 @@ paths:
       tags:
       - User
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       requestBody:
         content:
           application/json:
@@ -699,12 +612,7 @@ paths:
       - User
       description: Deletes the entity with the given id
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
@@ -712,12 +620,7 @@ paths:
       tags:
       - User
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       requestBody:
         content:
           application/json:
@@ -727,17 +630,12 @@ paths:
       responses:
         "204":
           description: Entity has been updated
-  /users/{id}/userProjectRoles:
+  /users/{username}/userProjectRoles:
     get:
       tags:
       - User
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       responses:
         "200":
           description: Success
@@ -772,14 +670,9 @@ paths:
       tags:
       - User
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Does not return an error if resource is alread bind.
+        resource. Overwrites existing assotiation.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -798,14 +691,10 @@ paths:
       tags:
       - User
       description: Binds the resource pointed to by the given URI(s) to the association
-        resource. Returns an error if resource is already bind.
+        resource. Adds specified resource to association. Returns an error if resource
+        is already bind.
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/userId'
       requestBody:
         description: URIs pointing to the resource to bind to the association
         content:
@@ -822,19 +711,14 @@ paths:
           description: Entity is missing
         "409":
           description: Problems like key duplication or unique constrain violation
-  /users/{id}/userProjectRoles/{childId}:
+  /users/{username}/userProjectRoles/{userProjectRoleId}:
     delete:
       tags:
       - User
       description: Unbinds the association
       parameters:
-      - name: id
-        in: path
-        description: Entity ID
-        required: true
-        schema:
-          type: string
-      - name: childId
+      - $ref: '#/components/parameters/userId'
+      - name: userProjectRoleId
         in: path
         description: Assotiated entity ID
         required: true
@@ -1110,3 +994,29 @@ components:
       allOf:
       - $ref: '#/components/schemas/User'
       - $ref: '#/components/schemas/UserLinks'
+  parameters:
+    projectId:
+      name: projectId
+      in: path
+      description: Project identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    userId:
+      name: username
+      in: path
+      description: User identifier
+      required: true
+      schema:
+        type: string
+        nullable: false
+    userProjectRoleId:
+      name: userProjectRoleId
+      in: path
+      description: UserProjectRole identifier
+      required: true
+      schema:
+        type: string
+        nullable: false

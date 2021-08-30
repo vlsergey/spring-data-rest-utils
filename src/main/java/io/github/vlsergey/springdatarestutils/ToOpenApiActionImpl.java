@@ -19,7 +19,9 @@ import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.Re
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.Schema;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -52,6 +54,8 @@ public class ToOpenApiActionImpl {
 
 	OpenAPI apiModel = new OpenAPI();
 	setApiInfo(apiModel);
+	apiModel.setComponents(new Components());
+	apiModel.setPaths(new Paths());
 	apiModel.setServers(this.taskProperties.getServers());
 
 	Consumer<Class<?>> onProjection = projectionClass -> {
@@ -78,8 +82,9 @@ public class ToOpenApiActionImpl {
 	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, isExposed, scanResult,
 		taskProperties);
 
-	apiModel.setPaths(new PathsGenerator(classToRefResolver, isExposed, scanResult, taskProperties).generate(mapper,
-		scanResult.getRepositories(), scanResult.getQueryMethodsCandidates()));
+	final PathsGenerator pathsGenerator = new PathsGenerator(classToRefResolver, apiModel.getComponents(),
+		isExposed, mapper, apiModel.getPaths(), scanResult, taskProperties);
+	pathsGenerator.generate(scanResult.getRepositories(), scanResult.getQueryMethodsCandidates());
 
 	scanResult.getRepositories().forEach(meta -> {
 	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
