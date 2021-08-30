@@ -10,7 +10,7 @@ Generates [OpenAPI specification](https://swagger.io/specification/) from JPA re
 - [x] Exposes open projections and default projections
 - [X] Generates path and operations for supported commands
   - Generates path items for CRUD methods: `findAll`, `findOneById`, `deleteById`, `save` (incl. PUT, POST and PATCH)
-  - Generates path items to fetch linked entities
+  - Generates path items to fetch linked entities, create or delete assotiations
   - (WIP) Generates path items for query methods (so far that accepts and returns "simple" types like `Long` or `String`)
 
 Examples:
@@ -21,7 +21,7 @@ Examples:
 Using the plugins DSL:
 ```groovy
 plugins {
-  id "io.github.vlsergey.spring-data-rest-utils" version "0.32.1"
+  id "io.github.vlsergey.spring-data-rest-utils" version "0.33.0"
 }
 ```
 
@@ -34,7 +34,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.32.1"
+    classpath "io.github.vlsergey.springdatarestutils:spring-data-rest-utils:0.33.0"
   }
 }
 
