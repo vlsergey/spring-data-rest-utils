@@ -20,6 +20,9 @@ public interface ClassToRefResolver {
 	if (cls.isAssignableFrom(Link.class)) {
 	    return taskProperties.getLinkTypeName();
 	}
+	if (cls.isEnum()) {
+	    return cls.getSimpleName() + taskProperties.getEnumTypeSuffix();
+	}
 
 	final StringBuilder sb = new StringBuilder();
 	sb.append(requestType.getPrefix().apply(taskProperties));

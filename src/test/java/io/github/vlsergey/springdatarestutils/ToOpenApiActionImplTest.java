@@ -79,6 +79,15 @@ class ToOpenApiActionImplTest {
     }
 
     @Test
+    void testBaseRepo() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(MY_PACKAGE + ".baserepo", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-baserepo.yaml"), tempFile);
+	});
+    }
+
+    @Test
     void testExample() throws Exception {
 	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
 
@@ -95,15 +104,6 @@ class ToOpenApiActionImplTest {
 	    generate(MY_PACKAGE + ".hibernate", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-hibernate.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testBaseRepo() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".baserepo", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-baserepo.yaml"), tempFile);
 	});
     }
 
@@ -133,6 +133,15 @@ class ToOpenApiActionImplTest {
 	    generate(MY_PACKAGE + ".userprojectroles", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-userprojectroles.yaml"), tempFile);
+	});
+    }
+
+    @Test
+    void testWithEnum() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(MY_PACKAGE + ".withenum", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-withenum.yaml"), tempFile);
 	});
     }
 
