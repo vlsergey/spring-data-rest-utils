@@ -1,0 +1,25 @@
+package io.github.vlsergey.springdatarestutils.customfinders;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+public interface TestEntityRepo extends JpaRepository<TestEntity, UUID> {
+
+    @Override
+    Page<TestEntity> findAll(Pageable pageable);
+
+    List<TestEntity> findByValue(int value);
+
+    @Query("SELECT t FROM TestEntity t WHERE value=?1")
+    TestEntity findOneSimple(int value);
+
+    @Query("SELECT t FROM TestEntity t WHERE value=?1")
+    Optional<TestEntity> findOneWrapped(int value);
+
+}
