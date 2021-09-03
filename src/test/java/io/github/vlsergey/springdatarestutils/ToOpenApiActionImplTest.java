@@ -16,6 +16,7 @@ import org.openapi4j.core.validation.ValidationSeverity;
 import org.openapi4j.parser.OpenApi3Parser;
 import org.openapi4j.parser.model.v3.OpenApi3;
 import org.openapi4j.parser.validation.v3.OpenApi3Validator;
+import org.springframework.security.access.annotation.Secured;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,6 +143,17 @@ class ToOpenApiActionImplTest {
 	    generate(MY_PACKAGE + ".withenum", tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
 	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-withenum.yaml"), tempFile);
+	});
+    }
+
+    @Test
+    void testWithSecured() throws Exception {
+	taskProperties.setAddXCustomAnnotations(singletonList(Secured.class.getName()));
+
+	withTempFile(tempFile -> {
+	    generate(MY_PACKAGE + ".withsecured", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-withsecured.yaml"), tempFile);
 	});
     }
 

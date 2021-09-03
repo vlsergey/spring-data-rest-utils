@@ -16,6 +16,8 @@ import lombok.SneakyThrows;
 
 class ReflectionUtils {
 
+    private static final Class<?>[] EMPTY_CLASSES = new Class[0];
+
     static <T extends Annotation> Optional<T> findAnnotationOnReadMethodOfField(final @NonNull Class<T> cls,
 	    final @NonNull PropertyDescriptor pd) {
 	if (pd.getReadMethod() != null) {
@@ -45,6 +47,10 @@ class ReflectionUtils {
 	}
     }
 
+    static Optional<Method> findMethod(Class<?> cls, String methodName) {
+	return findMethod(cls, methodName, EMPTY_CLASSES);
+    }
+
     static Optional<Method> findMethod(Class<?> cls, String methodName, Class<?>... paramArgsClasses) {
 	return Arrays.stream(cls.getMethods()) //
 		.filter(method -> Objects.equals(method.getName(), methodName))
@@ -60,10 +66,6 @@ class ReflectionUtils {
 		    return true;
 		}) //
 		.findAny();
-    }
-
-    static Optional<Method> findMethod(Class<?> cls, String methodName) {
-	return findMethod(cls, methodName, new Class[0]);
     }
 
     @SafeVarargs
