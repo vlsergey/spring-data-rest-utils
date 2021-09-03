@@ -27,8 +27,8 @@ class EntityToSchemaMapperTest {
     private final TaskProperties taskProperties = new TaskProperties().setAddXLinkedEntity(true);
 
     private final EntityToSchemaMapper mapper = new EntityToSchemaMapper(
-	    (a, b, c) -> ClassToRefResolver.generateName(taskProperties, a, b, c), TestEntity.class::equals,
-	    emptyScanResult, taskProperties);
+	    (a, b, c) -> ClassToRefResolver.generateName(taskProperties, a, b, c),
+	    new CustomAnnotationsHelper(taskProperties), TestEntity.class::equals, emptyScanResult, taskProperties);
 
     @Test
     void nullableArrayIsExposedAsNullable() {

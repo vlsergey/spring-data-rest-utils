@@ -79,11 +79,13 @@ public class ToOpenApiActionImpl {
 	    return ClassToRefResolver.generateName(taskProperties, cls, classMappingMode, requestType);
 	};
 
-	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, isExposed, scanResult,
-		taskProperties);
+	final CustomAnnotationsHelper customAnnotationsHelper = new CustomAnnotationsHelper(taskProperties);
+
+	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, customAnnotationsHelper,
+		isExposed, scanResult, taskProperties);
 
 	final PathsGenerator pathsGenerator = new PathsGenerator(classToRefResolver, apiModel.getComponents(),
-		isExposed, mapper, apiModel.getPaths(), scanResult, taskProperties);
+		customAnnotationsHelper, isExposed, mapper, apiModel.getPaths(), scanResult, taskProperties);
 	pathsGenerator.generate(scanResult.getRepositories(), scanResult.getQueryMethodsCandidates());
 
 	scanResult.getRepositories().forEach(meta -> {

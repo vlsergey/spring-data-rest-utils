@@ -78,6 +78,7 @@ dependencies {
     testImplementation group: 'org.reflections', name: 'reflections', version: '0.9.12'
     testImplementation group: 'org.springframework.data', name: 'spring-data-jpa', version: '2.5.1'
     testImplementation group: 'org.springframework.data', name: 'spring-data-rest-core', version: '3.5.1'
+    testImplementation group: 'org.springframework.security', name: 'spring-security-core', version: '5.5.2'
 }
 
 test {

@@ -3,7 +3,6 @@ package io.github.vlsergey.springdatarestutils;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
@@ -14,40 +13,24 @@ import java.util.stream.Stream;
 import org.springframework.hateoas.Link;
 import org.springframework.util.StringUtils;
 
-import static java.util.Collections.emptyList;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.models.media.*;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
+@AllArgsConstructor
 public class EntityToSchemaMapper {
 
-    private final ClassToRefResolver classToRefResolver;
+    private final @NonNull ClassToRefResolver classToRefResolver;
 
-    private final @NonNull Map<String, Class<? extends Annotation>> customAnnotations;
+    private final @NonNull CustomAnnotationsHelper customAnnotationsHelper;
 
     private final @NonNull Predicate<@NonNull Class<?>> isExposed;
 
     private final @NonNull ScanResult scanResult;
 
     private final @NonNull TaskProperties taskProperties;
-
-    public EntityToSchemaMapper(ClassToRefResolver classToRefResolver, @NonNull Predicate<@NonNull Class<?>> isExposed,
-	    @NonNull ScanResult scanResult, @NonNull TaskProperties taskProperties) {
-	super();
-	this.classToRefResolver = classToRefResolver;
-	this.isExposed = isExposed;
-	this.scanResult = scanResult;
-	this.taskProperties = taskProperties;
-
-	this.customAnnotations = Optional.ofNullable(taskProperties.getAddXCustomAnnotations()).orElse(emptyList())
-		.stream().map(clsName -> ReflectionUtils.<Annotation>findClass(clsName).orElse(null))
-		.filter(Objects::nonNull)
-		.collect(toMap(cls -> "x-" + CaseUtils.camelToKebab(cls.getSimpleName()), identity()));
-    }
 
     @SuppressWarnings("rawtypes")
     static Schema<?> buildOneToManyCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
@@ -270,9 +253,7 @@ public class EntityToSchemaMapper {
 	ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
 	ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
 
-	this.customAnnotations
-		.forEach((extensionName, annClass) -> ReflectionUtils.findAnnotationOnReadMethodOfField(annClass, pd)
-			.ifPresent(ann -> schema.addExtension(extensionName, Boolean.TRUE)));
+	customAnnotationsHelper.populatePropertySchema(pd, schema);
     }
 
     private ObjectSchema toObjectSchema(final @NonNull ClassMappingMode mode, final @NonNull RequestType requestType,

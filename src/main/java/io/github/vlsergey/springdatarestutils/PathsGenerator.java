@@ -55,6 +55,8 @@ public class PathsGenerator {
 
     private final @NonNull Components components;
 
+    private final @NonNull CustomAnnotationsHelper customAnnotationsHelper;
+
     private final @NonNull Predicate<Class<?>> isExposed;
 
     private final @NonNull EntityToSchemaMapper mapper;
@@ -78,9 +80,8 @@ public class PathsGenerator {
 
     public void generate(final @NonNull Iterable<RepositoryMetadata> metas, final Set<Method> allQueryCandidates) {
 	StreamSupport.stream(metas.spliterator(), false)
-		.sorted(Comparator.comparing(meta -> meta.getDomainType().getName())).forEach(meta -> {
-		    populatePathItems(meta, allQueryCandidates);
-		});
+		.sorted(Comparator.comparing(meta -> meta.getDomainType().getName()))
+		.forEach(meta -> populatePathItems(meta, allQueryCandidates));
     }
 
     private @NonNull String getIdPathParameterName(final @NonNull Class<?> domainType) {
@@ -326,6 +327,7 @@ public class PathsGenerator {
 		populateOperationWithPredicate(meta, operation);
 		populateOperationWithPageable(operation);
 		populateOperationWithProjection(meta, operation);
+		customAnnotationsHelper.populateMethod(method.get(), operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
@@ -335,13 +337,14 @@ public class PathsGenerator {
 	    if (method.isPresent()) {
 		populateOperationWithPageable(operation);
 		populateOperationWithProjection(meta, operation);
+		customAnnotationsHelper.populateMethod(method.get(), operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
 	});
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
-	    withIdPathItem.setGet(new Operation() //
+	    final Operation getOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //
 		    .description("Retrieves an entity by its id") //
@@ -351,20 +354,24 @@ public class PathsGenerator {
 					    new ApiResponse().content(entityContentWithLinks)
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
-					    new ApiResponse().description("Entity is missing"))));
+					    new ApiResponse().description("Entity is missing")));
+	    customAnnotationsHelper.populateMethod(findOneMethod, getOperation);
+	    withIdPathItem.setGet(getOperation);
 	});
 
 	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
 
-	    withIdPathItem.setPatch(new Operation() //
+	    final Operation patchOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.PATCH)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-			    new ApiResponse().description("Entity has been updated"))));
+			    new ApiResponse().description("Entity has been updated")));
+	    customAnnotationsHelper.populateMethod(saveMethod, patchOperation);
+	    withIdPathItem.setPatch(patchOperation);
 
-	    noIdPathItem.setPost(new Operation() //
+	    final Operation postOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .requestBody(
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.CREATE)) //
@@ -373,24 +380,30 @@ public class PathsGenerator {
 				    new ApiResponse().content(entityContentWithLinks)
 					    .description("Entity has been created"))
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
-				    new ApiResponse().description("Entity has been created"))));
+				    new ApiResponse().description("Entity has been created")));
+	    customAnnotationsHelper.populateMethod(saveMethod, postOperation);
+	    noIdPathItem.setPost(postOperation);
 
-	    withIdPathItem.setPut(new Operation() //
+	    final Operation putOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //
 		    .requestBody(
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.UPDATE)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-			    new ApiResponse().description("Entity has been updated"))));
+			    new ApiResponse().description("Entity has been updated")));
+	    customAnnotationsHelper.populateMethod(saveMethod, putOperation);
+	    withIdPathItem.setPut(putOperation);
 	});
 
 	crudMethods.getDeleteMethod().ifPresent(deleteMethod -> {
-	    withIdPathItem.setDelete(new Operation() //
+	    final Operation deleteOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //
 		    .description("Deletes the entity with the given id") //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
-			    new ApiResponse().description("Entity has been deleted or already didn't exists"))));
+			    new ApiResponse().description("Entity has been deleted or already didn't exists")));
+	    customAnnotationsHelper.populateMethod(deleteMethod, deleteOperation);
+	    withIdPathItem.setDelete(deleteOperation);
 	});
 
 	if (!noIdPathItem.readOperations().isEmpty()) {
