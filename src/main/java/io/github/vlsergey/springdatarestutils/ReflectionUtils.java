@@ -11,12 +11,30 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.springframework.core.annotation.AnnotationUtils;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
 class ReflectionUtils {
 
     private static final Class<?>[] EMPTY_CLASSES = new Class[0];
+
+    static <A extends Annotation> @NonNull Optional<A> findAnnotationMayBeOnClass(final @NonNull Class<A> annClass,
+	    final @NonNull Class<?> targetClass, final @NonNull Method method) {
+
+	A a = AnnotationUtils.findAnnotation(method, annClass);
+
+	if (a == null) {
+	    a = AnnotationUtils.findAnnotation(method.getDeclaringClass(), annClass);
+	}
+
+	if (a == null) {
+	    a = AnnotationUtils.findAnnotation(targetClass, annClass);
+	}
+
+	return Optional.ofNullable(a);
+    }
 
     static <T extends Annotation> Optional<T> findAnnotationOnReadMethodOfField(final @NonNull Class<T> cls,
 	    final @NonNull PropertyDescriptor pd) {
@@ -73,8 +91,8 @@ class ReflectionUtils {
 	if (Arrays.stream(paramArgsClasses).anyMatch(op -> !op.isPresent()))
 	    return Optional.empty();
 
-	return findMethod(cls, methodName,
-		(Class<?>[]) Arrays.stream(paramArgsClasses).map(Optional::get).toArray(Class[]::new));
+	final Class<?>[] paramClasses = Arrays.stream(paramArgsClasses).map(Optional::get).toArray(Class<?>[]::new);
+	return findMethod(cls, methodName, paramClasses);
     }
 
     @Deprecated

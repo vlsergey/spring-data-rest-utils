@@ -102,8 +102,7 @@ paths:
                         format: int32
                         nullable: false
       x-secured:
-      - ROLE_USER
-      - ROLE_ADMIN
+      - ROLE_FROM_METHOD
     post:
       tags:
       - TestEntity
@@ -122,6 +121,8 @@ paths:
                 $ref: '#/components/schemas/TestEntityWithLinks'
         "204":
           description: Entity has been created
+      x-secured:
+      - ROLE_FROM_CLASS
   /testEntities/{id}:
     get:
       tags:
@@ -138,6 +139,8 @@ paths:
                 $ref: '#/components/schemas/TestEntityWithLinks'
         "404":
           description: Entity is missing
+      x-secured:
+      - ROLE_FROM_CLASS
     put:
       tags:
       - TestEntity
@@ -152,6 +155,8 @@ paths:
       responses:
         "204":
           description: Entity has been updated
+      x-secured:
+      - ROLE_FROM_CLASS
     delete:
       tags:
       - TestEntity
@@ -161,6 +166,8 @@ paths:
       responses:
         "204":
           description: Entity has been deleted or already didn't exists
+      x-secured:
+      - ROLE_FROM_CLASS
     patch:
       tags:
       - TestEntity
@@ -175,6 +182,8 @@ paths:
       responses:
         "204":
           description: Entity has been updated
+      x-secured:
+      - ROLE_FROM_CLASS
 components:
   schemas:
     Link:

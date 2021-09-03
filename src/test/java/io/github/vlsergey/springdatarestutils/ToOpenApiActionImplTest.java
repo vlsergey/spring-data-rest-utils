@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,7 +149,7 @@ class ToOpenApiActionImplTest {
 
     @Test
     void testWithSecured() throws Exception {
-	taskProperties.setAddXCustomAnnotations(singletonList(Secured.class.getName()));
+	taskProperties.setAddXCustomAnnotations(Arrays.asList(Secured.class.getName()));
 
 	withTempFile(tempFile -> {
 	    generate(MY_PACKAGE + ".withsecured", tempFile);
