@@ -8,13 +8,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.access.annotation.Secured;
 
+@Secured({ "ROLE_FROM_CLASS" })
 public interface TestEntityRepo extends JpaRepository<TestEntity, UUID> {
 
     @Override
-    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    @Secured({ "ROLE_FROM_METHOD" })
     Page<TestEntity> findAll(Pageable pageable);
 
-    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    @Secured({ "ROLE_FROM_METHOD" })
     List<TestEntity> findByValue(int value);
 
 }

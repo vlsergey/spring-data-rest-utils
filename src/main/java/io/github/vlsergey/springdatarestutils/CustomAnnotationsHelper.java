@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
@@ -29,32 +28,28 @@ public class CustomAnnotationsHelper {
 		.collect(toMap(cls -> "x-" + CaseUtils.camelToKebab(cls.getSimpleName()), identity()));
     }
 
-    private <A extends Annotation> void extractAnnotationValue(A annotation, Consumer<Object> consumer) {
-	final Optional<Method> valueMethodOp = ReflectionUtils.findMethod(annotation.getClass(), "value");
-	if (!valueMethodOp.isPresent()) {
-	    consumer.accept(Boolean.TRUE);
-	    return;
-	}
-
-	valueMethodOp.ifPresent(valueMethod -> {
+    private static <A extends Annotation> @NonNull Object getAnnotationValue(final @NonNull A annotation) {
+	return ReflectionUtils.findMethod(annotation.getClass(), "value").map(valueMethod -> {
 	    try {
-		final Object value = valueMethod.invoke(annotation);
-		consumer.accept(value);
+		return valueMethod.invoke(annotation);
 	    } catch (Exception exc) {
 		log.error("Unable to migrate value of " + annotation.getClass().getName(), exc);
-		consumer.accept(Boolean.TRUE);
+		return Boolean.TRUE;
 	    }
-	});
+	}).orElse(Boolean.TRUE);
     }
 
-    public void populateMethod(Method method, final @NonNull Operation operation) {
-	customAnnotations.forEach((extensionName, annClass) -> Optional.ofNullable(method.getAnnotation(annClass))
-		.ifPresent(ann -> extractAnnotationValue(ann, value -> operation.addExtension(extensionName, value))));
-    }
-
-    public void populatePropertySchema(PropertyDescriptor pd, final @NonNull Schema<?> targetSchema) {
+    public void populateMethod(final @NonNull Class<?> targetClass, final @NonNull Method method,
+	    final @NonNull Operation operation) {
 	customAnnotations.forEach(
-		(extensionName, annClass) -> ReflectionUtils.findAnnotationOnReadMethodOfField(annClass, pd).ifPresent(
-			ann -> extractAnnotationValue(ann, value -> targetSchema.addExtension(extensionName, value))));
+		(extensionName, annClass) -> ReflectionUtils.findAnnotationMayBeOnClass(annClass, targetClass, method)
+			.map(CustomAnnotationsHelper::getAnnotationValue)
+			.ifPresent(value -> operation.addExtension(extensionName, value)));
+    }
+
+    public void populatePropertySchema(final @NonNull PropertyDescriptor pd, final @NonNull Schema<?> targetSchema) {
+	customAnnotations.forEach((extensionName, annClass) -> ReflectionUtils
+		.findAnnotationOnReadMethodOfField(annClass, pd).map(CustomAnnotationsHelper::getAnnotationValue)
+		.ifPresent(value -> targetSchema.addExtension(extensionName, value)));
     }
 }

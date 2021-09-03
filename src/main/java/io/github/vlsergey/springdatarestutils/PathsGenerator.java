@@ -300,6 +300,7 @@ public class PathsGenerator {
 	final PathItem withIdPathItem = new PathItem();
 
 	final CrudMethods crudMethods = meta.getCrudMethods();
+	final Class<?> repositoryInterface = meta.getRepositoryInterface();
 
 	final Content entityContentWithLinks = classToRefResolver.getRefContent(domainType, ClassMappingMode.WITH_LINKS,
 		RequestType.RESPONSE);
@@ -327,7 +328,7 @@ public class PathsGenerator {
 		populateOperationWithPredicate(meta, operation);
 		populateOperationWithPageable(operation);
 		populateOperationWithProjection(meta, operation);
-		customAnnotationsHelper.populateMethod(method.get(), operation);
+		customAnnotationsHelper.populateMethod(repositoryInterface, method.get(), operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
@@ -337,7 +338,7 @@ public class PathsGenerator {
 	    if (method.isPresent()) {
 		populateOperationWithPageable(operation);
 		populateOperationWithProjection(meta, operation);
-		customAnnotationsHelper.populateMethod(method.get(), operation);
+		customAnnotationsHelper.populateMethod(repositoryInterface, method.get(), operation);
 		noIdPathItem.setGet(operation);
 		return;
 	    }
@@ -355,7 +356,7 @@ public class PathsGenerator {
 						    .description("Entity is present"))
 				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
 					    new ApiResponse().description("Entity is missing")));
-	    customAnnotationsHelper.populateMethod(findOneMethod, getOperation);
+	    customAnnotationsHelper.populateMethod(repositoryInterface, findOneMethod, getOperation);
 	    withIdPathItem.setGet(getOperation);
 	});
 
@@ -368,7 +369,7 @@ public class PathsGenerator {
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.PATCH)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated")));
-	    customAnnotationsHelper.populateMethod(saveMethod, patchOperation);
+	    customAnnotationsHelper.populateMethod(repositoryInterface, saveMethod, patchOperation);
 	    withIdPathItem.setPatch(patchOperation);
 
 	    final Operation postOperation = new Operation() //
@@ -381,7 +382,7 @@ public class PathsGenerator {
 					    .description("Entity has been created"))
 			    .addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("Entity has been created")));
-	    customAnnotationsHelper.populateMethod(saveMethod, postOperation);
+	    customAnnotationsHelper.populateMethod(repositoryInterface, saveMethod, postOperation);
 	    noIdPathItem.setPost(postOperation);
 
 	    final Operation putOperation = new Operation() //
@@ -391,7 +392,7 @@ public class PathsGenerator {
 			    classToRefResolver.getRequestBody(domainType, ClassMappingMode.EXPOSED, RequestType.UPDATE)) //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been updated")));
-	    customAnnotationsHelper.populateMethod(saveMethod, putOperation);
+	    customAnnotationsHelper.populateMethod(repositoryInterface, saveMethod, putOperation);
 	    withIdPathItem.setPut(putOperation);
 	});
 
@@ -402,7 +403,7 @@ public class PathsGenerator {
 		    .description("Deletes the entity with the given id") //
 		    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 			    new ApiResponse().description("Entity has been deleted or already didn't exists")));
-	    customAnnotationsHelper.populateMethod(deleteMethod, deleteOperation);
+	    customAnnotationsHelper.populateMethod(repositoryInterface, deleteMethod, deleteOperation);
 	    withIdPathItem.setDelete(deleteOperation);
 	});
 
