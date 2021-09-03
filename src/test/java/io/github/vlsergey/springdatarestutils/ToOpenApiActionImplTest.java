@@ -90,6 +90,15 @@ class ToOpenApiActionImplTest {
     }
 
     @Test
+    void testCustomFinders() throws Exception {
+	withTempFile(tempFile -> {
+	    generate(MY_PACKAGE + ".customfinders", tempFile);
+	    assertOpenAPISpecValid(tempFile.toURI().toURL());
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-customfinders.yaml"), tempFile);
+	});
+    }
+
+    @Test
     void testExample() throws Exception {
 	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
 

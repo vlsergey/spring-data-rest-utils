@@ -4,6 +4,8 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Predicate;
@@ -111,7 +113,18 @@ public class PathsGenerator {
 		taskProperties.isAddXJavaComparable());
     }
 
-    public Schema<?> methodInOutsToSchema(Class<?> cls) {
+    public Schema<?> methodInOutsToSchema(Type type, Class<?> cls) {
+	if (isExposed.test(cls)) {
+	    return this.classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED, RequestType.RESPONSE);
+	}
+
+	if (Optional.class.equals(cls) && type instanceof ParameterizedType) {
+	    final Type actualType = ((ParameterizedType) type).getActualTypeArguments()[0];
+	    if (actualType instanceof Class<?>) {
+		return methodInOutsToSchema(actualType, (Class<?>) actualType);
+	    }
+	}
+
 	final Optional<Supplier<Schema<?>>> schema = getStandardSchemaSupplier(cls);
 	if (!schema.isPresent()) {
 	    throw new UnsupportedOperationException("Unsupported class: " + cls.getName());
@@ -420,11 +433,11 @@ public class PathsGenerator {
 	populateAssociationResourceMethods(tag, idPathParameterRef, domainType,
 		basePath + "/{" + idPathParameterName + "}", paths));
 
-	populatePathItemsWithSearchQueries(meta, allQueryCandidates, paths, tag, basePath);
+	populatePathItemsWithSearchQueries(meta, allQueryCandidates, tag, basePath);
     }
 
     private void populatePathItemsWithSearchQueries(final RepositoryMetadata meta, final Set<Method> allQueryCandidates,
-	    final Paths paths, final String tag, final String basePath) {
+	    final String tag, final String basePath) {
 	final Class<?> repoInterface = meta.getRepositoryInterface();
 	for (Method method : repoInterface.getMethods()) {
 	    method = ClassUtils.getMostSpecificMethod(method, repoInterface);
@@ -438,15 +451,17 @@ public class PathsGenerator {
 			: new Path(annotation.path());
 
 		// TODO: check void
-		final Operation operation = new Operation().addTagsItem(tag).responses(
-			new ApiResponses().addApiResponse(RESPONSE_CODE_OK, new ApiResponse().description("ok")
-				.content(SchemaUtils.toContent(methodInOutsToSchema(method.getReturnType())))));
+		final Operation operation = new Operation().addTagsItem(tag)
+			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
+				new ApiResponse().description("ok").content(SchemaUtils.toContent(
+					methodInOutsToSchema(method.getGenericReturnType(), method.getReturnType())))));
 
 		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
 		    operation.addParametersItem(new Parameter().in(IN_QUERY).name(methodParam.getName())
-			    .schema(methodInOutsToSchema(methodParam.getType())));
+			    .schema(methodInOutsToSchema(methodParam.getParameterizedType(), methodParam.getType())));
 		}
 
+		customAnnotationsHelper.populateMethod(repoInterface, method, operation);
 		paths.addPathItem(basePath + "/search" + path.toString(), new PathItem().get(operation));
 
 	    } catch (UnsupportedOperationException exc) {
