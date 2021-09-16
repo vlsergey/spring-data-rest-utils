@@ -15,7 +15,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
-import org.springframework.data.rest.core.config.Projection;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy;
 import org.springframework.util.ClassUtils;
 
@@ -71,12 +70,14 @@ public class CodebaseScannerFacade {
 		    return true;
 		}).collect(toSet());
 
-	Set<Class<?>> projections = emptySet();
-	try {
-	    projections = reflections.getTypesAnnotatedWith(Projection.class);
-	} catch (ReflectionsException exc) {
-	    log.info("No types annotated with @Projection were found. Hope you just are not usign them.");
-	}
+	Set<Class<?>> projections = (Set<Class<?>>) SpringDataUtils.CLASS_PROJECTION.map(cls -> {
+	    try {
+		return reflections.getTypesAnnotatedWith(cls);
+	    } catch (ReflectionsException exc) {
+		log.info("No types annotated with @Projection were found. Hope you just are not usign them.");
+		return emptySet();
+	    }
+	}).orElse(emptySet());
 
 	final @NonNull Map<Class<?>, SortedSet<Class<?>>> inheritance = scanForInheritance(reflections, repositories);
 	final @NonNull Set<Method> queryMethodsCandidates = scanForQueryMethodsCandidates(reflections, repositories);

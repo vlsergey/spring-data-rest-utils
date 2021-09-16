@@ -2,10 +2,7 @@ package io.github.vlsergey.springdatarestutils;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
@@ -114,6 +111,12 @@ class ReflectionUtils {
 
     }
 
+    static <T> Optional<T> getAnnotationAttributeValue(AnnotatedElement annotated,
+	    Optional<Class<? extends Annotation>> opAnnClass, Optional<Method> opMethod, Class<T> resultClass) {
+	return opAnnClass.map(annotated::getAnnotation)
+		.flatMap(ann -> opMethod.map(method -> ReflectionUtils.getOrNull(method, ann, resultClass)));
+    }
+
     static Optional<Class<?>> getCollectionGenericTypeArgument(PropertyDescriptor pd) {
 	if (!Collection.class.isAssignableFrom(pd.getPropertyType()))
 	    return Optional.empty();
@@ -152,7 +155,7 @@ class ReflectionUtils {
 
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    static <T> T getOrNull(Method method, Annotation obj, Class<T> resultClass) {
+    static <T> T getOrNull(Method method, Object obj, Class<T> resultClass) {
 	try {
 	    return (T) method.invoke(obj);
 	} catch (Exception exc) {

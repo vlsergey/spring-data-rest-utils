@@ -18,12 +18,9 @@ import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.rest.core.Path;
 import org.springframework.data.rest.core.annotation.RestResource;
-import org.springframework.data.rest.core.config.Projection;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-
-import static java.util.stream.Collectors.toList;
 
 import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -65,6 +62,8 @@ public class PathsGenerator {
 
     private final @NonNull Paths paths;
 
+    private final @NonNull ProjectionHelper projectionHelper;
+
     private final @NonNull ScanResult scanResult;
 
     private final @NonNull TaskProperties taskProperties;
@@ -80,7 +79,25 @@ public class PathsGenerator {
 		.findMethod(cls, method.getName(), method.getParameterTypes())).isPresent();
     }
 
+    public Schema<?> buildCollectionWithProjectionsSchema(@NonNull Class<?> cls) {
+	final ComposedSchema oneOf = new ComposedSchema();
+	oneOf.addOneOfItem(new ArraySchema()
+		.items(classToRefResolver.getRefSchema(cls, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE)));
+
+	final Schema<Object> linksSchema = classToRefResolver.getRefSchema(cls, ClassMappingMode.LINKS,
+		RequestType.RESPONSE);
+	projectionHelper.getProjections(cls).forEach((name, projectionInterface) -> {
+	    final Schema<?> projectionSchema = classToRefResolver.getRefSchema(projectionInterface,
+		    ClassMappingMode.PROJECTION, RequestType.RESPONSE);
+	    oneOf.addOneOfItem(new ArraySchema()
+		    .items(new ComposedSchema().addAllOfItem(projectionSchema).addAllOfItem(linksSchema)));
+	});
+
+	return oneOf;
+    }
+
     public void generate(final @NonNull Iterable<RepositoryMetadata> metas, final Set<Method> allQueryCandidates) {
+
 	StreamSupport.stream(metas.spliterator(), false)
 		.sorted(Comparator.comparing(meta -> meta.getDomainType().getName()))
 		.forEach(meta -> populatePathItems(meta, allQueryCandidates));
@@ -288,24 +305,20 @@ public class PathsGenerator {
 
     private void populateOperationWithProjection(final @NonNull RepositoryMetadata meta,
 	    final @NonNull Operation operation) {
-	final List<Class<?>> projections = this.scanResult.getProjections().stream().filter(
-		cls -> Arrays.asList(cls.getAnnotation(Projection.class).types()).contains(meta.getDomainType()))
-		.collect(toList());
-	if (projections.isEmpty())
-	    return;
+	projectionHelper.getProjectionNames(meta.getDomainType()).ifPresent(projectionNames -> {
+	    final Schema<String> schema = new StringSchema();
 
-	final Schema<String> schema = new StringSchema();
-	schema.setEnum(projections.stream()
-		.map(cls -> Optional.ofNullable(
-			org.apache.commons.lang3.StringUtils.trimToNull(cls.getAnnotation(Projection.class).name()))
-			.orElseGet(cls::getSimpleName))
-		.collect(toList()));
-	operation.addParametersItem(new Parameter().description("The name of projection").in(IN_QUERY)
-		.name("projection").schema(schema).required(false));
+	    final ArrayList<String> projectionNameList = new ArrayList<>(projectionNames);
+	    Collections.sort(projectionNameList);
+	    schema.setEnum(projectionNameList);
+
+	    operation.addParametersItem(new Parameter().description("The name of projection").in(IN_QUERY)
+		    .name("projection").schema(schema).required(false));
+	});
     }
 
     @SneakyThrows
-    public void populatePathItems(final @NonNull RepositoryMetadata meta,
+    private void populatePathItems(final @NonNull RepositoryMetadata meta,
 	    final @NonNull Set<Method> allQueryCandidates) {
 	final Class<?> domainType = meta.getDomainType();
 
@@ -328,9 +341,12 @@ public class PathsGenerator {
 	    final Operation operation = new Operation() //
 		    .addTagsItem(tag).description("Find entities");
 
-	    final Schema<?> responseSchema = EntityToSchemaMapper.buildRootCollectionSchema(
-		    taskProperties.getLinkTypeName(), collectionKey,
-		    classToRefResolver.getRefSchema(domainType, ClassMappingMode.WITH_LINKS, RequestType.RESPONSE));
+	    final Schema<?> embeddedSchema = projectionHelper.hasProjections(domainType)
+		    ? buildCollectionWithProjectionsSchema(domainType)
+		    : new ArraySchema().items(classToRefResolver.getRefSchema(domainType, ClassMappingMode.WITH_LINKS,
+			    RequestType.RESPONSE));
+	    final Schema<?> responseSchema = EntityToSchemaMapper
+		    .buildRootCollectionSchema(taskProperties.getLinkTypeName(), collectionKey, embeddedSchema);
 
 	    operation.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
 		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success")));
@@ -358,18 +374,22 @@ public class PathsGenerator {
 	});
 
 	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
+	    final Content responseContent = classToRefResolver.getRefContent(domainType,
+		    projectionHelper.hasProjections(domainType) ? ClassMappingMode.WITH_PROJECTIONS
+			    : ClassMappingMode.WITH_LINKS,
+		    RequestType.RESPONSE);
+
 	    final Operation getOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //
 		    .description("Retrieves an entity by its id") //
-		    .responses(
-			    new ApiResponses()
-				    .addApiResponse(RESPONSE_CODE_OK,
-					    new ApiResponse().content(entityContentWithLinks)
-						    .description("Entity is present"))
-				    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
-					    new ApiResponse().description("Entity is missing")));
+		    .responses(new ApiResponses()
+			    .addApiResponse(RESPONSE_CODE_OK,
+				    new ApiResponse().content(responseContent).description("Entity is present"))
+			    .addApiResponse(RESPONSE_CODE_NOT_FOUND,
+				    new ApiResponse().description("Entity is missing")));
 	    customAnnotationsHelper.populateMethod(repositoryInterface, findOneMethod, getOperation);
+	    populateOperationWithProjection(meta, getOperation);
 	    withIdPathItem.setGet(getOperation);
 	});
 

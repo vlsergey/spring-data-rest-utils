@@ -9,11 +9,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.tuple.Triple;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.mapping.RepositoryDetectionStrategy.RepositoryDetectionStrategies;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +46,7 @@ public class ToOpenApiActionImpl {
 	final ScanResult scanResult = scannerFacade.scan(Thread.currentThread().getContextClassLoader());
 	final Predicate<Class<?>> isExposed = cls -> scanResult.getRepositories().stream()
 		.anyMatch(meta -> meta.getDomainType().isAssignableFrom(cls));
+	final ProjectionHelper projectionHelper = new ProjectionHelper(scanResult);
 
 	Queue<Triple<Class<?>, ClassMappingMode, RequestType>> toProcess = new LinkedList<>();
 	Set<Triple<Class<?>, ClassMappingMode, RequestType>> queued = new HashSet<>();
@@ -57,15 +56,6 @@ public class ToOpenApiActionImpl {
 	apiModel.setComponents(new Components());
 	apiModel.setPaths(new Paths());
 	apiModel.setServers(this.taskProperties.getServers());
-
-	Consumer<Class<?>> onProjection = projectionClass -> {
-	    final Triple<Class<?>, ClassMappingMode, RequestType> projectionKey = Triple.of(projectionClass,
-		    ClassMappingMode.PROJECTION, RequestType.RESPONSE);
-	    if (!queued.contains(projectionKey)) {
-		toProcess.add(projectionKey);
-		queued.add(projectionKey);
-	    }
-	};
 
 	final ClassToRefResolver classToRefResolver = (@NonNull Class<?> cls,
 		@NonNull ClassMappingMode classMappingMode, @NonNull RequestType requestType) -> {
@@ -82,22 +72,12 @@ public class ToOpenApiActionImpl {
 	final CustomAnnotationsHelper customAnnotationsHelper = new CustomAnnotationsHelper(taskProperties);
 
 	final EntityToSchemaMapper mapper = new EntityToSchemaMapper(classToRefResolver, customAnnotationsHelper,
-		isExposed, scanResult, taskProperties);
+		isExposed, projectionHelper, scanResult, taskProperties);
 
 	final PathsGenerator pathsGenerator = new PathsGenerator(classToRefResolver, apiModel.getComponents(),
-		customAnnotationsHelper, isExposed, mapper, apiModel.getPaths(), scanResult, taskProperties);
+		customAnnotationsHelper, isExposed, mapper, apiModel.getPaths(), projectionHelper, scanResult,
+		taskProperties);
 	pathsGenerator.generate(scanResult.getRepositories(), scanResult.getQueryMethodsCandidates());
-
-	scanResult.getRepositories().forEach(meta -> {
-	    RepositoryRestResource resAnn = meta.getRepositoryInterface().getAnnotation(RepositoryRestResource.class);
-	    if (resAnn != null) {
-		final Class<?> projectionClass = resAnn.excerptProjection();
-		if (projectionClass != null) {
-		    onProjection.accept(projectionClass);
-		}
-	    }
-	});
-	scanResult.getProjections().stream().forEach(onProjection);
 
 	while (!toProcess.isEmpty()) {
 	    final Triple<Class<?>, ClassMappingMode, RequestType> head = toProcess.poll();

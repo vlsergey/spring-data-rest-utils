@@ -28,6 +28,8 @@ public class EntityToSchemaMapper {
 
     private final @NonNull Predicate<@NonNull Class<?>> isExposed;
 
+    private final @NonNull ProjectionHelper projectionHelper;
+
     private final @NonNull ScanResult scanResult;
 
     private final @NonNull TaskProperties taskProperties;
@@ -48,12 +50,13 @@ public class EntityToSchemaMapper {
     }
 
     @SuppressWarnings("rawtypes")
-    static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey, Schema itemRefSchema) {
+    static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey,
+	    Schema<?> embeddedArraySchema) {
 	ObjectSchema result = new ObjectSchema();
 	result.setRequired(Arrays.asList("_embedded", "_links", "page"));
 
-	result.addProperties("_embedded", new ObjectSchema().addRequiredItem(collectionKey).addProperties(collectionKey,
-		new ArraySchema().items(itemRefSchema)));
+	result.addProperties("_embedded",
+		new ObjectSchema().addRequiredItem(collectionKey).addProperties(collectionKey, embeddedArraySchema));
 
 	final Schema<?> linkSchema = new Schema<>().$ref("#/components/schemas/" + linkTypeName);
 
@@ -201,6 +204,23 @@ public class EntityToSchemaMapper {
 	return new ComposedSchema().addAllOfItem(withoutLinks).addAllOfItem(links);
     }
 
+    private Schema<?> buildWithProjections(@NonNull Class<?> cls) {
+	final @NonNull Schema<?> withoutProjections = classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED,
+		RequestType.RESPONSE);
+
+	final ComposedSchema oneOf = new ComposedSchema().addOneOfItem(withoutProjections);
+	projectionHelper.getProjections(cls).forEach((name, projectionInterface) -> {
+	    final Schema<?> projectionSchema = classToRefResolver.getRefSchema(projectionInterface,
+		    ClassMappingMode.PROJECTION, RequestType.RESPONSE);
+	    oneOf.addOneOfItem(projectionSchema);
+	});
+
+	final @NonNull Schema<?> links = classToRefResolver.getRefSchema(cls, ClassMappingMode.LINKS,
+		RequestType.RESPONSE);
+
+	return new ComposedSchema().addAllOfItem(oneOf).addAllOfItem(links);
+    }
+
     @SneakyThrows
     public Schema<?> mapEntity(final @NonNull Class<?> cls, final @NonNull ClassMappingMode mode,
 	    final @NonNull RequestType requestType) {
@@ -210,6 +230,10 @@ public class EntityToSchemaMapper {
 
 	if (mode == ClassMappingMode.WITH_LINKS) {
 	    return buildWithLinksSchema(cls);
+	}
+
+	if (mode == ClassMappingMode.WITH_PROJECTIONS) {
+	    return buildWithProjections(cls);
 	}
 
 	if (mode == ClassMappingMode.INHERITANCE_CHILD) {

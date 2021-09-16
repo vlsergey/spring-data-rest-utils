@@ -65,9 +65,15 @@ paths:
                     type: object
                     properties:
                       testEntities:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/TestEntityWithLinks'
+                        oneOf:
+                        - type: array
+                          items:
+                            $ref: '#/components/schemas/TestEntityWithLinks'
+                        - type: array
+                          items:
+                            allOf:
+                            - $ref: '#/components/schemas/TestEntityDefaultProjection'
+                            - $ref: '#/components/schemas/TestEntityLinks'
                   _links:
                     required:
                     - profile
@@ -134,13 +140,21 @@ paths:
       description: Retrieves an entity by its id
       parameters:
       - $ref: '#/components/parameters/testEntityId'
+      - name: projection
+        in: query
+        description: The name of projection
+        required: false
+        schema:
+          type: string
+          enum:
+          - testProjection
       responses:
         "200":
           description: Entity is present
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestEntityWithLinks'
+                $ref: '#/components/schemas/TestEntityWithProjections'
         "404":
           description: Entity is missing
     put:
@@ -335,6 +349,12 @@ components:
     TestEntityWithLinks:
       allOf:
       - $ref: '#/components/schemas/TestEntity'
+      - $ref: '#/components/schemas/TestEntityLinks'
+    TestEntityWithProjections:
+      allOf:
+      - oneOf:
+        - $ref: '#/components/schemas/TestEntity'
+        - $ref: '#/components/schemas/TestEntityDefaultProjection'
       - $ref: '#/components/schemas/TestEntityLinks'
   parameters:
     testEntityId:
