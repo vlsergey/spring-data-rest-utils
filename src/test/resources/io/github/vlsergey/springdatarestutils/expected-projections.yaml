@@ -266,7 +266,6 @@ components:
       required:
       - created
       - id
-      - parent
       - updated
       type: object
       properties:
@@ -278,10 +277,6 @@ components:
           type: string
           format: uuid
           nullable: false
-        parent:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/TestEntity'
         updated:
           type: string
           format: date-time

@@ -283,7 +283,8 @@ public class EntityToSchemaMapper {
     private ObjectSchema toObjectSchema(final @NonNull ClassMappingMode mode, final @NonNull RequestType requestType,
 	    final @NonNull Class<?> cls) {
 	final ObjectSchema objectSchema = new ObjectSchema();
-	objectSchema.setName(classToRefResolver.getRefName(cls, mode, requestType));
+	final String refName = classToRefResolver.getRefName(cls, mode, requestType);
+	objectSchema.setName(refName);
 
 	withBeanProperties(cls, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
@@ -396,7 +397,7 @@ public class EntityToSchemaMapper {
 	    return schema;
 	}
 
-	final ClassMappingMode childPropertyMappingMode = isExposed.test(propertyType) ? mode
+	final ClassMappingMode childPropertyMappingMode = isExposed.test(propertyType) ? ClassMappingMode.EXPOSED
 		: ClassMappingMode.DATA_ITEM;
 	final Schema<Object> refSchema = classToRefResolver.getRefSchema(propertyType, childPropertyMappingMode,
 		requestType);

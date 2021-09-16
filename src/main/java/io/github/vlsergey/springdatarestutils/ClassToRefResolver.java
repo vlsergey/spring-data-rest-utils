@@ -17,6 +17,11 @@ public interface ClassToRefResolver {
      */
     static String generateName(final TaskProperties taskProperties, final @NonNull Class<?> cls,
 	    final @NonNull ClassMappingMode classMappingMode, final @NonNull RequestType requestType) {
+	if (!classMappingMode.isCompatibleWith(cls)) {
+	    throw new IllegalArgumentException(
+		    "Class mode " + classMappingMode + " is not compatible with " + cls.getName());
+	}
+
 	if (cls.isAssignableFrom(Link.class)) {
 	    return taskProperties.getLinkTypeName();
 	}
