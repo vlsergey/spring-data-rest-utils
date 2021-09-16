@@ -26,19 +26,15 @@ public class TaskProperties {
 
     private String baseTypePrefix = "Base";
 
+    private String createTypePrefix = "New";
+
+    private String createTypeSuffix = "Request";
+
     private String defaultTypeSuffix = "";
 
     private String enumTypeSuffix = "";
 
     private Info info = new Info();
-
-    private String createTypePrefix = "New";
-
-    private String createTypeSuffix = "Request";
-
-    private String updateTypePrefix = "";
-
-    private String updateTypeSuffix = "Request";
 
     private String linksTypeSuffix = "Links";
 
@@ -52,6 +48,14 @@ public class TaskProperties {
 
     private List<Server> servers = new ArrayList<>(singletonList(new Server().url("/api")));
 
+    private String updateTypePrefix = "";
+
+    private String updateTypeSuffix = "Request";
+
     private String withLinksTypeSuffix = "WithLinks";
+
+    private String withProjectionsTypePrefix = "";
+
+    private String withProjectionsTypeSuffix = "WithProjections";
 
 }

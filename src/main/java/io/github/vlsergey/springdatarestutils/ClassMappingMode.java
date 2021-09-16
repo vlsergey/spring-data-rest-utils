@@ -12,39 +12,42 @@ public enum ClassMappingMode {
      * Class is not part of exported entities set, considered as POJO. Enums are
      * also goes here.
      */
-    DATA_ITEM(true, x -> "", TaskProperties::getDefaultTypeSuffix),
+    DATA_ITEM(x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Class is part of exported entities set, but this mode is for patch
      */
-    EXPOSED(false, x -> "", TaskProperties::getDefaultTypeSuffix),
+    EXPOSED(x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Container for properties that present in hierarchy base class.
      */
-    INHERITANCE_BASE(false, TaskProperties::getBaseTypePrefix, TaskProperties::getDefaultTypeSuffix),
+    INHERITANCE_BASE(TaskProperties::getBaseTypePrefix, TaskProperties::getDefaultTypeSuffix),
 
     /**
      * Extends {@link ClassMappingMode#INHERITANCE_BASE} and includes own
      * properties.
      */
-    INHERITANCE_CHILD(false, x -> "", TaskProperties::getDefaultTypeSuffix),
+    INHERITANCE_CHILD(x -> "", TaskProperties::getDefaultTypeSuffix),
 
     /**
      * The part of entity where _links property is described
      */
-    LINKS(false, x -> "", TaskProperties::getLinksTypeSuffix),
+    LINKS(x -> "", TaskProperties::getLinksTypeSuffix),
 
-    WITH_LINKS(false, x -> "", TaskProperties::getWithLinksTypeSuffix),
+    WITH_LINKS(x -> "", TaskProperties::getWithLinksTypeSuffix),
 
     /**
      * Class is projection, top level
      */
-    PROJECTION(true, x -> "", TaskProperties::getDefaultTypeSuffix),
+    PROJECTION(x -> "", TaskProperties::getDefaultTypeSuffix),
+
+    /**
+     * Entity type that can be returned from finder or from getter (findOne)
+     */
+    WITH_PROJECTIONS(TaskProperties::getWithProjectionsTypePrefix, TaskProperties::getWithProjectionsTypeSuffix),
 
     ;
-
-    private final boolean mappedEntitiesExpoded;
 
     @Getter
     private final Function<TaskProperties, String> prefix;

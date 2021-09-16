@@ -42,6 +42,8 @@ abstract class PluginProperties {
 	getUpdateTypePrefix().convention(defaults.getUpdateTypePrefix());
 	getUpdateTypeSuffix().convention(defaults.getUpdateTypeSuffix());
 	getWithLinksTypeSuffix().convention(defaults.getWithLinksTypeSuffix());
+	getWithProjectionsTypePrefix().convention(defaults.getWithProjectionsTypePrefix());
+	getWithProjectionsTypeSuffix().convention(defaults.getWithProjectionsTypeSuffix());
     }
 
     abstract ListProperty<String> getAddXCustomAnnotations();
@@ -86,6 +88,10 @@ abstract class PluginProperties {
 
     abstract Property<String> getWithLinksTypeSuffix();
 
+    abstract Property<String> getWithProjectionsTypePrefix();
+
+    abstract Property<String> getWithProjectionsTypeSuffix();
+
     TaskProperties toTaskProperties() {
 	return new TaskProperties() //
 		.setAddXCustomAnnotations(getAddXCustomAnnotations().get()) //
@@ -108,6 +114,8 @@ abstract class PluginProperties {
 		.setUpdateTypePrefix(getUpdateTypePrefix().get()) //
 		.setUpdateTypeSuffix(getUpdateTypeSuffix().get()) //
 		.setWithLinksTypeSuffix(getWithLinksTypeSuffix().get()) //
+		.setWithProjectionsTypePrefix(getWithProjectionsTypePrefix().get()) //
+		.setWithProjectionsTypeSuffix(getWithProjectionsTypeSuffix().get()) //
 	;
     }
 
