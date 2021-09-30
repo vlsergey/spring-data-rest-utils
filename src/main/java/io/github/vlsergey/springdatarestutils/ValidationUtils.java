@@ -19,13 +19,11 @@ class ValidationUtils {
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
 
     static Optional<Long> getMaxValue(PropertyDescriptor pd) {
-	return CLASS_MAX.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_MAX_VALUE.map(method -> ReflectionUtils.getOrNull(method, ann, Long.class)));
+	return ReflectionUtils.findAnnotationValue(CLASS_MAX, METHOD_MAX_VALUE, pd, long.class);
     }
 
     static Optional<Long> getMinValue(PropertyDescriptor pd) {
-	return CLASS_MIN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_MIN_VALUE.map(method -> ReflectionUtils.getOrNull(method, ann, Long.class)));
+	return ReflectionUtils.findAnnotationValue(CLASS_MIN, METHOD_MIN_VALUE, pd, long.class);
     }
 
 }

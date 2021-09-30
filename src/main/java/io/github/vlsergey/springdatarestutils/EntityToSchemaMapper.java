@@ -277,6 +277,12 @@ public class EntityToSchemaMapper {
 	ValidationUtils.getMaxValue(pd).ifPresent(value -> schema.setMaximum(BigDecimal.valueOf(value)));
 	ValidationUtils.getMinValue(pd).ifPresent(value -> schema.setMinimum(BigDecimal.valueOf(value)));
 
+	if (String.class.equals(pd.getPropertyType())) {
+	    PersistenceUtils.getColumnLength(pd).ifPresent(schema::setMaxLength);
+	    HibernateValidatorUtils.getLengthMin(pd).ifPresent(schema::setMinLength);
+	    HibernateValidatorUtils.getLengthMax(pd).ifPresent(schema::setMaxLength);
+	}
+
 	customAnnotationsHelper.populatePropertySchema(pd, schema);
     }
 

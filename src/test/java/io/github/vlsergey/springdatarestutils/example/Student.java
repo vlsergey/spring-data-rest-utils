@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import javax.persistence.*;
 
+import org.hibernate.validator.constraints.Length;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,8 +21,9 @@ public class Student {
     private Group group;
 
     @Basic(optional = false)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     @SingleLine
+    @Length(min = 1)
     private String name;
 
     @Id

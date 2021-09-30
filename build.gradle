@@ -73,6 +73,7 @@ dependencies {
     testImplementation(platform('org.junit:junit-bom:5.7.2'))
     testImplementation('org.junit.jupiter:junit-jupiter')
     testImplementation group: 'org.hibernate', name: 'hibernate-core', version: '5.5.3.Final'
+    testImplementation group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.2.0.Final'
     testImplementation group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     testImplementation group: 'org.openapi4j', name: 'openapi-parser', version: '1.0.7'
     testImplementation group: 'org.reflections', name: 'reflections', version: '0.9.12'

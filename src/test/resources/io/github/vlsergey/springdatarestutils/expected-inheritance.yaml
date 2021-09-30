@@ -188,6 +188,7 @@ components:
           format: uuid
           nullable: false
         kind:
+          maxLength: 255
           type: string
           nullable: false
     BaseEntity:
@@ -222,6 +223,7 @@ components:
           type: string
           format: uuid
         kind:
+          maxLength: 255
           type: string
     BaseEntityRequest:
       required:

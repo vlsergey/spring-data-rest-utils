@@ -47,8 +47,7 @@ class JacksonUtils {
     }
 
     static boolean isJsonIgnore(PropertyDescriptor pd) {
-	return CLASS_JSON_IGNORE.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
-		ann -> METHOD_JSON_IGNORE_VALUE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)))
+	return ReflectionUtils.findAnnotationValue(CLASS_JSON_IGNORE, METHOD_JSON_IGNORE_VALUE, pd, boolean.class)
 		.orElse(false);
     }
 

@@ -217,6 +217,7 @@ components:
           format: uuid
           nullable: false
         name:
+          maxLength: 255
           type: string
           nullable: false
     TestEntity:
@@ -230,6 +231,7 @@ components:
           format: uuid
           nullable: false
         name:
+          maxLength: 255
           type: string
           nullable: false
     TestEntityLinks:
@@ -251,6 +253,7 @@ components:
           type: string
           format: uuid
         name:
+          maxLength: 255
           type: string
     TestEntityRequest:
       required:
@@ -262,6 +265,7 @@ components:
           format: uuid
           nullable: false
         name:
+          maxLength: 255
           type: string
           nullable: false
     TestEntityWithLinks:
