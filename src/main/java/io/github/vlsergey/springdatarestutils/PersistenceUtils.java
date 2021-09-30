@@ -30,6 +30,8 @@ class PersistenceUtils {
 
     private static final Optional<Method> METHOD_COLUMN_INSERTABLE = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "insertable"));
+    private static final Optional<Method> METHOD_COLUMN_LENGTH = CLASS_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "length"));
     private static final Optional<Method> METHOD_COLUMN_NAME = CLASS_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "name"));
     private static final Optional<Method> METHOD_COLUMN_NULLABLE = CLASS_COLUMN
@@ -47,19 +49,20 @@ class PersistenceUtils {
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
 
     static Optional<Boolean> getBasicOptional(final PropertyDescriptor pd) {
-	return CLASS_BASIC.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
-		ann -> METHOD_BASIC_OPTIONAL.map(method -> ReflectionUtils.getOrNull(method, ann, Boolean.class)));
+	return ReflectionUtils.findAnnotationValue(CLASS_BASIC, METHOD_BASIC_OPTIONAL, pd, boolean.class);
+    }
+
+    static Optional<Integer> getColumnLength(PropertyDescriptor pd) {
+	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_LENGTH, pd, int.class);
     }
 
     static String getColumnName(PropertyDescriptor pd) {
-	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_COLUMN_NAME.map(method -> ReflectionUtils.getOrNull(method, ann, String.class)))
+	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_NAME, pd, String.class)
 		.orElse(toColumnName(pd.getName()));
     }
 
     static Optional<Boolean> getColumnNullable(PropertyDescriptor pd) {
-	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
-		ann -> METHOD_COLUMN_NULLABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)));
+	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_NULLABLE, pd, boolean.class);
     }
 
     static Optional<String> getDiscriminatorColumnName(Class<?> cls) {
@@ -73,20 +76,16 @@ class PersistenceUtils {
     }
 
     static Optional<Boolean> getJoinColumnNullable(PropertyDescriptor pd) {
-	return CLASS_JOIN_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd))
-		.flatMap(ann -> METHOD_JOIN_COLUMN_NULLABLE
-			.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)));
+	return ReflectionUtils.findAnnotationValue(CLASS_JOIN_COLUMN, METHOD_JOIN_COLUMN_NULLABLE, pd, boolean.class);
     }
 
     static boolean isColumnInsertable(PropertyDescriptor pd) {
-	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
-		ann -> METHOD_COLUMN_INSERTABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)))
+	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_INSERTABLE, pd, boolean.class)
 		.orElse(true);
     }
 
     static boolean isColumnUpdatable(PropertyDescriptor pd) {
-	return CLASS_COLUMN.flatMap(cls -> ReflectionUtils.findAnnotationOnReadMethodOfField(cls, pd)).flatMap(
-		ann -> METHOD_COLUMN_UPDATABLE.map(method -> ReflectionUtils.getOrNull(method, ann, boolean.class)))
+	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_UPDATABLE, pd, boolean.class)
 		.orElse(true);
     }
 

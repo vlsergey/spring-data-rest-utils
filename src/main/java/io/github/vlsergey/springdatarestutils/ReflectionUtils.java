@@ -53,6 +53,13 @@ class ReflectionUtils {
 	return Optional.empty();
     }
 
+    static <R> Optional<R> findAnnotationValue(final @NonNull Optional<Class<? extends Annotation>> opCls,
+	    final @NonNull Optional<Method> opMethod, final @NonNull PropertyDescriptor pd,
+	    final @NonNull Class<R> resultClass) {
+	return opCls.flatMap(cls -> findAnnotationOnReadMethodOfField(cls, pd))
+		.flatMap(ann -> opMethod.map(method -> ReflectionUtils.getOrNull(method, ann, resultClass)));
+    }
+
     @SuppressWarnings("unchecked")
     static <T> Optional<Class<? extends T>> findClass(String className) {
 	try {
@@ -60,10 +67,6 @@ class ReflectionUtils {
 	} catch (Exception exc) {
 	    return Optional.empty();
 	}
-    }
-
-    static Optional<Method> findMethod(Class<?> cls, String methodName) {
-	return findMethod(cls, methodName, EMPTY_CLASSES);
     }
 
     static Optional<Method> findMethod(Class<?> cls, String methodName, Class<?>... paramArgsClasses) {
@@ -109,6 +112,10 @@ class ReflectionUtils {
 		}) //
 		.findAny();
 
+    }
+
+    static <T> Optional<Method> findMethod(Class<T> cls, String methodName) {
+	return findMethod(cls, methodName, EMPTY_CLASSES);
     }
 
     static <T> Optional<T> getAnnotationAttributeValue(AnnotatedElement annotated,

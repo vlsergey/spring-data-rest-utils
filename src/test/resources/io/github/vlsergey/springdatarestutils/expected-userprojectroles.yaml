@@ -769,6 +769,7 @@ components:
       type: object
       properties:
         label:
+          maxLength: 255
           type: string
           nullable: false
         projectId:
@@ -786,6 +787,7 @@ components:
           type: string
           nullable: false
         role:
+          maxLength: 255
           type: string
           nullable: false
         user:
@@ -802,12 +804,15 @@ components:
       type: object
       properties:
         email:
+          maxLength: 255
           type: string
           nullable: true
         name:
+          maxLength: 255
           type: string
           nullable: false
         username:
+          maxLength: 255
           type: string
           nullable: false
     Project:
@@ -817,6 +822,7 @@ components:
       type: object
       properties:
         label:
+          maxLength: 255
           type: string
           nullable: false
         projectId:
@@ -839,6 +845,7 @@ components:
       type: object
       properties:
         label:
+          maxLength: 255
           type: string
         projectId:
           type: string
@@ -849,6 +856,7 @@ components:
       type: object
       properties:
         label:
+          maxLength: 255
           type: string
           nullable: false
         projectId:
@@ -867,12 +875,15 @@ components:
       type: object
       properties:
         email:
+          maxLength: 255
           type: string
           nullable: true
         name:
+          maxLength: 255
           type: string
           nullable: false
         username:
+          maxLength: 255
           type: string
           nullable: false
     UserLinks:
@@ -891,10 +902,13 @@ components:
       type: object
       properties:
         email:
+          maxLength: 255
           type: string
         name:
+          maxLength: 255
           type: string
         username:
+          maxLength: 255
           type: string
     UserProjectRole:
       required:
@@ -909,6 +923,7 @@ components:
           format: uuid
           nullable: false
         role:
+          maxLength: 255
           type: string
           nullable: false
         userProjectRoleId:
@@ -916,6 +931,7 @@ components:
           format: uuid
           nullable: false
         username:
+          maxLength: 255
           type: string
           nullable: false
     UserProjectRoleLinks:
@@ -943,6 +959,7 @@ components:
           type: string
           format: uuid
         role:
+          maxLength: 255
           type: string
         user:
           type: string
@@ -950,6 +967,7 @@ components:
           type: string
           format: uuid
         username:
+          maxLength: 255
           type: string
     UserProjectRoleRequest:
       required:
@@ -962,6 +980,7 @@ components:
           type: string
           nullable: false
         role:
+          maxLength: 255
           type: string
           nullable: false
         user:
@@ -982,12 +1001,15 @@ components:
       type: object
       properties:
         email:
+          maxLength: 255
           type: string
           nullable: true
         name:
+          maxLength: 255
           type: string
           nullable: false
         username:
+          maxLength: 255
           type: string
           nullable: false
     UserWithLinks:

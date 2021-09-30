@@ -617,6 +617,8 @@ components:
           type: string
           nullable: false
         name:
+          maxLength: 255
+          minLength: 1
           type: string
           nullable: false
           x-single-line: true
@@ -631,6 +633,8 @@ components:
       type: object
       properties:
         name:
+          maxLength: 255
+          minLength: 1
           type: string
           nullable: false
           x-single-line: true
@@ -658,6 +662,8 @@ components:
         group:
           type: string
         name:
+          maxLength: 255
+          minLength: 1
           type: string
           x-single-line: true
         studentId:
@@ -673,6 +679,8 @@ components:
           type: string
           nullable: false
         name:
+          maxLength: 255
+          minLength: 1
           type: string
           nullable: false
           x-single-line: true
