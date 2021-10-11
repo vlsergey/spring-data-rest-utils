@@ -222,9 +222,6 @@ components:
         id:
           type: string
           format: uuid
-        kind:
-          maxLength: 255
-          type: string
     BaseEntityRequest:
       required:
       - fromBase

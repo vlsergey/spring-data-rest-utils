@@ -955,9 +955,6 @@ components:
       properties:
         project:
           type: string
-        projectId:
-          type: string
-          format: uuid
         role:
           maxLength: 255
           type: string
@@ -966,9 +963,6 @@ components:
         userProjectRoleId:
           type: string
           format: uuid
-        username:
-          maxLength: 255
-          type: string
     UserProjectRoleRequest:
       required:
       - project
