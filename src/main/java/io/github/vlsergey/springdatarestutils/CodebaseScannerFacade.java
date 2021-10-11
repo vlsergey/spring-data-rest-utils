@@ -112,10 +112,20 @@ public class CodebaseScannerFacade {
 	log.info("Scanning implementation of repo methods to filter query methods candidates...");
 	Set<Method> queryMethodsCandidates = new LinkedHashSet<>();
 	for (RepositoryMetadata meta : repositories) {
+
+	    // TODO: not ideal check, better to actually check overriding of methods in base
+	    // interface
+	    final Set<Method> crudMethods = new HashSet<>();
+	    meta.getCrudMethods().getDeleteMethod().ifPresent(crudMethods::add);
+	    meta.getCrudMethods().getFindAllMethod().ifPresent(crudMethods::add);
+	    meta.getCrudMethods().getFindOneMethod().ifPresent(crudMethods::add);
+	    meta.getCrudMethods().getSaveMethod().ifPresent(crudMethods::add);
+
 	    nextMethod: for (Method repoMethod : meta.getRepositoryInterface().getMethods()) {
 		Method method = ClassUtils.getMostSpecificMethod(repoMethod, meta.getRepositoryInterface());
 		if (method.isBridge() || method.isDefault() || Modifier.isStatic(method.getModifiers())
-			|| method.getDeclaringClass().getName().startsWith("org.springframework.")) {
+			|| method.getDeclaringClass().getName().startsWith("org.springframework.")
+			|| crudMethods.contains(method)) {
 		    continue;
 		}
 
