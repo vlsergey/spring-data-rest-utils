@@ -13,7 +13,7 @@ import lombok.*;
 public class UserProjectRole {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(name = "project_id", nullable = false, updatable = false)
     @ToString.Exclude
     private @NonNull Project project;
 

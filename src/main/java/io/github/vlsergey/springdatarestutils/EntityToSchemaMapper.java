@@ -322,12 +322,13 @@ public class EntityToSchemaMapper {
 	    if (requestType != RequestType.PARAMETER && JacksonUtils.isJsonIgnore(pd)) {
 		return;
 	    }
-	    if (requestType == RequestType.CREATE
-		    && (!PersistenceUtils.isColumnInsertable(pd) || HibernateUtils.isCreationTimestamp(pd))) {
+	    if (requestType == RequestType.CREATE && (!PersistenceUtils.isColumnInsertable(pd)
+		    || !PersistenceUtils.isJoinColumnInsertable(pd) || HibernateUtils.isCreationTimestamp(pd))) {
 		return;
 	    }
 	    if ((requestType == RequestType.UPDATE || requestType == RequestType.PATCH)
-		    && (!PersistenceUtils.isColumnUpdatable(pd) || HibernateUtils.isUpdateTimestamp(pd))) {
+		    && (!PersistenceUtils.isColumnUpdatable(pd) || !PersistenceUtils.isJoinColumnUpdatable(pd)
+			    || HibernateUtils.isUpdateTimestamp(pd))) {
 		return;
 	    }
 	    if (requestType != RequestType.RESPONSE && HibernateUtils.isFormula(pd)) {

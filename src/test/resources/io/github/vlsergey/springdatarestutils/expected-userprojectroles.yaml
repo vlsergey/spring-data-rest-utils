@@ -953,8 +953,6 @@ components:
     UserProjectRolePatch:
       type: object
       properties:
-        project:
-          type: string
         role:
           maxLength: 255
           type: string
@@ -965,14 +963,10 @@ components:
           format: uuid
     UserProjectRoleRequest:
       required:
-      - project
       - role
       - user
       type: object
       properties:
-        project:
-          type: string
-          nullable: false
         role:
           maxLength: 255
           type: string
