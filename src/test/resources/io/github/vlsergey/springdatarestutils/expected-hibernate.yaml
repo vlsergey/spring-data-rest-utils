@@ -248,15 +248,9 @@ components:
     TestEntityPatch:
       type: object
       properties:
-        created:
-          type: string
-          format: date-time
         entityId:
           type: string
           format: uuid
-        updated:
-          type: string
-          format: date-time
     TestEntityRequest:
       type: object
       properties:

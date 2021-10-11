@@ -326,7 +326,7 @@ public class EntityToSchemaMapper {
 		    && (!PersistenceUtils.isColumnInsertable(pd) || HibernateUtils.isCreationTimestamp(pd))) {
 		return;
 	    }
-	    if (requestType == RequestType.UPDATE
+	    if ((requestType == RequestType.UPDATE || requestType == RequestType.PATCH)
 		    && (!PersistenceUtils.isColumnUpdatable(pd) || HibernateUtils.isUpdateTimestamp(pd))) {
 		return;
 	    }
