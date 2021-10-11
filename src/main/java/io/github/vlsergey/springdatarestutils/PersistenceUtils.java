@@ -45,8 +45,12 @@ class PersistenceUtils {
     private static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
 
+    private static final Optional<Method> METHOD_JOIN_COLUMN_INSERTABLE = CLASS_JOIN_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "insertable"));
     private static final Optional<Method> METHOD_JOIN_COLUMN_NULLABLE = CLASS_JOIN_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "nullable"));
+    private static final Optional<Method> METHOD_JOIN_COLUMN_UPDATABLE = CLASS_JOIN_COLUMN
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "updatable"));
 
     static Optional<Boolean> getBasicOptional(final PropertyDescriptor pd) {
 	return ReflectionUtils.findAnnotationValue(CLASS_BASIC, METHOD_BASIC_OPTIONAL, pd, boolean.class);
@@ -95,6 +99,16 @@ class PersistenceUtils {
 
     static boolean isId(final PropertyDescriptor pd) {
 	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_ID, pd);
+    }
+
+    static boolean isJoinColumnInsertable(PropertyDescriptor pd) {
+	return ReflectionUtils.findAnnotationValue(CLASS_JOIN_COLUMN, METHOD_JOIN_COLUMN_INSERTABLE, pd, boolean.class)
+		.orElse(true);
+    }
+
+    static boolean isJoinColumnUpdatable(PropertyDescriptor pd) {
+	return ReflectionUtils.findAnnotationValue(CLASS_JOIN_COLUMN, METHOD_JOIN_COLUMN_UPDATABLE, pd, boolean.class)
+		.orElse(true);
     }
 
     private static boolean isUnderscoreRequired(char before, char current, char after) {
