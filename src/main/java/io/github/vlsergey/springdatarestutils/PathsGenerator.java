@@ -337,7 +337,9 @@ public class PathsGenerator {
 	final String collectionKey = English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
 	final String basePath = "/" + collectionKey;
 
-	crudMethods.getFindAllMethod().ifPresent(findAllMethod -> {
+	final Optional<Method> opFindAllMethod = crudMethods.getFindAllMethod()
+		.filter(method -> SpringDataUtils.isRestResourceExported(repositoryInterface, method));
+	opFindAllMethod.ifPresent(findAllMethod -> {
 	    final Operation operation = new Operation() //
 		    .addTagsItem(tag).description("Find entities");
 
@@ -373,7 +375,9 @@ public class PathsGenerator {
 	    }
 	});
 
-	crudMethods.getFindOneMethod().ifPresent(findOneMethod -> {
+	final Optional<Method> opFindOneMethod = crudMethods.getFindOneMethod()
+		.filter(method -> SpringDataUtils.isRestResourceExported(repositoryInterface, method));
+	opFindOneMethod.ifPresent(findOneMethod -> {
 	    final Content responseContent = classToRefResolver.getRefContent(domainType,
 		    projectionHelper.hasProjections(domainType) ? ClassMappingMode.WITH_PROJECTIONS
 			    : ClassMappingMode.WITH_LINKS,
@@ -393,7 +397,9 @@ public class PathsGenerator {
 	    withIdPathItem.setGet(getOperation);
 	});
 
-	crudMethods.getSaveMethod().ifPresent(saveMethod -> {
+	final Optional<Method> opSaveMethod = crudMethods.getSaveMethod()
+		.filter(method -> SpringDataUtils.isRestResourceExported(repositoryInterface, method));
+	opSaveMethod.ifPresent(saveMethod -> {
 
 	    final Operation patchOperation = new Operation() //
 		    .addTagsItem(tag) //
@@ -429,7 +435,9 @@ public class PathsGenerator {
 	    withIdPathItem.setPut(putOperation);
 	});
 
-	crudMethods.getDeleteMethod().ifPresent(deleteMethod -> {
+	final Optional<Method> opDeleteMethod = crudMethods.getDeleteMethod()
+		.filter(method -> SpringDataUtils.isRestResourceExported(repositoryInterface, method));
+	opDeleteMethod.ifPresent(deleteMethod -> {
 	    final Operation deleteOperation = new Operation() //
 		    .addTagsItem(tag) //
 		    .addParametersItem(idPathParameterRef) //

@@ -10,6 +10,8 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.openapi4j.core.exception.ResolutionException;
 import org.openapi4j.core.validation.ValidationException;
 import org.openapi4j.core.validation.ValidationResults;
@@ -23,7 +25,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 
-import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.vlsergey.springdatarestutils.example.SingleLine;
@@ -80,90 +81,16 @@ class ToOpenApiActionImplTest {
 	});
     }
 
-    @Test
-    void testBaseRepo() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".baserepo", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-baserepo.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testCustomFinders() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".customfinders", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-customfinders.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testExample() throws Exception {
-	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
+    @ParameterizedTest
+    @CsvSource({ "baserepo", "customfinders", "disablesave", "example", "hibernate", "inheritance", "projections",
+	    "userprojectroles", "withenum", "withsecured" })
+    void test(String code) throws Exception {
+	taskProperties.setAddXCustomAnnotations(Arrays.asList(Secured.class.getName(), SingleLine.class.getName()));
 
 	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".example", tempFile);
+	    generate(MY_PACKAGE + "." + code, tempFile);
 	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-example.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testHibernate() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".hibernate", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-hibernate.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testInheritance() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".inheritance", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-inheritance.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testProjections() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".projections", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-projections.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testUserProjectRoles() throws Exception {
-	taskProperties.setAddXCustomAnnotations(singletonList(SingleLine.class.getName()));
-
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".userprojectroles", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-userprojectroles.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testWithEnum() throws Exception {
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".withenum", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-withenum.yaml"), tempFile);
-	});
-    }
-
-    @Test
-    void testWithSecured() throws Exception {
-	taskProperties.setAddXCustomAnnotations(Arrays.asList(Secured.class.getName()));
-
-	withTempFile(tempFile -> {
-	    generate(MY_PACKAGE + ".withsecured", tempFile);
-	    assertOpenAPISpecValid(tempFile.toURI().toURL());
-	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-withsecured.yaml"), tempFile);
+	    assertEquals(ToOpenApiActionImplTest.class.getResource("expected-" + code + ".yaml"), tempFile);
 	});
     }
 

@@ -161,6 +161,12 @@ class ReflectionUtils {
     }
 
     @SneakyThrows
+    static <T> @NonNull Optional<T> getOrEmpty(final @NonNull Optional<Method> opMethod, final @NonNull Object obj,
+	    final @NonNull Class<T> resultClass) {
+	return opMethod.map(method -> getOrNull(method, obj, resultClass));
+    }
+
+    @SneakyThrows
     @SuppressWarnings("unchecked")
     static <T> T getOrNull(Method method, Object obj, Class<T> resultClass) {
 	try {
