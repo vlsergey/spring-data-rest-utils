@@ -15,6 +15,8 @@ public interface TestEntityRepo extends JpaRepository<TestEntity, UUID> {
     @Override
     Page<TestEntity> findAll(Pageable pageable);
 
+    List<TestEntity> findByLink(TestEntity testEntity);
+
     List<TestEntity> findByValue(int value);
 
     @Query("SELECT t FROM TestEntity t WHERE value=:value")
