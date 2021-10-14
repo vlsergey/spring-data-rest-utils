@@ -361,7 +361,7 @@ public class EntityToSchemaMapper {
 	    switch (requestType) {
 	    case RESPONSE:
 		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!isGeneratedValue(pd)),
-			JacksonUtils.nullIncludedInJson(cls));
+			Optional.of(!PersistenceUtils.isId(pd)), JacksonUtils.nullIncludedInJson(cls));
 		break;
 	    case CREATE:
 	    case UPDATE:

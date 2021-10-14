@@ -4,7 +4,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Id;
 
 import lombok.Data;
 import lombok.NonNull;
@@ -16,8 +17,6 @@ public class TestEntity {
     private @NonNull Instant created;
 
     @Id
-    @Basic(optional = false)
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @Column(name = "parent", nullable = true)
