@@ -14,6 +14,7 @@ import java.util.stream.StreamSupport;
 
 import org.atteo.evo.inflector.English;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.domain.Page;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.rest.core.Path;
@@ -79,6 +80,18 @@ public class PathsGenerator {
 		.findMethod(cls, method.getName(), method.getParameterTypes())).isPresent();
     }
 
+    private Schema<?> buildCollectionResponseSchema(final Class<?> domainType, boolean includePageInformation) {
+	final String collectionKey = English.plural(StringUtils.uncapitalize(domainType.getSimpleName()));
+
+	final Schema<?> embeddedSchema = projectionHelper.hasProjections(domainType)
+		? buildCollectionWithProjectionsSchema(domainType)
+		: new ArraySchema().items(classToRefResolver.getRefSchema(domainType,
+			isExposed.test(domainType) ? ClassMappingMode.WITH_LINKS : ClassMappingMode.DATA_ITEM,
+			RequestType.RESPONSE));
+	return EntityToSchemaMapper.buildRootCollectionSchema(taskProperties.getLinkTypeName(), collectionKey,
+		embeddedSchema, includePageInformation);
+    }
+
     public Schema<?> buildCollectionWithProjectionsSchema(@NonNull Class<?> cls) {
 	final ComposedSchema oneOf = new ComposedSchema();
 	oneOf.addOneOfItem(new ArraySchema()
@@ -130,15 +143,46 @@ public class PathsGenerator {
 		taskProperties.isAddXJavaComparable());
     }
 
-    public Schema<?> methodInOutsToSchema(Type type, Class<?> cls) {
+    public Schema<?> methodInOutsToSchema(Type type, Class<?> cls, RequestType requestType) {
 	if (isExposed.test(cls)) {
-	    return this.classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED, RequestType.RESPONSE);
+	    return this.classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED, requestType);
 	}
 
 	if (Optional.class.equals(cls) && type instanceof ParameterizedType) {
 	    final Type actualType = ((ParameterizedType) type).getActualTypeArguments()[0];
 	    if (actualType instanceof Class<?>) {
-		return methodInOutsToSchema(actualType, (Class<?>) actualType);
+		return methodInOutsToSchema(actualType, (Class<?>) actualType, requestType);
+	    }
+	}
+
+	if (requestType == RequestType.RESPONSE) {
+	    if (Collection.class.isAssignableFrom(cls) && type instanceof ParameterizedType) {
+		final Type actualType = ((ParameterizedType) type).getActualTypeArguments()[0];
+		if (actualType instanceof Class<?>) {
+		    Class<?> actualClass = (Class<?>) actualType;
+		    return buildCollectionResponseSchema(actualClass, false);
+		}
+	    }
+
+	    if (Page.class.isAssignableFrom(cls) && type instanceof ParameterizedType) {
+		final Type actualType = ((ParameterizedType) type).getActualTypeArguments()[0];
+		if (actualType instanceof Class<?>) {
+		    Class<?> actualClass = (Class<?>) actualType;
+		    return buildCollectionResponseSchema(actualClass, true);
+		}
+	    }
+	}
+
+	if (requestType == RequestType.PARAMETER && Collection.class.isAssignableFrom(cls)
+		&& type instanceof ParameterizedType) {
+	    final Type actualType = ((ParameterizedType) type).getActualTypeArguments()[0];
+	    if (actualType instanceof Class<?>) {
+		Class<?> actualClass = (Class<?>) actualType;
+
+		final Optional<Supplier<Schema<?>>> opSchemaSupplier = getStandardSchemaSupplier(actualClass);
+		if (opSchemaSupplier.isPresent()) {
+		    return new ArraySchema().items(opSchemaSupplier.get().get());
+		}
 	    }
 	}
 
@@ -343,12 +387,8 @@ public class PathsGenerator {
 	    final Operation operation = new Operation() //
 		    .addTagsItem(tag).description("Find entities");
 
-	    final Schema<?> embeddedSchema = projectionHelper.hasProjections(domainType)
-		    ? buildCollectionWithProjectionsSchema(domainType)
-		    : new ArraySchema().items(classToRefResolver.getRefSchema(domainType, ClassMappingMode.WITH_LINKS,
-			    RequestType.RESPONSE));
-	    final Schema<?> responseSchema = EntityToSchemaMapper
-		    .buildRootCollectionSchema(taskProperties.getLinkTypeName(), collectionKey, embeddedSchema);
+	    final Schema<?> responseSchema = buildCollectionResponseSchema(domainType,
+		    Page.class.isAssignableFrom(findAllMethod.getReturnType()));
 
 	    operation.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
 		    new ApiResponse().content(SchemaUtils.toContent(responseSchema)).description("Success")));
@@ -481,12 +521,14 @@ public class PathsGenerator {
 		// TODO: check void
 		final Operation operation = new Operation().addTagsItem(tag)
 			.responses(new ApiResponses().addApiResponse(RESPONSE_CODE_OK,
-				new ApiResponse().description("ok").content(SchemaUtils.toContent(
-					methodInOutsToSchema(method.getGenericReturnType(), method.getReturnType())))));
+				new ApiResponse().description("ok").content(
+					SchemaUtils.toContent(methodInOutsToSchema(method.getGenericReturnType(),
+						method.getReturnType(), RequestType.RESPONSE)))));
 
 		for (java.lang.reflect.Parameter methodParam : method.getParameters()) {
-		    operation.addParametersItem(new Parameter().in(IN_QUERY).name(methodParam.getName())
-			    .schema(methodInOutsToSchema(methodParam.getParameterizedType(), methodParam.getType())));
+		    operation.addParametersItem(
+			    new Parameter().in(IN_QUERY).name(methodParam.getName()).schema(methodInOutsToSchema(
+				    methodParam.getParameterizedType(), methodParam.getType(), RequestType.PARAMETER)));
 		}
 
 		customAnnotationsHelper.populateMethod(repoInterface, method, operation);

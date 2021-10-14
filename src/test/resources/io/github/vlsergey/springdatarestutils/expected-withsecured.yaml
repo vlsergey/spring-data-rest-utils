@@ -123,6 +123,53 @@ paths:
           description: Entity has been created
       x-secured:
       - ROLE_FROM_CLASS
+  /testEntities/search/findByValue:
+    get:
+      tags:
+      - TestEntity
+      parameters:
+      - name: value
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: false
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - testEntities
+                    type: object
+                    properties:
+                      testEntities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestEntityWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
+      x-secured:
+      - ROLE_FROM_METHOD
   /testEntities/{id}:
     get:
       tags:

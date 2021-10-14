@@ -50,8 +50,8 @@ public class EntityToSchemaMapper {
     }
 
     @SuppressWarnings("rawtypes")
-    static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey,
-	    Schema<?> embeddedArraySchema) {
+    static Schema<?> buildRootCollectionSchema(String linkTypeName, String collectionKey, Schema<?> embeddedArraySchema,
+	    boolean includePageInformation) {
 	ObjectSchema result = new ObjectSchema();
 	result.setRequired(Arrays.asList("_embedded", "_links", "page"));
 
@@ -65,15 +65,20 @@ public class EntityToSchemaMapper {
 			.addProperties("self", linkSchema).addProperties("profile", linkSchema)
 			.addProperties("search", linkSchema));
 
-	Schema int32NonNegativeSchema = new IntegerSchema().format("int32").minimum(BigDecimal.ZERO)
-		.nullable(Boolean.FALSE);
-	Schema int64NonNegativeSchema = new IntegerSchema().format("int64").minimum(BigDecimal.ZERO)
-		.nullable(Boolean.FALSE);
+	if (includePageInformation) {
+	    Schema int32NonNegativeSchema = new IntegerSchema().format("int32").minimum(BigDecimal.ZERO)
+		    .nullable(Boolean.FALSE);
+	    Schema int64NonNegativeSchema = new IntegerSchema().format("int64").minimum(BigDecimal.ZERO)
+		    .nullable(Boolean.FALSE);
 
-	result.addProperties("page", new ObjectSchema().addRequiredItem("size").addRequiredItem("totalElements")
-		.addRequiredItem("totalPages").addRequiredItem("number").addProperties("size", int32NonNegativeSchema)
-		.addProperties("totalElements", int64NonNegativeSchema)
-		.addProperties("totalPages", int32NonNegativeSchema).addProperties("number", int32NonNegativeSchema));
+	    result.addProperties("page",
+		    new ObjectSchema().addRequiredItem("size").addRequiredItem("totalElements")
+			    .addRequiredItem("totalPages").addRequiredItem("number")
+			    .addProperties("size", int32NonNegativeSchema)
+			    .addProperties("totalElements", int64NonNegativeSchema)
+			    .addProperties("totalPages", int32NonNegativeSchema)
+			    .addProperties("number", int32NonNegativeSchema));
+	}
 
 	return result;
     }
