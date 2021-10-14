@@ -119,6 +119,49 @@ paths:
                 $ref: '#/components/schemas/TestEntityWithLinks'
         "204":
           description: Entity has been created
+  /testEntities/search/findByLink:
+    get:
+      tags:
+      - TestEntity
+      parameters:
+      - name: testEntity
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - testEntities
+                    type: object
+                    properties:
+                      testEntities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestEntityWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
   /testEntities/search/findByValue:
     get:
       tags:

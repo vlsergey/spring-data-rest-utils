@@ -21,6 +21,9 @@ public interface ClassToRefResolver {
 	    throw new IllegalArgumentException(
 		    "Class mode " + classMappingMode + " is not compatible with " + cls.getName());
 	}
+	if (classMappingMode == ClassMappingMode.EXPOSED && requestType == RequestType.PARAMETER) {
+	    throw new IllegalArgumentException("String shall be used to pass entity as parameter, not ref schema");
+	}
 
 	if (cls.isAssignableFrom(Link.class)) {
 	    return taskProperties.getLinkTypeName();

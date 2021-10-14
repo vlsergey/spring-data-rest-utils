@@ -145,6 +145,9 @@ public class PathsGenerator {
 
     public Schema<?> methodInOutsToSchema(Type type, Class<?> cls, RequestType requestType) {
 	if (isExposed.test(cls)) {
+	    if (requestType == RequestType.PARAMETER) {
+		return getStandardSchemaSupplier(String.class).get().get();
+	    }
 	    return this.classToRefResolver.getRefSchema(cls, ClassMappingMode.EXPOSED, requestType);
 	}
 
