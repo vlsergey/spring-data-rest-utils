@@ -344,8 +344,15 @@ public class PathsGenerator {
 	    final Class<?> propertyType = pd.getPropertyType();
 
 	    getStandardSchemaSupplier(propertyType).ifPresent(schemaSupplier -> {
-		operation.addParametersItem(
-			new Parameter().in(IN_QUERY).name(pd.getName()).schema(schemaSupplier.get()));
+		final Schema<?> singleItemSchema = schemaSupplier.get();
+		final Schema<?> arraySchema = new ArraySchema().items(singleItemSchema).minItems(1);
+
+		final Schema<?> oneOfSchema = new ComposedSchema().addOneOfItem(singleItemSchema)
+			.addOneOfItem(arraySchema);
+
+		final Parameter parameter = new Parameter().explode(Boolean.TRUE).in(IN_QUERY).name(pd.getName())
+			.required(Boolean.FALSE).schema(oneOfSchema).style(Parameter.StyleEnum.FORM);
+		operation.addParametersItem(parameter);
 	    });
 	}
     }
