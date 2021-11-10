@@ -278,13 +278,30 @@ paths:
       parameters:
       - name: name
         in: query
+        required: false
+        style: form
+        explode: true
         schema:
-          type: string
+          oneOf:
+          - type: string
+          - minItems: 1
+            type: array
+            items:
+              type: string
       - name: studentId
         in: query
+        required: false
+        style: form
+        explode: true
         schema:
-          type: string
-          format: uuid
+          oneOf:
+          - type: string
+            format: uuid
+          - minItems: 1
+            type: array
+            items:
+              type: string
+              format: uuid
       - name: page
         in: query
         description: Results page you want to retrieve (0..N)
