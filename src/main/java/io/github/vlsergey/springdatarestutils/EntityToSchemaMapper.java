@@ -99,7 +99,8 @@ public class EntityToSchemaMapper {
     static Stream<PropertyDescriptor> withBeanProperties(Class<?> cls) {
 	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
 	return Arrays.stream(beanInfo.getPropertyDescriptors())
-		.filter(pd -> !pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang."));
+		.filter(pd -> !pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang."))
+		.filter(pd -> !PersistenceUtils.isTransient(pd));
     }
 
     static void withBeanProperties(Class<?> cls, Consumer<PropertyDescriptor> consumer) {
@@ -108,7 +109,7 @@ public class EntityToSchemaMapper {
 	    return;
 	}
 	// special handling for interfaces
-	withBeanPropertiesImpl(cls, consumer, new HashSet<String>());
+	withBeanPropertiesImpl(cls, consumer, new HashSet<>());
     }
 
     static void withBeanPropertiesImpl(final @NonNull Class<?> interfaceClass,

@@ -208,11 +208,11 @@ public class PathsGenerator {
 	// expose additional methods to get linked entity by main entity ID
 
 	// expose one-to-one / many-to-one links
-	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	EntityToSchemaMapper.withBeanProperties(bean, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
 
 	    if (!isExposed.test(propertyType)) {
-		continue;
+		return;
 	    }
 
 	    final PathItem pathItem = new PathItem();
@@ -240,14 +240,14 @@ public class PathsGenerator {
 	    }
 
 	    paths.addPathItem(basePath + "/" + pd.getName(), pathItem);
-	}
+	});
 
 	// expose one-to-many / many-to-many links
-	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+	EntityToSchemaMapper.withBeanProperties(bean, pd -> {
 	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd)
 		    .filter(isExposed);
 	    if (!opLinkedType.isPresent())
-		continue;
+		return;
 
 	    final Class<?> linkedType = opLinkedType.get();
 	    final PathItem pathItem = new PathItem();
@@ -313,7 +313,7 @@ public class PathsGenerator {
 				    .name(linkedEntityIdParamName).description("Assotiated entity ID"))
 			    .responses(new ApiResponses().addApiResponse(RESPONSE_CODE_NO_CONTENT,
 				    new ApiResponse().description("ok")))));
-	}
+	});
 
 	/*
 	 * There is no need to go deeper -- Spring Data REST can't handle deeper links
@@ -335,12 +335,7 @@ public class PathsGenerator {
 
     @SneakyThrows
     private void populateOperationWithPredicate(@NonNull RepositoryMetadata meta, final @NonNull Operation operation) {
-	final Class<?> cls = meta.getDomainType();
-	final BeanInfo beanInfo = Introspector.getBeanInfo(cls);
-	for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-	    if (pd.getReadMethod().getDeclaringClass().getName().startsWith("java.lang.")) {
-		continue;
-	    }
+	EntityToSchemaMapper.withBeanProperties(meta.getDomainType(), pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
 
 	    getStandardSchemaSupplier(propertyType).ifPresent(schemaSupplier -> {
@@ -354,7 +349,7 @@ public class PathsGenerator {
 			.required(Boolean.FALSE).schema(oneOfSchema).style(Parameter.StyleEnum.FORM);
 		operation.addParametersItem(parameter);
 	    });
-	}
+	});
     }
 
     private void populateOperationWithProjection(final @NonNull RepositoryMetadata meta,
