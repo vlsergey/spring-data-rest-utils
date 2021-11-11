@@ -24,6 +24,8 @@ class PersistenceUtils {
 	    .findClass("javax.persistence.Inheritance");
     private static final Optional<Class<? extends Annotation>> CLASS_JOIN_COLUMN = ReflectionUtils
 	    .findClass("javax.persistence.JoinColumn");
+    static final Optional<Class<? extends Annotation>> CLASS_TRANSIENT = ReflectionUtils
+	    .findClass("javax.persistence.Transient");
 
     private static final Optional<Method> METHOD_BASIC_OPTIONAL = CLASS_BASIC
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "optional"));
@@ -109,6 +111,10 @@ class PersistenceUtils {
     static boolean isJoinColumnUpdatable(PropertyDescriptor pd) {
 	return ReflectionUtils.findAnnotationValue(CLASS_JOIN_COLUMN, METHOD_JOIN_COLUMN_UPDATABLE, pd, boolean.class)
 		.orElse(true);
+    }
+
+    static boolean isTransient(final PropertyDescriptor pd) {
+	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_TRANSIENT, pd);
     }
 
     private static boolean isUnderscoreRequired(char before, char current, char after) {
