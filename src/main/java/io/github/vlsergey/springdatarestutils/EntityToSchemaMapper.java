@@ -22,6 +22,8 @@ import lombok.SneakyThrows;
 @AllArgsConstructor
 public class EntityToSchemaMapper {
 
+    private static final Class<Object> ANY_VALUE_CLASS = Object.class;
+
     private final @NonNull ClassToRefResolver classToRefResolver;
 
     private final @NonNull CustomAnnotationsHelper customAnnotationsHelper;
@@ -320,7 +322,7 @@ public class EntityToSchemaMapper {
 		}
 	    }
 
-	    if (Collection.class.isAssignableFrom(propertyType)) {
+	    if (Collection.class.isAssignableFrom(propertyType) && !PersistenceUtils.isElementCollection(pd)) {
 		// not yet implemented
 		return;
 	    }
@@ -373,7 +375,7 @@ public class EntityToSchemaMapper {
 		break;
 	    }
 
-	    Schema<?> schema = toSchema(mode, requestType, propertyType, dstNullable);
+	    Schema<?> schema = toSchema(mode, requestType, Optional.of(pd), propertyType, dstNullable);
 	    if (schema.get$ref() == null) {
 		populateSchema(pd, schema);
 	    }
@@ -383,7 +385,8 @@ public class EntityToSchemaMapper {
     }
 
     public Schema<?> toSchema(final @NonNull ClassMappingMode mode, final @NonNull RequestType requestType,
-	    Class<?> propertyType, Optional<Boolean> nullable) {
+	    final Optional<PropertyDescriptor> opPd, final @NonNull Class<?> propertyType,
+	    final @NonNull Optional<Boolean> nullable) {
 	if (propertyType.isEnum()) {
 	    return classToRefResolver.getRefSchema(propertyType, ClassMappingMode.DATA_ITEM, requestType);
 	}
@@ -397,8 +400,31 @@ public class EntityToSchemaMapper {
 
 	if (propertyType.isArray()) {
 	    ArraySchema schema = new ArraySchema();
-	    schema.setItems(toSchema(mode, requestType, propertyType.getComponentType(), Optional.empty()));
+	    schema.setItems(
+		    toSchema(mode, requestType, Optional.empty(), propertyType.getComponentType(), Optional.empty()));
 	    nullable.ifPresent(schema::setNullable);
+	    return schema;
+	}
+
+	if (Collection.class.isAssignableFrom(propertyType)) {
+	    final @NonNull Optional<Class<?>> itemType = OptionalUtils.coalesce(
+		    opPd.flatMap(PersistenceUtils::getElementCollectionTargetClass),
+		    opPd.flatMap(ReflectionUtils::getCollectionGenericTypeArgument), Optional.of(ANY_VALUE_CLASS));
+	    if (itemType.isPresent()) {
+		final ArraySchema schema = new ArraySchema();
+		schema.setItems(toSchema(mode, requestType, Optional.empty(), itemType.get(), Optional.empty()));
+		nullable.ifPresent(schema::setNullable);
+		return schema;
+	    }
+	}
+
+	if (ANY_VALUE_CLASS.equals(propertyType)) {
+	    final ComposedSchema schema = new ComposedSchema();
+	    schema.addOneOfItem(new BooleanSchema());
+	    schema.addOneOfItem(new ObjectSchema().additionalProperties(Boolean.TRUE));
+	    schema.addOneOfItem(new NumberSchema());
+	    schema.addOneOfItem(new StringSchema());
+	    schema.setNullable(true);
 	    return schema;
 	}
 

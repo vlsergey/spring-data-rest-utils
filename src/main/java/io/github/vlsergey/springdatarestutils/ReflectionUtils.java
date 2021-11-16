@@ -124,7 +124,7 @@ class ReflectionUtils {
 		.flatMap(ann -> opMethod.map(method -> ReflectionUtils.getOrNull(method, ann, resultClass)));
     }
 
-    static Optional<Class<?>> getCollectionGenericTypeArgument(PropertyDescriptor pd) {
+    static @NonNull Optional<Class<?>> getCollectionGenericTypeArgument(final @NonNull PropertyDescriptor pd) {
 	if (!Collection.class.isAssignableFrom(pd.getPropertyType()))
 	    return Optional.empty();
 
@@ -141,7 +141,7 @@ class ReflectionUtils {
 	});
     }
 
-    static Optional<Type> getGenericType(PropertyDescriptor pd) {
+    static @NonNull Optional<Type> getGenericType(final @NonNull PropertyDescriptor pd) {
 	if (pd.getReadMethod() != null) {
 	    final Type result = pd.getReadMethod().getGenericReturnType();
 	    if (result != null) {
