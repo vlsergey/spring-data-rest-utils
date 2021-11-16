@@ -16,6 +16,8 @@ class PersistenceUtils {
 	    .findClass("javax.persistence.DiscriminatorColumn");
     private static final Optional<Class<? extends Annotation>> CLASS_DISCRIMINATOR_VALUE = ReflectionUtils
 	    .findClass("javax.persistence.DiscriminatorValue");
+    private static final Optional<Class<? extends Annotation>> CLASS_ELEMENT_COLLECTION = ReflectionUtils
+	    .findClass("javax.persistence.ElementCollection");
     private static final Optional<Class<? extends Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
 	    .findClass("javax.persistence.GeneratedValue");
     private static final Optional<Class<? extends Annotation>> CLASS_ID = ReflectionUtils
@@ -46,6 +48,9 @@ class PersistenceUtils {
 
     private static final Optional<Method> METHOD_DISCRIMINATOR_VALUE_VALUE = CLASS_DISCRIMINATOR_VALUE
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "value"));
+
+    private static final Optional<Method> METHOD_ELEMENT_COLLECTION_TARGET_CLASS = CLASS_ELEMENT_COLLECTION
+	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "targetClass"));
 
     private static final Optional<Method> METHOD_JOIN_COLUMN_INSERTABLE = CLASS_JOIN_COLUMN
 	    .flatMap(cls -> ReflectionUtils.findMethod(cls, "insertable"));
@@ -81,6 +86,13 @@ class PersistenceUtils {
 		.map(method -> ReflectionUtils.getOrNull(method, ann, String.class)));
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static Optional<Class<?>> getElementCollectionTargetClass(PropertyDescriptor pd) {
+	return (Optional) ReflectionUtils
+		.findAnnotationValue(CLASS_ELEMENT_COLLECTION, METHOD_ELEMENT_COLLECTION_TARGET_CLASS, pd, Class.class)
+		.filter(cls -> !void.class.equals(cls));
+    }
+
     static Optional<Boolean> getJoinColumnNullable(PropertyDescriptor pd) {
 	return ReflectionUtils.findAnnotationValue(CLASS_JOIN_COLUMN, METHOD_JOIN_COLUMN_NULLABLE, pd, boolean.class);
     }
@@ -93,6 +105,10 @@ class PersistenceUtils {
     static boolean isColumnUpdatable(PropertyDescriptor pd) {
 	return ReflectionUtils.findAnnotationValue(CLASS_COLUMN, METHOD_COLUMN_UPDATABLE, pd, boolean.class)
 		.orElse(true);
+    }
+
+    static boolean isElementCollection(final PropertyDescriptor pd) {
+	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_ELEMENT_COLLECTION, pd);
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {
