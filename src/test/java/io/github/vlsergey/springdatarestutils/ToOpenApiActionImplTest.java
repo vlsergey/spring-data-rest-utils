@@ -83,7 +83,7 @@ class ToOpenApiActionImplTest {
 
     @ParameterizedTest
     @CsvSource({ "baserepo", "customfinders", "disablesave", "example", "hibernate", "inheritance", "projections",
-	    "withtransient", "userprojectroles", "withenum", "withsecured" })
+	    "withtransient", "userprojectroles", "withembedded", "withenum", "withsecured" })
     void test(String code) throws Exception {
 	taskProperties.setAddXCustomAnnotations(Arrays.asList(Secured.class.getName(), SingleLine.class.getName()));
 
