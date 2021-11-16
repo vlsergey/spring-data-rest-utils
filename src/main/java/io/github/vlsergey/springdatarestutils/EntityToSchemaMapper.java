@@ -309,7 +309,7 @@ public class EntityToSchemaMapper {
 	    }
 
 	    if (isExposed.test(propertyType)
-		    || ReflectionUtils.getCollectionGenericTypeArgument(pd).filter(isExposed).isPresent()) {
+		    || ReflectionUtils.getCollectionGenericTypeArgument(pd, 0).filter(isExposed).isPresent()) {
 		switch (mode) {
 		case PROJECTION:
 		case DATA_ITEM:
@@ -409,13 +409,29 @@ public class EntityToSchemaMapper {
 	if (Collection.class.isAssignableFrom(propertyType)) {
 	    final @NonNull Optional<Class<?>> itemType = OptionalUtils.coalesce(
 		    opPd.flatMap(PersistenceUtils::getElementCollectionTargetClass),
-		    opPd.flatMap(ReflectionUtils::getCollectionGenericTypeArgument), Optional.of(ANY_VALUE_CLASS));
+		    opPd.flatMap(pd -> ReflectionUtils.getCollectionGenericTypeArgument(pd, 0)),
+		    Optional.of(ANY_VALUE_CLASS));
 	    if (itemType.isPresent()) {
 		final ArraySchema schema = new ArraySchema();
 		schema.setItems(toSchema(mode, requestType, Optional.empty(), itemType.get(), Optional.empty()));
 		nullable.ifPresent(schema::setNullable);
 		return schema;
 	    }
+	}
+
+	if (Map.class.isAssignableFrom(propertyType)) {
+	    final @NonNull Optional<Class<?>> itemType = OptionalUtils.coalesce(
+		    opPd.flatMap(PersistenceUtils::getElementCollectionTargetClass),
+		    opPd.flatMap(pd -> ReflectionUtils.getCollectionGenericTypeArgument(pd, 1)));
+	    final ObjectSchema schema = new ObjectSchema();
+	    if (itemType.isPresent()) {
+		schema.setAdditionalProperties(
+			toSchema(mode, requestType, Optional.empty(), itemType.get(), Optional.empty()));
+	    } else {
+		schema.setAdditionalProperties(Boolean.TRUE);
+	    }
+	    nullable.ifPresent(schema::setNullable);
+	    return schema;
 	}
 
 	if (ANY_VALUE_CLASS.equals(propertyType)) {

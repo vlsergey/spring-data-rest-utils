@@ -4,7 +4,6 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -124,15 +123,13 @@ class ReflectionUtils {
 		.flatMap(ann -> opMethod.map(method -> ReflectionUtils.getOrNull(method, ann, resultClass)));
     }
 
-    static @NonNull Optional<Class<?>> getCollectionGenericTypeArgument(final @NonNull PropertyDescriptor pd) {
-	if (!Collection.class.isAssignableFrom(pd.getPropertyType()))
-	    return Optional.empty();
-
+    static @NonNull Optional<Class<?>> getCollectionGenericTypeArgument(final @NonNull PropertyDescriptor pd,
+	    final int index) {
 	return getGenericType(pd).map(type -> {
 	    try {
 		if (type instanceof ParameterizedType) {
 		    Type[] genericArguments = ((ParameterizedType) type).getActualTypeArguments();
-		    return Class.forName(genericArguments[0].getTypeName());
+		    return Class.forName(genericArguments[index].getTypeName());
 		}
 	    } catch (ClassNotFoundException exc) {
 		// ignore
