@@ -1,0 +1,337 @@
+openapi: 3.0.1
+info:
+  title: ToOpenApiActionImplTest Spring Data REST OpenAPI Specification
+  description: This is automatically generated OpenAPI Specification for Spring Data
+    REST entities and repositories
+  version: 0.0.1-SNAPSHOT
+servers:
+- url: /api
+paths:
+  /testEntities:
+    get:
+      tags:
+      - TestEntity
+      description: Find entities
+      parameters:
+      - name: page
+        in: query
+        description: Results page you want to retrieve (0..N)
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+          nullable: false
+      - name: size
+        in: query
+        description: Number of records per page
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          nullable: false
+      - name: sort
+        in: query
+        description: Sorting parameters
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                required:
+                - _embedded
+                - _links
+                - page
+                type: object
+                properties:
+                  _embedded:
+                    required:
+                    - testEntities
+                    type: object
+                    properties:
+                      testEntities:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TestEntityWithLinks'
+                  _links:
+                    required:
+                    - profile
+                    - search
+                    - self
+                    type: object
+                    properties:
+                      self:
+                        $ref: '#/components/schemas/Link'
+                      profile:
+                        $ref: '#/components/schemas/Link'
+                      search:
+                        $ref: '#/components/schemas/Link'
+                  page:
+                    required:
+                    - number
+                    - size
+                    - totalElements
+                    - totalPages
+                    type: object
+                    properties:
+                      size:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      totalElements:
+                        minimum: 0
+                        type: integer
+                        format: int64
+                        nullable: false
+                      totalPages:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+                      number:
+                        minimum: 0
+                        type: integer
+                        format: int32
+                        nullable: false
+    post:
+      tags:
+      - TestEntity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTestEntityRequest'
+        required: true
+      responses:
+        "200":
+          description: Entity has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestEntityWithLinks'
+        "204":
+          description: Entity has been created
+  /testEntities/{id}:
+    get:
+      tags:
+      - TestEntity
+      description: Retrieves an entity by its id
+      parameters:
+      - $ref: '#/components/parameters/testEntityId'
+      responses:
+        "200":
+          description: Entity is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestEntityWithLinks'
+        "404":
+          description: Entity is missing
+    put:
+      tags:
+      - TestEntity
+      parameters:
+      - $ref: '#/components/parameters/testEntityId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestEntityRequest'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+    delete:
+      tags:
+      - TestEntity
+      description: Deletes the entity with the given id
+      parameters:
+      - $ref: '#/components/parameters/testEntityId'
+      responses:
+        "204":
+          description: Entity has been deleted or already didn't exists
+    patch:
+      tags:
+      - TestEntity
+      parameters:
+      - $ref: '#/components/parameters/testEntityId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestEntityPatch'
+        required: true
+      responses:
+        "204":
+          description: Entity has been updated
+components:
+  schemas:
+    Link:
+      type: object
+      properties:
+        deprecation:
+          type: string
+          nullable: false
+        href:
+          type: string
+          nullable: false
+        hreflang:
+          type: string
+          nullable: false
+        media:
+          type: string
+          nullable: false
+        name:
+          type: string
+          nullable: false
+        profile:
+          type: string
+          nullable: false
+        rel:
+          type: string
+          nullable: false
+        templated:
+          type: boolean
+          nullable: false
+        title:
+          type: string
+          nullable: false
+        type:
+          type: string
+          nullable: false
+    NewTestEntityRequest:
+      required:
+      - testAnyElementCollection
+      - testExplicitElementCollection
+      - testNonNullElementCollection
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        testAnyElementCollection:
+          type: object
+          additionalProperties: true
+        testExplicitElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNonNullElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNullableElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+    TestEntity:
+      required:
+      - id
+      - testAnyElementCollection
+      - testExplicitElementCollection
+      - testNonNullElementCollection
+      - testNullableElementCollection
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+        testAnyElementCollection:
+          type: object
+          additionalProperties: true
+        testExplicitElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNonNullElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNullableElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+    TestEntityLinks:
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+            testEntity:
+              $ref: '#/components/schemas/Link'
+    TestEntityPatch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        testAnyElementCollection:
+          type: object
+          additionalProperties: true
+        testExplicitElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNonNullElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNullableElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+    TestEntityRequest:
+      required:
+      - testAnyElementCollection
+      - testExplicitElementCollection
+      - testNonNullElementCollection
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        testAnyElementCollection:
+          type: object
+          additionalProperties: true
+        testExplicitElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNonNullElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+        testNullableElementCollection:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+    TestEntityWithLinks:
+      allOf:
+      - $ref: '#/components/schemas/TestEntity'
+      - $ref: '#/components/schemas/TestEntityLinks'
+  parameters:
+    testEntityId:
+      name: id
+      in: path
+      description: TestEntity identifier
+      required: true
+      schema:
+        type: string
+        format: uuid
+        nullable: false

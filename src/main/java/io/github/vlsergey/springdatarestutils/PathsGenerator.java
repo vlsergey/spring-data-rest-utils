@@ -244,7 +244,7 @@ public class PathsGenerator {
 
 	// expose one-to-many / many-to-many links
 	EntityToSchemaMapper.withBeanProperties(bean, pd -> {
-	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd)
+	    final Optional<Class<?>> opLinkedType = ReflectionUtils.getCollectionGenericTypeArgument(pd, 0)
 		    .filter(isExposed);
 	    if (!opLinkedType.isPresent())
 		return;
