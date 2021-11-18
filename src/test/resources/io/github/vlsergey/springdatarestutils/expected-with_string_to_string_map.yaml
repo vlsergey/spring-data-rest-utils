@@ -208,10 +208,6 @@ components:
           type: string
           nullable: false
     NewTestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -220,14 +216,17 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: true
         testExplicitElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: true
         testNonNullElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: true
         testNullableElementCollection:
           type: object
           additionalProperties:
@@ -299,10 +298,6 @@ components:
           additionalProperties:
             type: string
     TestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -311,14 +306,17 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: true
         testExplicitElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: true
         testNonNullElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: true
         testNullableElementCollection:
           type: object
           additionalProperties:

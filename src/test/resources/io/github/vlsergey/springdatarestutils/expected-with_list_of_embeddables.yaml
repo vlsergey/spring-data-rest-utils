@@ -217,10 +217,6 @@ components:
           format: int32
           nullable: false
     NewTestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -229,14 +225,17 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: true
         testExplicitElementCollection:
           type: object
           additionalProperties:
             nullable: true
             oneOf:
             - $ref: '#/components/schemas/NewTestEmbeddableRequest'
+          nullable: true
         testNonNullElementCollection:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:
@@ -347,10 +346,6 @@ components:
             oneOf:
             - $ref: '#/components/schemas/TestEmbeddablePatch'
     TestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -359,14 +354,17 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: true
         testExplicitElementCollection:
           type: object
           additionalProperties:
             nullable: true
             oneOf:
             - $ref: '#/components/schemas/TestEmbeddableRequest'
+          nullable: true
         testNonNullElementCollection:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:

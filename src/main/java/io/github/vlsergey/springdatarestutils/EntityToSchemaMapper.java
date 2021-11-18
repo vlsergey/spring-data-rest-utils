@@ -302,7 +302,12 @@ public class EntityToSchemaMapper {
 
 	withBeanProperties(cls, pd -> {
 	    final Class<?> propertyType = pd.getPropertyType();
-	    final Optional<Boolean> nullable = NullableUtils.getNullable(pd);
+	    final boolean isCollection = propertyType.isArray() || Collection.class.isAssignableFrom(propertyType)
+		    || Map.class.isAssignableFrom(propertyType);
+
+	    final Optional<Boolean> nullable = isCollection && requestType != RequestType.RESPONSE
+		    ? Optional.of(Boolean.TRUE)
+		    : NullableUtils.getNullable(pd);
 
 	    if (mode == ClassMappingMode.INHERITANCE_CHILD && !pd.getReadMethod().getDeclaringClass().equals(cls)) {
 		return;
@@ -360,10 +365,7 @@ public class EntityToSchemaMapper {
 	    case RESPONSE:
 		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!PersistenceUtils.isEmbeddedId(pd)),
 			Optional.of(!isGeneratedValue(pd)), Optional.of(!PersistenceUtils.isId(pd)),
-			JacksonUtils.nullIncludedInJson(cls),
-			Optional.of(!(pd.getPropertyType().isArray()
-				|| Collection.class.isAssignableFrom(pd.getPropertyType())
-				|| Map.class.isAssignableFrom(pd.getPropertyType()))));
+			JacksonUtils.nullIncludedInJson(cls), Optional.of(!isCollection));
 		break;
 	    case CREATE:
 	    case UPDATE:

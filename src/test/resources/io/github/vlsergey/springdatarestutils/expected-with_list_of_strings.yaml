@@ -208,10 +208,6 @@ components:
           type: string
           nullable: false
     NewTestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -219,6 +215,7 @@ components:
           format: uuid
         testAnyElementCollection:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:
@@ -229,10 +226,12 @@ components:
             - type: string
         testExplicitElementCollection:
           type: array
+          nullable: true
           items:
             type: string
         testNonNullElementCollection:
           type: array
+          nullable: true
           items:
             type: string
         testNullableElementCollection:
@@ -323,10 +322,6 @@ components:
           items:
             type: string
     TestEntityRequest:
-      required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
       type: object
       properties:
         id:
@@ -334,6 +329,7 @@ components:
           format: uuid
         testAnyElementCollection:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:
@@ -344,10 +340,12 @@ components:
             - type: string
         testExplicitElementCollection:
           type: array
+          nullable: true
           items:
             type: string
         testNonNullElementCollection:
           type: array
+          nullable: true
           items:
             type: string
         testNullableElementCollection:

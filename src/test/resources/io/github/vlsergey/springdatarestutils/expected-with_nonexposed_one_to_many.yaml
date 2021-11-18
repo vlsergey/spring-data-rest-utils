@@ -217,7 +217,6 @@ components:
     NewTestEntityRequest:
       required:
       - parentValue
-      - testOneToMany
       type: object
       properties:
         id:
@@ -227,6 +226,7 @@ components:
           type: string
         testOneToMany:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:
@@ -297,7 +297,6 @@ components:
     TestEntityRequest:
       required:
       - parentValue
-      - testOneToMany
       type: object
       properties:
         id:
@@ -307,6 +306,7 @@ components:
           type: string
         testOneToMany:
           type: array
+          nullable: true
           items:
             nullable: true
             oneOf:

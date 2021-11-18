@@ -559,8 +559,6 @@ components:
           x-single-line: true
     GroupRequest:
       required:
-      - students
-      - subjects
       - title
       type: object
       properties:
@@ -570,10 +568,12 @@ components:
           nullable: false
         students:
           type: array
+          nullable: true
           items:
             type: string
         subjects:
           type: array
+          nullable: true
           items:
             type: string
         title:
@@ -619,8 +619,6 @@ components:
           nullable: false
     NewGroupRequest:
       required:
-      - students
-      - subjects
       - title
       type: object
       properties:
@@ -630,10 +628,12 @@ components:
           nullable: false
         students:
           type: array
+          nullable: true
           items:
             type: string
         subjects:
           type: array
+          nullable: true
           items:
             type: string
         title:
