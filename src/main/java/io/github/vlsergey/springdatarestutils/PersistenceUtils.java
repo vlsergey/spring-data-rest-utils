@@ -20,6 +20,8 @@ class PersistenceUtils {
 	    .findClass("javax.persistence.ElementCollection");
     private static final Optional<Class<? extends Annotation>> CLASS_GENERATED_VALUE = ReflectionUtils
 	    .findClass("javax.persistence.GeneratedValue");
+    private static final Optional<Class<? extends Annotation>> CLASS_EMBEDDED_ID = ReflectionUtils
+	    .findClass("javax.persistence.EmbeddedId");
     private static final Optional<Class<? extends Annotation>> CLASS_ID = ReflectionUtils
 	    .findClass("javax.persistence.Id");
     static final Optional<Class<? extends Annotation>> CLASS_INHERITANCE = ReflectionUtils
@@ -109,6 +111,10 @@ class PersistenceUtils {
 
     static boolean isElementCollection(final PropertyDescriptor pd) {
 	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_ELEMENT_COLLECTION, pd);
+    }
+
+    static boolean isEmbeddedId(final PropertyDescriptor pd) {
+	return ReflectionUtils.hasAnnotationOnReadMethodOfField(CLASS_EMBEDDED_ID, pd);
     }
 
     static boolean isGeneratedValue(final PropertyDescriptor pd) {

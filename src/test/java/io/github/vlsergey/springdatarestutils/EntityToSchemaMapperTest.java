@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.persistence.Column;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.UriTemplate;
@@ -18,7 +16,6 @@ import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.github.vlsergey.springdatarestutils.projections.TestEntityDefaultProjection;
 import io.github.vlsergey.springdatarestutils.test.TestEntity;
 import io.swagger.v3.oas.models.media.Schema;
-import lombok.Getter;
 
 class EntityToSchemaMapperTest {
 
@@ -30,33 +27,6 @@ class EntityToSchemaMapperTest {
 	    (a, b, c) -> ClassToRefResolver.generateName(taskProperties, a, b, c),
 	    new CustomAnnotationsHelper(taskProperties), TestEntity.class::equals,
 	    new ProjectionHelper(emptyScanResult), emptyScanResult, taskProperties);
-
-    @Test
-    void nullableArrayIsExposedAsNullable() {
-	// it's required in response, because server will fill it (but may be null)
-	assertEquals("required:\n" + //
-		"- nullableArray\n" + //
-		"type: object\n" + //
-		"properties:\n" + //
-		"  nullableArray:\n" + //
-		"    type: array\n" + //
-		"    nullable: true\n" + //
-		"    items:\n" + //
-		"      type: string\n" + //
-		"", SchemaUtils.writeValueAsString(false, mapper.mapEntity(ClassWithNullableArray.class,
-			ClassMappingMode.EXPOSED, RequestType.RESPONSE)));
-
-	// but optional in create/update request
-	assertEquals("type: object\n" + //
-		"properties:\n" + //
-		"  nullableArray:\n" + //
-		"    type: array\n" + //
-		"    nullable: true\n" + //
-		"    items:\n" + //
-		"      type: string\n" + //
-		"", SchemaUtils.writeValueAsString(false,
-			mapper.mapEntity(ClassWithNullableArray.class, ClassMappingMode.EXPOSED, RequestType.CREATE)));
-    }
 
     @Test
     void testLink() throws Exception {
@@ -187,8 +157,23 @@ class EntityToSchemaMapperTest {
 	final Schema<?> schema = mapper.mapEntity(UriTemplate.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
 	String json = SchemaUtils.writeValueAsString(false, schema);
 
-	assertEquals("type: object\n" + //
-		"", json);
+	assertEquals("required:\n" //
+		+ "- variableNames\n" //
+		+ "- variables\n" //
+		+ "type: object\n" //
+		+ "properties:\n" //
+		+ "  variableNames:\n" //
+		+ "    type: array\n" //
+		+ "    nullable: false\n" //
+		+ "    items:\n" //
+		+ "      type: string\n" //
+		+ "      nullable: false\n" //
+		+ "  variables:\n" //
+		+ "    type: array\n" //
+		+ "    nullable: false\n" //
+		+ "    items:\n" //
+		+ "      $ref: '#/components/schemas/TemplateVariable'\n" //
+		+ "", json);
     }
 
     @Test
@@ -196,12 +181,6 @@ class EntityToSchemaMapperTest {
 	List<String> props = new ArrayList<>();
 	EntityToSchemaMapper.withBeanProperties(TestEntityDefaultProjection.class, pd -> props.add(pd.getName()));
 	assertEquals(Arrays.asList("grandParent", "parent", "parentId", "id"), props);
-    }
-
-    @Getter
-    public static class ClassWithNullableArray {
-	@Column(nullable = true)
-	private String[] nullableArray;
     }
 
 }

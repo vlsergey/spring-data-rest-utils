@@ -520,8 +520,10 @@ components:
           nullable: false
         subjects:
           type: array
+          nullable: false
           items:
             type: string
+            nullable: false
         title:
           type: string
           nullable: false
@@ -544,6 +546,10 @@ components:
         groupId:
           type: string
           format: uuid
+        students:
+          type: array
+          items:
+            type: string
         subjects:
           type: array
           items:
@@ -553,6 +559,7 @@ components:
           x-single-line: true
     GroupRequest:
       required:
+      - students
       - subjects
       - title
       type: object
@@ -561,6 +568,10 @@ components:
           type: string
           format: uuid
           nullable: false
+        students:
+          type: array
+          items:
+            type: string
         subjects:
           type: array
           items:
@@ -608,6 +619,7 @@ components:
           nullable: false
     NewGroupRequest:
       required:
+      - students
       - subjects
       - title
       type: object
@@ -616,6 +628,10 @@ components:
           type: string
           format: uuid
           nullable: false
+        students:
+          type: array
+          items:
+            type: string
         subjects:
           type: array
           items:

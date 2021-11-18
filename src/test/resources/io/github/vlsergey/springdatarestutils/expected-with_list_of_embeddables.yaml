@@ -289,25 +289,24 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: false
         testExplicitElementCollection:
           type: object
           additionalProperties:
             nullable: true
             oneOf:
             - $ref: '#/components/schemas/TestEmbeddable'
+          nullable: false
         testNonNullElementCollection:
           type: array
+          nullable: false
           items:
-            nullable: true
-            oneOf:
-            - $ref: '#/components/schemas/TestEmbeddable'
+            $ref: '#/components/schemas/TestEmbeddable'
         testNullableElementCollection:
           type: array
-          nullable: true
+          nullable: false
           items:
-            nullable: true
-            oneOf:
-            - $ref: '#/components/schemas/TestEmbeddable'
+            $ref: '#/components/schemas/TestEmbeddable'
     TestEntityLinks:
       required:
       - _links

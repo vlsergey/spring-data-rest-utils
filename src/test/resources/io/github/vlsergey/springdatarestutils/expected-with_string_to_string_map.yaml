@@ -249,19 +249,22 @@ components:
         testAnyElementCollection:
           type: object
           additionalProperties: true
+          nullable: false
         testExplicitElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: false
         testNonNullElementCollection:
           type: object
           additionalProperties:
             type: string
+          nullable: false
         testNullableElementCollection:
           type: object
           additionalProperties:
             type: string
-          nullable: true
+          nullable: false
     TestEntityLinks:
       required:
       - _links
