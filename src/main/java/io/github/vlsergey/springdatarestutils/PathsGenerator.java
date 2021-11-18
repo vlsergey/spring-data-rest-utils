@@ -118,7 +118,8 @@ public class PathsGenerator {
 
     private @NonNull String getIdPathParameterName(final @NonNull Class<?> domainType) {
 	final String enitityName = StringUtils.uncapitalize(domainType.getSimpleName());
-	return EntityToSchemaMapper.withBeanProperties(domainType).filter(PersistenceUtils::isId)
+	return EntityToSchemaMapper.withBeanProperties(domainType)
+		.filter(pd -> PersistenceUtils.isEmbeddedId(pd) || PersistenceUtils.isId(pd))
 		.map(PropertyDescriptor::getName).findAny().orElse(enitityName + "Id");
     }
 

@@ -322,11 +322,6 @@ public class EntityToSchemaMapper {
 		}
 	    }
 
-	    if (Collection.class.isAssignableFrom(propertyType) && !PersistenceUtils.isElementCollection(pd)) {
-		// not yet implemented
-		return;
-	    }
-
 	    if (requestType != RequestType.PARAMETER && JacksonUtils.isJsonIgnore(pd)) {
 		return;
 	    }
@@ -363,8 +358,12 @@ public class EntityToSchemaMapper {
 	    final Optional<Boolean> dstNullable;
 	    switch (requestType) {
 	    case RESPONSE:
-		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!isGeneratedValue(pd)),
-			Optional.of(!PersistenceUtils.isId(pd)), JacksonUtils.nullIncludedInJson(cls));
+		dstNullable = OptionalUtils.allTrue(nullable, Optional.of(!PersistenceUtils.isEmbeddedId(pd)),
+			Optional.of(!isGeneratedValue(pd)), Optional.of(!PersistenceUtils.isId(pd)),
+			JacksonUtils.nullIncludedInJson(cls),
+			Optional.of(!(pd.getPropertyType().isArray()
+				|| Collection.class.isAssignableFrom(pd.getPropertyType())
+				|| Map.class.isAssignableFrom(pd.getPropertyType()))));
 		break;
 	    case CREATE:
 	    case UPDATE:
@@ -400,8 +399,8 @@ public class EntityToSchemaMapper {
 
 	if (propertyType.isArray()) {
 	    ArraySchema schema = new ArraySchema();
-	    schema.setItems(
-		    toSchema(mode, requestType, Optional.empty(), propertyType.getComponentType(), Optional.empty()));
+	    schema.setItems(toSchema(mode, requestType, Optional.empty(), propertyType.getComponentType(),
+		    requestType == RequestType.RESPONSE ? Optional.of(Boolean.FALSE) : Optional.empty()));
 	    nullable.ifPresent(schema::setNullable);
 	    return schema;
 	}
@@ -413,7 +412,8 @@ public class EntityToSchemaMapper {
 		    Optional.of(ANY_VALUE_CLASS));
 	    if (itemType.isPresent()) {
 		final ArraySchema schema = new ArraySchema();
-		schema.setItems(toSchema(mode, requestType, Optional.empty(), itemType.get(), Optional.empty()));
+		schema.setItems(toSchema(mode, requestType, Optional.empty(), itemType.get(),
+			requestType == RequestType.RESPONSE ? Optional.of(Boolean.FALSE) : Optional.empty()));
 		nullable.ifPresent(schema::setNullable);
 		return schema;
 	    }

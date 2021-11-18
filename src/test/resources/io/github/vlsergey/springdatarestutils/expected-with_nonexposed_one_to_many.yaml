@@ -207,81 +207,67 @@ components:
         type:
           type: string
           nullable: false
+    NewTestChildRequest:
+      required:
+      - childValue
+      type: object
+      properties:
+        childValue:
+          type: string
     NewTestEntityRequest:
       required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
+      - parentValue
+      - testOneToMany
       type: object
       properties:
         id:
           type: string
           format: uuid
-        testAnyElementCollection:
+        parentValue:
+          type: string
+        testOneToMany:
           type: array
           items:
             nullable: true
             oneOf:
-            - type: boolean
-            - type: object
-              additionalProperties: true
-            - type: number
-            - type: string
-        testExplicitElementCollection:
-          type: array
-          items:
-            type: string
-        testNonNullElementCollection:
-          type: array
-          items:
-            type: string
-        testNullableElementCollection:
-          type: array
-          nullable: true
-          items:
-            type: string
+            - $ref: '#/components/schemas/NewTestChildRequest'
+    TestChild:
+      required:
+      - childValue
+      type: object
+      properties:
+        childValue:
+          type: string
+    TestChildPatch:
+      type: object
+      properties:
+        childValue:
+          type: string
+    TestChildRequest:
+      required:
+      - childValue
+      type: object
+      properties:
+        childValue:
+          type: string
     TestEntity:
       required:
       - id
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
-      - testNullableElementCollection
+      - parentValue
+      - testOneToMany
       type: object
       properties:
         id:
           type: string
           format: uuid
           nullable: false
-        testAnyElementCollection:
+        parentValue:
+          type: string
+        testOneToMany:
           type: array
           nullable: false
           items:
-            nullable: true
-            oneOf:
-            - type: boolean
-            - type: object
-              additionalProperties: true
-            - type: number
-            - type: string
-        testExplicitElementCollection:
-          type: array
-          nullable: false
-          items:
-            type: string
-            nullable: false
-        testNonNullElementCollection:
-          type: array
-          nullable: false
-          items:
-            type: string
-            nullable: false
-        testNullableElementCollection:
-          type: array
-          nullable: false
-          items:
-            type: string
-            nullable: false
+            $ref: '#/components/schemas/TestChild'
     TestEntityLinks:
       required:
       - _links
@@ -300,61 +286,31 @@ components:
         id:
           type: string
           format: uuid
-        testAnyElementCollection:
+        parentValue:
+          type: string
+        testOneToMany:
           type: array
           items:
             nullable: true
             oneOf:
-            - type: boolean
-            - type: object
-              additionalProperties: true
-            - type: number
-            - type: string
-        testExplicitElementCollection:
-          type: array
-          items:
-            type: string
-        testNonNullElementCollection:
-          type: array
-          items:
-            type: string
-        testNullableElementCollection:
-          type: array
-          items:
-            type: string
+            - $ref: '#/components/schemas/TestChildPatch'
     TestEntityRequest:
       required:
-      - testAnyElementCollection
-      - testExplicitElementCollection
-      - testNonNullElementCollection
+      - parentValue
+      - testOneToMany
       type: object
       properties:
         id:
           type: string
           format: uuid
-        testAnyElementCollection:
+        parentValue:
+          type: string
+        testOneToMany:
           type: array
           items:
             nullable: true
             oneOf:
-            - type: boolean
-            - type: object
-              additionalProperties: true
-            - type: number
-            - type: string
-        testExplicitElementCollection:
-          type: array
-          items:
-            type: string
-        testNonNullElementCollection:
-          type: array
-          items:
-            type: string
-        testNullableElementCollection:
-          type: array
-          nullable: true
-          items:
-            type: string
+            - $ref: '#/components/schemas/TestChildRequest'
     TestEntityWithLinks:
       allOf:
       - $ref: '#/components/schemas/TestEntity'
