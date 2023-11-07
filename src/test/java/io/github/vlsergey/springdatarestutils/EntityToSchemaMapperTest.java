@@ -3,6 +3,7 @@ package io.github.vlsergey.springdatarestutils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.Link;
@@ -16,6 +17,8 @@ import io.github.vlsergey.springdatarestutils.CodebaseScannerFacade.ScanResult;
 import io.github.vlsergey.springdatarestutils.projections.TestEntityDefaultProjection;
 import io.github.vlsergey.springdatarestutils.test.TestEntity;
 import io.swagger.v3.oas.models.media.Schema;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.Yaml;
 
 class EntityToSchemaMapperTest {
 
@@ -23,6 +26,7 @@ class EntityToSchemaMapperTest {
 
     private final TaskProperties taskProperties = new TaskProperties().setAddXLinkedEntity(true);
 
+    private final Yaml yaml = new Yaml(new Constructor(Map.class));
     private final EntityToSchemaMapper mapper = new EntityToSchemaMapper(
 	    (a, b, c) -> ClassToRefResolver.generateName(taskProperties, a, b, c),
 	    new CustomAnnotationsHelper(taskProperties), TestEntity.class::equals,
@@ -31,9 +35,9 @@ class EntityToSchemaMapperTest {
     @Test
     void testLink() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(Link.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
-	String json = SchemaUtils.writeValueAsString(false, schema);
+	Map<String, Object> yamlMap = yaml.load(SchemaUtils.writeValueAsString(false, schema));
 
-	assertEquals("type: object\n" + //
+	assertEquals(yaml.load("type: object\n" + //
 		"properties:\n" + //
 		"  deprecation:\n" + //
 		"    type: string\n" + //
@@ -65,15 +69,15 @@ class EntityToSchemaMapperTest {
 		"  type:\n" + //
 		"    type: string\n" + //
 		"    nullable: false\n" + //
-		"", json);
+		""), yamlMap);
     }
 
     @Test
     void testMapAsDataItem() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
-	String json = SchemaUtils.writeValueAsString(false, schema);
+	Map<String, Object> yamlMap = yaml.load(SchemaUtils.writeValueAsString(false, schema));
 
-	assertEquals("required:\n" + //
+	assertEquals(yaml.load("required:\n" + //
 		"- created\n" + //
 		"- id\n" + //
 		"- parent\n" + //
@@ -96,15 +100,15 @@ class EntityToSchemaMapperTest {
 		"    type: string\n" + //
 		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"", json);
+		""), yamlMap);
     }
 
     @Test
     void testMapAsExposed() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.EXPOSED, RequestType.RESPONSE);
-	String json = SchemaUtils.writeValueAsString(false, schema);
+	Map<String, Object> yamlMap = yaml.load(SchemaUtils.writeValueAsString(false, schema));
 
-	assertEquals("required:\n" + //
+	assertEquals(yaml.load("required:\n" + //
 		"- created\n" + //
 		"- id\n" + //
 		"- updated\n" + //
@@ -122,15 +126,15 @@ class EntityToSchemaMapperTest {
 		"    type: string\n" + //
 		"    format: date-time\n" + //
 		"    nullable: false\n" + //
-		"", json);
+		""), yamlMap);
     }
 
     @Test
     void testMapAsLinks() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(TestEntity.class, ClassMappingMode.LINKS, RequestType.RESPONSE);
-	String json = SchemaUtils.writeValueAsString(false, schema);
+	Map<String, Object> yamlMap = yaml.load(SchemaUtils.writeValueAsString(false, schema));
 
-	assertEquals("required:\n" + //
+	assertEquals(yaml.load("required:\n" + //
 		"- _links\n" + //
 		"type: object\n" + //
 		"properties:\n" + //
@@ -149,15 +153,15 @@ class EntityToSchemaMapperTest {
 		"        allOf:\n" + //
 		"        - $ref: '#/components/schemas/Link'\n" + //
 		"        x-linked-entity: TestEntity\n" + //
-		"", json);
+		""), yamlMap);
     }
 
     @Test
     void testUriTemplate() throws Exception {
 	final Schema<?> schema = mapper.mapEntity(UriTemplate.class, ClassMappingMode.DATA_ITEM, RequestType.RESPONSE);
-	String json = SchemaUtils.writeValueAsString(false, schema);
+	Map<String, Object> yamlMap = yaml.load(SchemaUtils.writeValueAsString(false, schema));
 
-	assertEquals("required:\n" //
+	assertEquals(yaml.load("required:\n" //
 		+ "- variableNames\n" //
 		+ "- variables\n" //
 		+ "type: object\n" //
@@ -173,7 +177,7 @@ class EntityToSchemaMapperTest {
 		+ "    nullable: false\n" //
 		+ "    items:\n" //
 		+ "      $ref: '#/components/schemas/TemplateVariable'\n" //
-		+ "", json);
+		+ ""), yamlMap);
     }
 
     @Test
