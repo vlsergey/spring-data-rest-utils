@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,8 @@ import com.google.common.io.Resources;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.vlsergey.springdatarestutils.example.SingleLine;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.Yaml;
 
 class ToOpenApiActionImplTest {
 
@@ -36,8 +39,9 @@ class ToOpenApiActionImplTest {
     private TaskProperties taskProperties;
 
     static void assertEquals(URL expectedUrl, File actualFile) throws IOException {
-	String expected = Resources.toString(expectedUrl, StandardCharsets.UTF_8).replace("\r", "");
-	String actual = new String(Files.readAllBytes(actualFile.toPath()), StandardCharsets.UTF_8).replace("\r", "");
+	Yaml yaml = new Yaml(new Constructor(Map.class));
+	Map<String, Object> expected = yaml.load(Resources.toString(expectedUrl, StandardCharsets.UTF_8).replace("\r", ""));
+	Map<String, Object> actual = yaml.load(new String(Files.readAllBytes(actualFile.toPath()), StandardCharsets.UTF_8).replace("\r", ""));
 	Assertions.assertEquals(expected, actual);
     }
 
